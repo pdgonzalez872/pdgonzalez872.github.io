@@ -53,4 +53,6 @@
 - At1 -> `global` named Agent
 
 ## Conclusion:
-t2 can communicate with At1
+t2 can communicate with At1 in a connected BEAM cluster
+
+Thanks for reading, PDG
