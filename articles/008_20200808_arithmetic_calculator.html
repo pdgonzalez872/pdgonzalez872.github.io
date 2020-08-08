@@ -1,0 +1,239 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2020-08-08 | Stack Arithmetic Examples
+</h2>
+
+<p>
+I often operate at a very abstracted level in the computer, translating human
+thought to a high level programming language (Elixir) and creating applications
+that are then run by on top of the computer's operating system. My applications
+often interact with other applications, also running on top of the operating
+system. A good example here is Postgres, a database engine my applications use
+for persistence.
+</p>
+
+<p>
+I think it is important to always look inward to try to fill the gaps we all
+have in different aspects in our lives. I enjoy my job but realize there is
+more to computers than the things I get to do on a daily basis.
+</p>
+
+<p>
+A great book that outlines these ideas/gaps is "The Elements of Computing
+Systems"[0], where the authors discuss a first principles of computing. Here is
+a great TED Talk[2] about the book (and education as well).
+</p>
+
+<p>
+`The Elements of Computing Systems` mentions the concept of "Stack Arithmetic"
+in chapter 7 (on Virtual Machines). It mentions a very interesting observation:
+"any arithmetic and Boolen expression - no matter how complex - can be
+systematically converted into, and evaluated by, a sequence of simple
+operations on a stack".
+</p>
+
+<p>
+With that in mind, I thought it would be interesting to create a calculator
+that does just that: takes in a valid math expression (text) and uses stacks to
+do the calculation (without calling `eval` and friends).
+</p>
+
+<p>
+I'm sure there are better ways of approaching this problem, but this is my
+current MVP. It handles precedence, parentheses and returns the correct values
+for the test cases I have below. The more test cases I have, the more confident
+I'll be of the solution. If you have any suggestions, please contact me.
+</p>
+
+<h3>
+Elixir Implementation of a stack based calculator:
+</h3>
+
+<pre></code>
+defmodule Vm do
+  defmodule Calculator do
+    @moduledoc """
+    A stack based calculator.
+
+    Notes:
+    - I'm ommitting @spec, @doc for simplicity
+    - Instead of growing downwards like the usual examples, the stack "grows to
+      the left".
+    - Error handling can be more robust. At this time, we are just handling happy
+      paths and hoping people don't input things like "4+a/1"
+
+    Resources:
+    - "The Elements of Computer Systems"
+    - http://www2.lawrence.edu/fast/GREGGJ/CMSC150/071Calculator/Calculator.html
+    """
+
+    @supported_operands ["(", ")", "*", "/", "+", "-"]
+
+    def call(expression) when is_binary(expression) do
+      calculate([], [], String.split(expression, " ", trim: true))
+    end
+
+    defp calculate([final_value], [], []) do
+      final_value
+    end
+
+    defp calculate(
+           values,
+           [_ | _] = operands,
+           ["(" = h_expression | t_expression]
+         ) do
+      operands = increment_stack(operands, h_expression, :operand)
+      calculate(values, operands, t_expression)
+    end
+
+    defp calculate(
+           values,
+           [_ | _] = operands,
+           [")" | t_expression]
+         ) do
+      calculate(values, operands, t_expression)
+    end
+
+    defp calculate(values, operands, [last_token]) do
+      values = increment_stack(values, last_token, :value)
+      operands = increment_stack(operands, last_token, :operand)
+      [a, b | t_values] = values
+      [operand | t_operands] = operands
+      result = evaluate([a, b], operand)
+      calculate([result | t_values], t_operands, [])
+    end
+
+    defp calculate(
+           values,
+           operands,
+           [h_expression | t_expression] = expression
+         ) do
+      with {:has_two_values, [_a, _b | _]} <- {:has_two_values, values},
+           {:current_operand, [current_operand | _]} <- {:current_operand, operands},
+           {:next_token, [next_token | _]} <- {:next_token, expression},
+           {:next_token_is_operand, true} <- {:next_token_is_operand, is_operand(next_token)},
+           {:current_operand_is_parens, false} <-
+             {:current_operand_is_parens, current_operand == "(" or current_operand == ")"},
+           {:precedence, false} <-
+             {:precedence, precedence_value(next_token) > precedence_value(current_operand)} do
+        [a, b | t_values] = values
+        [operand | t_operands] = operands
+        result = evaluate([a, b], operand)
+        calculate([result | t_values], t_operands, expression)
+      else
+        _reason ->
+          values = increment_stack(values, h_expression, :value)
+          operands = increment_stack(operands, h_expression, :operand)
+          calculate(values, operands, t_expression)
+      end
+    end
+
+    defp calculate(
+           [_, _ | _] = values,
+           ["(" | t_operands],
+           [] = expression
+         ) do
+      calculate(values, t_operands, expression)
+    end
+
+    defp calculate(
+           [a, b | t_values],
+           [h_operands | t_operands],
+           [] = expression
+         ) do
+      result = evaluate([a, b], h_operands)
+      calculate([result | t_values], t_operands, expression)
+    end
+
+    # The order in the args here matters. Since this is a stack, the list
+    # "head" is actually the stack's last element.
+    defp evaluate([a, b], "+") do
+      b + a
+    end
+
+    defp evaluate([a, b], "-") do
+      b - a
+    end
+
+    defp evaluate([a, b], "*") do
+      b * a
+    end
+
+    defp evaluate([a, b], "/") do
+      b / a
+    end
+
+    defp increment_stack(stack, token, :value) do
+      if is_value(token) do
+        {int, _} = Integer.parse(token)
+        [int | stack]
+      else
+        stack
+      end
+    end
+
+    defp increment_stack(stack, token, :operand) do
+      if is_operand(token), do: [token | stack], else: stack
+    end
+
+    defp is_operand(token) when token in @supported_operands, do: true
+    defp is_operand(_), do: false
+
+    defp is_value(token), do: !is_operand(token)
+
+    defp precedence_value(operand) do
+      case operand do
+        "*" -> 2
+        "/" -> 2
+        "+" -> 1
+        "-" -> 1
+        e -> raise "not implemented yet #{inspect(e)}"
+      end
+    end
+  end
+
+  use ExUnit.Case
+
+  describe "StackArithmetic" do
+    @tag :solved
+    test "calculates expressions, solved" do
+      assert 10 == "4 + 6" |> Calculator.call()
+      assert 24 == "4 * 6" |> Calculator.call()
+      assert 8 == "2 + 3 * 4 - 6" |> Calculator.call()
+      assert 34 == "4 + 5 * 6" |> Calculator.call()
+      assert 2 == "3 / 3 + 1" |> Calculator.call()
+      assert 2 == "3 / 3 + 4 / 4" |> Calculator.call()
+      assert 8 == "4 * ( 4 - 2 )" |> Calculator.call()
+      assert 8 == "4 * ( 6 - 2 * ( 4 - 2 ) )" |> Calculator.call()
+      assert 27 == "4 / 2 + 8 * 4 - ( 5 + 2 )" |> Calculator.call()
+    end
+
+    @tag :trying
+    test "calculates expressions, trying" do
+      assert true
+    end
+  end
+end
+</code></pre>
+
+<h3>
+Resources
+</h3>
+
+<ul>
+  <li> [0] Elements of Computing Systems: <a
+      href="https://www.nand2tetris.org/book">https://www.nand2tetris.org/book</a></li>
+  <li> [1] The self-organizing computer course: <a
+      href="https://www.ted.com/talks/shimon_schocken_the_self_organizing_computer_course">https://www.ted.com/talks/shimon_schocken_the_self_organizing_computer_course</a></li>
+  <li> [2] Joe Gregg's (Lawrence University) CMSC150's lecture notes about this problem: <a
+      href="http://www2.lawrence.edu/fast/GREGGJ/CMSC150/071Calculator/Calculator.html">http://www2.lawrence.edu/fast/GREGGJ/CMSC150/071Calculator/Calculator.html</a></li>
+</ul>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
