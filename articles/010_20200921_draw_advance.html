@@ -1,0 +1,234 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<style>
+  table, th, td {
+    border: 1px solid black;
+  }
+</style>
+
+<h2>
+  2020-09-21 | Advancing a player in a draw
+</h2>
+
+<p>
+  2020 has been interesting (to say the least) for a number of reasons. One of
+  them is the fact that Roland Garros (the only clay court Grand Slam in the
+  season) was moved from June to September. A usual clay court season is
+  comprised of multiple tournaments on clay so players can get rhythm and be at
+  the top of their game when it comes to RG. RG is the last of the clay court
+  tournaments (at least the highest level ones) in the season. So my favorite
+  tennis season is happenning as we speak! This is excellent.
+</p>
+<p>
+  Racket sports have been a big part of my life. Competing in these sports
+  has also played a big part in my life. I was never involved with managing
+  tournaments, only played them. You basically followed orders: got a time, a
+  court and went out to play your match.
+</p>
+<p>
+  Now that we were watching some tennis on tv, I wondered how things work under
+  the hood. Lots of interesting questions and fairly complex problems come up
+  when you are managing a tournament. Creating the draw, scheduling the matches,
+  managing the results and many more non-trivial issues. The issue I want to
+  discuss today is a fairly simple one: how to deal with the result of a match
+  and advance the winner to the correct position in the next round.
+</p>
+
+<p>
+  Imagine the following 4 player tournament:
+</p>
+
+<pre></code>
+Semifinals
+|-----------------------|
+|         Paulo         |
+|-----------------------|---------
+|       Rafa Nadal      |        |         Finals
+|-----------------------|        |-----------------------|
+                                 |           ?           |
+                                 |-----------------------|
+                                 |           ?           |
+                                 |-----------------------|
+|-----------------------|        |
+|         Silvia        |        |
+|-----------------------|---------
+|     Roger Federer     |
+|-----------------------|
+</code></pre>
+
+<ul> You get the following results:
+  <li>
+    Paulo beats Rafa Nadal 6/7 7/6 7/6
+  </li>
+  <li>
+    Silvia beats Roger Federer 6/2 6/0
+  </li>
+</ul>
+
+<p>
+  You then need to update the tournament draw to show the below:
+</p>
+
+<pre></code>
+Semifinals
+|-----------------------|
+|         Paulo         |
+|-----------------------|---------
+|       Rafa Nadal      |        |         Finals
+|-----------------------|        |-----------------------|
+                                 |         Paulo         |
+                                 |-----------------------|
+                                 |         Silvia        |
+                                 |-----------------------|
+|-----------------------|        |
+|         Silvia        |        |
+|-----------------------|---------
+|     Roger Federer     |
+|-----------------------|
+</code></pre>
+
+<p>
+  The approach below seems to work for our use case and is a great example of how
+  important it is to frame a problem and play with the data.
+</p>
+
+
+<p>
+  As with every problem, it is imperative to try different approaches and how you
+  frame the problem means a lot. I've seen that the solution (and how fast you can
+  get to it) is directly correlated to how a problem is framed.
+</p>
+
+<p>After talking to Kels and Kristen for a little bit, we arrived at the following:</p>
+
+<ul>
+  <li>
+    A round will have different matches.
+  </li>
+  <li>
+    A round also have positions, starting from the 1 going top to
+    bottom
+  </li>
+  <li>
+    Each of the matches in the round should have a number, starting from 1 going
+    top to bottom
+  </li>
+  <li>
+    A match will have two positions: top and bottom
+  </li>
+</ul>
+
+<p>
+  The structure is as follows:
+</p>
+
+<pre></code>
+                A
+    |-----------------------|
+    |  1       A1P1         |
+ A1 |-----------------------|---------
+    |  2       A1P2         |        |           B
+    |-----------------------|        |-----------------------|
+                                     |  1       B1P1         |
+                                  B1 |-----------------------|
+                                     |  2       B1P2         |
+                                     |-----------------------|
+    |-----------------------|        |
+    |  3        A2P1        |        |
+ A2 |-----------------------|---------
+    |  4        A2P2        |
+    |-----------------------|
+</code></pre>
+
+<p>
+  Legend:
+</p>
+
+<ul>
+  <li>
+    A is a round
+  </li>
+  <li>
+    B is a round
+  </li>
+  <li>
+    A1 is a match in the A round
+  </li>
+  <li>
+    A2 is a match in the A round
+  </li>
+  <li>
+    A1P1 is the top position in the A2 match
+  </li>
+  <li>
+    And so on.
+  </li>
+</ul>
+
+<p>
+  In order to solve for "how to advance a player" we looked at an existing draw in
+  a tournament that is about to start this week in Italy [0], applied the
+  structure above and jotted own a few scenarios, as seen below:
+</p>
+
+<table>
+  <th>name</th>
+  <th>match_number</th>
+  <th>position_round</th>
+  <th>result_match_number</th>
+  <th>result_position_round</th>
+  <tr><td>rudd</td><td>3</td><td>5</td><td>2</td><td>3</td></tr>
+  <tr><td>paire</td><td>3</td><td>6</td><td>2</td><td>3</td></tr>
+  <tr><td>monfils</td><td>12</td><td>24</td><td>6</td><td>12</td></tr>
+  <tr><td>hanfman</td><td>12</td><td>23</td><td>6</td><td>12</td></tr>
+  <tr><td>fritz</td><td>15</td><td>29</td><td>8</td><td>15</td></tr>
+  <tr><td>cuevas</td><td>15</td><td>30</td><td>8</td><td>15</td></tr>
+  <tr><td>sandgren</td><td>8</td><td>15</td><td>4</td><td>8</td></tr>
+  <tr><td>rublev</td><td>8</td><td>16</td><td>4</td><td>8</td></tr>
+</table>
+
+<p>
+  It was a lot easier to reason about things when I had the table above to look
+  at. To me, it was clear that the algorithm to advance a player to the correct
+  position is as follows:
+</p>
+
+<ul>
+  <li>
+    In order to get the next round's match number: If the match number
+    is even, divide by 2. If odd, add 1 and divide by 2. The result
+    is the match number in the next round.
+  </li>
+  <li>
+    In order to get the next round's position: this will be the same as the
+    match number where the player came from.
+  </li>
+</ul>
+
+<p>
+  If we look at Silvia's example above, she had position #3 and was playing
+  match #2 in the round. So, (match #2 is even) -> 2 / 2 -> 1. So she is playing
+  in next round's match #1. Since she came from match #2, her position in the
+  next round's match #1 will be #2.
+</p>
+
+<p>
+  Thanks for Kels and Kristen that helped me solve this after dinner!
+</p>
+
+<h3>
+  Resources
+  </h3>
+
+  <ul>
+    <li> [0] Citta di Forli ATP Challenger draw: <a href="https://www.atptour.com/en/scores/current-challenger/forli/9357/draws?matchType=singles">https://www.atptour.com/en/scores/current-challenger/forli/9357/draws?matchType=singles</a>
+    </li>
+  </ul>
+
+  --------------
+
+<p>
+  Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
