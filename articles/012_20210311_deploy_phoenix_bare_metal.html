@@ -1,0 +1,649 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2021-03-12 | On deploying a Phoenix application to a brand new remote server
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<h3> Goals for this article: </h3>
+
+<p>
+  The goal here is: deploy a an existing Phoenix application to a remote server
+  with some basic security considerations. We also expand on this initial goal
+  by:
+</p>
+
+<ul>
+  <li>
+    buying a domain name, setting up a domain name for our application
+  </li>
+
+  <li>
+    use Cloudflare to manage the domain as well as add some security that
+    browsers (and users) consider as best practice (SSL, always redirect to
+    https)
+  </li>
+
+  <li>
+    configure and use nginx as a reverse proxy for our application (including
+    sockets - for Phoenix applications that use them)
+  </li>
+</ul>
+
+<p>
+  *** If you find a security vulnerability in the approach I suggest below,
+  please let me know. I'm very interested in improving my craft. Please email
+  me and I'll respond ASAP.
+</p>
+
+<h3> Why write this?: </h3>
+
+<p>
+  I'm interested in improving my craft and learning things from first
+  principles. A lot of times, writing a blog post like this is a fantastic way
+  to learn more about something. That's why.
+</p>
+
+<h3> But... there are better options and solutions to this problem!</h3>
+
+<p>
+  Yes, this can be cut down considerably by leveraging other technologies
+  (containers, pre configured OS images) but I was interested in removing
+  abstractions in this exercise and start from the ground up. Maybe a future
+  part 2 could address these improvements.
+</p>
+
+<h3>
+  ## So, let's get started! ###
+</h3>
+
+<h3>
+  Domain name and DNS: Buy a domain name
+</h3>
+
+<p>
+  Head over to <a href="https://www.namecheap.com">Namecheap</a> (no
+  affiliation, just what I have used in the past) and buy a cheap domain.
+</p>
+
+<h3>
+  Domain name and DNS: use Cloudflare to manage DNS records
+</h3>
+
+<p>
+  Now that we have a domain name, go to
+  <a href="https://www.cloudflare.com">CloudFlare</a>,
+  and follow the instructions in this <a
+    href="https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account">article</a>
+  on how to configure a new "site" on CloudFlare (written by Namecheap). The
+  defaults are good defaults (always switch to https for example).
+</p>
+
+<h3>
+  Creating the machine: Create an Ubuntu 20.04 machine on Digital Ocean
+</h3>
+
+<p>
+  Go to <a
+          href="https://www.digitalocean.com/docs/droplets/how-to/create/">Digital
+          Ocean (DO)</a> and create a Ubuntu 20.04 (Ubuntu works well)
+        droplet (machine from now on) and in the Authentication section, choose
+        SSH. If you don't have an SSH key set up with DO, you will have an
+        option to click and it will guide you through it. Select your the key
+        you added and continue clicking through the process.
+</p>
+
+<p>
+  Security checkpoint: DO will have made access available only through SSH from
+  you local machine. You will be able to login as root on that machine, with
+  `ssh root@ip_for_your_new_box`. Once you select SSH for authentication,
+  logging in with a password is disabled by DO (which is excellent). We also
+  don't know the password for root, by default.
+</p>
+
+<h3>
+  Securing the machine: Configure firewall: ufw
+</h3>
+
+<p>
+  The firewall is the first line of defense when it comes to networking. You
+  can configure how the machine communicates with other members of the network. The
+  approach here is to limit communication to only what we will need. Our setup
+  is a good enough one.
+</p>
+
+<pre>
+$ ufw allow ssh
+$ ufw allow http
+$ ufw allow https
+$ ufw enable
+</pre>
+
+<p>
+And you can verify things worked by running:
+</p>
+
+<pre>
+$ ufw status
+Status: active
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW       Anywhere
+80/tcp                     ALLOW       Anywhere
+443/tcp                    ALLOW       Anywhere
+22/tcp (v6)                ALLOW       Anywhere (v6)
+80/tcp (v6)                ALLOW       Anywhere (v6)
+443/tcp (v6)               ALLOW       Anywhere (v6)
+</pre>
+
+<p>
+  Security checkpoint: The only ports accessible to the external world are 22,
+  80 and 443. If we didn't have this and had a program listening on a certain
+  port, an attacker could potentially interact with it. Now, the firewall will
+  take care of that.
+</p>
+
+<h3>
+  Securing the machine: Create an admin user
+</h3>
+
+<p>
+  Let's create a user that is not root, add a password for it and add it to the
+  `sudo` permissions group. The password for that user will be prompted every
+  time this new user needs higher priviledge when executing a command they
+  would need to know the password. Let's also add SSH access to the machine through
+  that user by using the key we already have set up on our local machine. Let's
+  call this new user admin_deploy.
+</p>
+
+<pre>
+# Think of a password and use it when running the below:
+$ adduser admin_deploy
+$ usermod -aG sudo admin_deploy
+</pre>
+
+<p>
+  Security checkpoint: you are able to log in as the admin_deploy and root
+  users by using ssh. The admin_deploy user requires a password to run
+  priviledged commands while root can do anything on the machine (see encrypted
+  passwords that can later be brute forced, install things on the machine,
+  monitor usage, etc).
+</p>
+
+<h3>
+  Securing the machine: Configure SSH for new admin user
+</h3>
+
+<p>
+  Now that we have the user, let's set up SSH for it so we can use connect to
+  the machine without connecting as root.
+</p>
+
+<pre>
+# Change to the admin_deploy user:
+$ su admin_deploy
+
+# Go to the correct home directory and create a file:
+$ cd ~
+$ mkdir .ssh
+$ touch .ssh/authorized_keys
+
+# Copy your local public key to the remote machine. (** Do this on your local machine **).
+# Assumes you have one already since you used it for creating the droplet. You
+# can also use a different one, but for simplicity purposes we will use the
+# same one.
+$ cat ~/.ssh/id_rsa.pub | xclip -sel c
+
+# Then on the remote machine:
+$ vim .ssh/authorized_keys
+# and add your public SSH key that you have copied on your clipboard
+
+# then, restart the ssh service:
+$ service ssh restart
+</pre>
+
+<p>
+  You should be able to SSH from your local machine as the admin_deploy user.
+  Do so from now on.
+</p>
+
+<p>
+  Security checkpoint: No change. We just created a new secure door to connect
+  to the system. Only your local machine can use that door.
+</p>
+
+<h3>
+  Securing the machine: Disable SSH for root
+</h3>
+
+<p>
+  Now that we have a more secure door to go through (admin_deploy SSH), let's
+  kill the one that let's you do anything on the machine (root SSH).
+</p>
+
+<pre>
+$ sudo vim /etc/ssh/sshd_config
+# Find this line:
+# PermitRootLogin yes
+# change it to `no`, so it looks like this:
+# PermitRootLogin no
+
+# Then run
+$ service ssh restart
+</pre>
+
+<p>
+  Security checkpoint: Big change. Now you can no longer log in as root (the
+  user that could do whatever it wanted in the machine) at all. You can still do
+  whatever you want when logged in as admin_deploy because you have sudo
+  priviledges, but you need to know the password you set for the user. We now
+  have a couple of layers of security.
+</p>
+
+<h3>
+  Preparing the machine: Prepare the machine to run our Phoenix application
+</h3>
+
+<p>
+  Now that we have basic security in place, let's prepare the machine so it has
+  everything we need to run our Phoenix application. The only abstraction we
+  are using here is the fact that we are using a runtime version manager for
+  the languages we need (Erlang and Elixir) instead of compiling and bulding
+  the code locally. We need the following on the machine to run the Phoenix
+  application I had built:
+</p>
+
+<ul>
+  <li>
+    Erlang
+  </li>
+  <li>
+    Elixir
+  </li>
+  <li>
+    PostgreSQL
+  </li>
+  <li>
+    nodejs
+  </li>
+  <li>
+    npm
+  </li>
+</ul>
+
+<p>
+  And since we want to use nginx to reverse proxy our traffic, we need to install it as well.
+</p>
+
+<p>
+  I've put together this script <a
+                                  href="https://github.com/pdgonzalez872/dotfiles/blob/master/ubuntu_setup.sh">script</a>
+  because I set up a few Ubuntu machines for development and it gets us
+  everything we need to be able to write, build and deploy our app. Feel free
+  to manually download the above, or you can copy some parts of the script as
+  you'd like.
+</p>
+
+<h3>
+  Preparing the machine: Configure Nginx
+</h3>
+
+<p>
+  Now that we have the tools we need installed on the machine, let's configure
+  a great tool to handle the network traffic that comes to the machine: nginx.
+  We don't need this, we could have set up things differently, but, I wanted
+  this additional layer of control for this exercise.
+</p>
+
+<p>
+  Here is a <a
+              href="https://github.com/pdgonzalez872/dotfiles/blob/master/available-sites-example">config</a>
+  file that fits the purpose of this exercise. We listen to port 80 on the
+  machine and we redirect accordingly to the port the Phoenix application is
+  will be listening (the default for Phoenix is 4000). We also handle socket
+  connections (therefore liveview) correctly. For brevity, I will use the fact
+  that I cloned the repo where I have these utility scripts (dotfiles) and copy
+  the config file to the appropriate location.
+</p>
+
+<pre>
+$ sudo rm /etc/nginx/sites-available/default
+$ sudo cp dotfiles/available-sites-example /etc/nginx/sites-available/default
+$ sudo cat /etc/nginx/sites-available/default
+$ sudo nginx -s reload
+</pre>
+
+<p>
+  You can also manually copy/edit the file (/etc/nginx/sites-available/default)
+  with the following:
+</p>
+
+<pre>
+server {
+  listen 80;
+  server_name phoenix 0.0.0.0;
+
+  location / {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+    proxy_pass http://localhost:4000;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+
+  location /live {
+    proxy_pass http://localhost:4000$request_uri;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "Upgrade";
+    proxy_set_header   Host $host;
+  }
+
+  location /socket {
+    proxy_pass http://localhost:4000$request_uri;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "Upgrade";
+    proxy_set_header   Host $host;
+  }
+}
+</pre>
+
+<p>
+  And you should change the user that nginx uses when creating OS processes for
+  each of the reverse proxy requests. In this case, we will use the
+  admin_deploy user:
+</p>
+
+<pre>
+# Verify the default user, created by a default nginx install
+$ cat /etc/nginx/nginx.conf | ag "user " -Q
+user www-data;
+
+# change that user to be admin_deploy and verify that it has changed:
+$ cat /etc/nginx/nginx.conf | ag "user " -Q
+user admin_deploy;
+
+# And restart nginx, as sudo:
+$ sudo nginx -s reload
+</pre>
+
+<p>
+  Security checkpoint: Our nginx reverse proxy is configured and routes all
+  network traffic to port 4000 (where the Phoenix application will ultimately
+  be listening on). The OS processes that handle the requests are created with
+  the admin_deploy user's priviledges (but without sudo).
+</p>
+
+<h3>
+  Preparing the machine: Configure PostgreSQL
+</h3>
+
+<p>
+  PostgreSQL configures a user (called postgres) during installation and all
+  PostgreSQL OS processes run under its ownership. This user doesn't have sudo
+  privileges. Since processes will be run under the postgres user, PostgreSQL
+  creates a user inside PostgreSQL itself, called postgres :) Let's set the
+  password for the postgres user inside PostgreSQL itself to something we know
+  and can refer to.
+</p>
+
+<p>
+  After writing this section, I realized how similar the names are and how that
+  can cause confusion. Definitely annoying for folks starting out. Hope it is
+  clear enough.
+</p>
+
+<pre>
+# Let's change to the postgres user
+$ sudo su postgres
+# now you are the postgres user
+# Let's call psql to interact with PostgreSQL as the postgres user
+$ psql
+# now you get a psql shell, interacting directly with PostgreSQL
+# Let's change the password for the postgres user to... drumroll... postgres
+postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
+# Let's exit the psql shell
+postgres=# \q
+# now you exited the psql shell and have a shell under the postgres user, which
+# we want to exit back to admin_deploy
+$ exit
+# we now have a shell under admin_deploy, you can verify with:
+$ whoami # admin_deploy
+</pre>
+
+<p>
+  Security checkpoint: We could have set up the password to be something else.
+  But, if an attacker had access to our machine under the admin_user they could
+  change the password for the database anyways since they could `sudo su
+  postgres` and change the password themselves. Maybe there is room for
+  improvement in this step, I will update the post as I learn more about it.
+</p>
+
+<h3>
+  Preparing the deploy: Create a deploy user SSH key for this machine to be used with Github/Gitlab/etc
+</h3>
+
+<p>
+  In this case, we use Github and the repo is a private. A good solution is to
+  create an SSH key on the machine and configure a
+  <a
+     href="https://docs.github.com/en/developers/overview/managing-deploy-keys">deploy
+     token</a>.
+  With it in place, we can clone the repo to the machine in a safe and secure
+  way. Follow the steps the link to set that up.
+</p>
+
+<p>
+  Security checkpoint: If someone is able to get your private SSH key on your
+  local machine and they can log into the remote machine, they would also be
+  able to have access to the repo you just cloned. Honestly, if your private
+  SSH key is compromised, I'd bet this is the least of your worries, but I
+  thought I should mention in. Hardly no change to security in this step.
+</p>
+
+<h3>
+  Preparing the deploy: Plumbing now that you have the source code
+</h3>
+
+<p>
+  Now that we have the source code, we can get ready to run the server in
+  "production" (on the machine we created). Below are commands to run so we can
+  run the server.
+</p>
+
+<pre>
+# Install Phoenix
+$ mix archive.install hex phx_new 1.5.8
+
+#
+# `cd` to the project's directory, and from there, continue below
+#
+
+# Fetch dependencies
+$ mix deps.get
+
+# Prepare the assets to be served and create the correct config files.
+$ cd assets && npm install && node node_modules/webpack/bin/webpack.js --mode development && cd ..
+
+# Create a secret that Phoenix will use to sign and encrypt data
+# Copy the output when you get it.
+$ mix phx.gen.secret
+</pre>
+
+<p>
+  Create a .env file with the following in the root of the project we cloned:
+</p>
+
+<pre>
+DATABASE_URL=ecto://postgres:postgres@localhost/database
+SECRET_KEY_BASE=the_secret_you_copied_above
+</pre>
+
+<p>
+  Create a folder for logs and create a file to hold the log, in the
+  project's root directory
+</p>
+
+<pre>
+$ mkdir logs
+$ touch logs/logs.log
+</pre>
+
+<p>
+  And finally:
+</p>
+
+<pre>
+# Create the database, run the migrations
+$ export $(cat .env | xargs) && MIX_ENV=prod mix do ecto.create, ecto.migrate
+
+# Fetch dependencies, production only
+$ mix deps.get --only prod
+
+# Compile
+$ MIX_ENV=prod mix compile
+
+# Compile assets part 1
+$ npm run deploy --prefix ./assets
+
+# Compile assets part 2: Move the files to the `priv` folder
+$ mix phx.digest
+
+# Run the server, outputting to the log file
+$ export $(cat .env | xargs) && MIX_ENV=prod mix phx.server >> logs/logs.log
+</pre>
+
+<p>
+  Security checkpoint: Note how we run the Phoenix server as the admin_user,
+  therefore without access to root.
+</p>
+
+<p>
+  ** Another interesting article would be to use releases instead of running
+  the server directly like I do above. <a href="https://hexdocs.pm/phoenix/releases.html">Here are the docs for it.</a>
+</p>
+
+<h3>
+  Post deploy: Basic monitoring
+</h3>
+
+<p>
+  Now that the Phoenix application is deployed, we can monitor some interesting
+  things. Note how we need `sudo` for certain ones (the ones that are located
+  inside `/var`) and not for the others.
+</p>
+
+<pre>
+# Monitor nginx traffic logs
+$ sudo tail -f /var/log/nginx/access.log
+
+# Monitor the Phoenix application's logs. From the project's root:
+$ tail -f logs/logs.log
+
+# Monitor authentication attempts on the machine
+$ sudo tail -f /var/log/auth.log
+
+# Run htop to see how the machine is doing
+$ htop
+</pre>
+
+<p>
+  I use tmux and have have the above running on different windows. There is a
+  lot, a lot of bot activity probing the machine. This likely is a blog post in
+  itself, where I show some of the most common attacks that one receives after
+  putting a machine online. The types of attacks the bots try make you wonder
+  if folks even try to secure a machine.
+</p>
+
+<h2>
+  Conclusion
+</h2>
+
+<p>
+  After all of this, your application should be up, with all that it needs to
+  work in a fairly safe environment. With that said, I'd choose a provider for
+  this type of work (such as Heroku) if I were to deliver a production ready
+  project. There are a few others you can choose from after doing a little bit
+  of searching online. There are guides to deploy to them on the
+   <a href="https://hexdocs.pm/phoenix/deployment.html#content">Phoenix
+      Guides</a> page.
+</p>
+
+<h3>
+  General Drawbacks
+</h3>
+
+<ul>
+  <li>
+    Security and dealing with bots => The machine is safe, but it is exposed to
+    the internet. Folks will continue to attempt exploits. We have CloudFlare
+    to deter DDoS attacks, but I'm usually paranoid about these things. My
+    customers' data is too important to chance it, regardless of how decent of
+    a job I did security wise. So, I prefer platforms that offer this service
+    instead of handling my own.
+  </li>
+  <li>
+    Logging => I'm a big fan of logging and just having it locally on the
+    machine makes me a little nervous. Maybe we run out of space on the box due
+    to logs. You'd need to eventually manage different log files as they grow
+    in size, move them around, etc. This is an interesting concept because it
+    becomes expensive VERY quickly. Services like Splunk can be very pricey.
+  </li>
+</ul>
+
+<p>
+  As I mentioned in the monitoring section, there is a lot of bot activity when
+  you are creating a machine that can be accessible to the whole internet. I'll
+  write a blog post sometime analyzing the type of activity we get just by
+  putting up a machine online. It's a lot. Folks will try to access the machine
+  directly with different usernames/passwords (our machine is not accessible
+  through passwords, so this doesn't work), send malicious http requests to the
+  machine attempting to gain useful info, among other interesting things.
+</p>
+
+<p>
+  Special thanks to my friends that have helped with this post in some fashion:
+</p>
+
+<ul>
+  <li>
+    <a href="https://twitter.com/atomkirk">Adam Kirk</a> - General discussions, listening ear
+  </li>
+  <li>
+    <a href="https://twitter.com/imjus1sayntho">Asa Matelau</a> - General discussions, listening ear
+  </li>
+  <li>
+    <a href="https://luckywatcher.dev">Brian Petersen</a> - Helped me with the security section, general discussions and help
+  </li>
+  <li>
+    <a href="https://twitter.com/BrunnoMdeCampos">Brunno Campos</a> - General discussions, listening ear
+  </li>
+  <li>
+    <a href="https://doriankarter.com/">Dorian Karter</a> - Helped me with setting up nginx correctly, general discussions
+  </li>
+  <li>
+    <a href="https://twitter.com/hiagomeels">Hiago Mels</a> - General discussions about nginx and security
+  </li>
+  <li>
+    <a href="https://twitter.com/mrjfernando">Jorge Motarueda</a> - General discussions about nginx and security
+  </li>
+  <li>
+    Petr Vecera - General discussions about nginx and security
+  </li>
+  <li>
+    <a href="https://twitter.com/raphael_vcosta">Raphael Vidal Costa</a> - General discussion, sounding board, rubber duck for multiple things
+  </li>
+</ul>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
