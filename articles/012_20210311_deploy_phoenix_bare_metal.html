@@ -288,7 +288,7 @@ $ service ssh restart
 </p>
 
 <h3>
-  Preparing the machine: Configure Nginx
+  Preparing the machine: Install and configure Nginx
 </h3>
 
 <p>
@@ -355,29 +355,31 @@ server {
 </pre>
 
 <p>
-  And you should change the user that nginx uses when creating OS processes for
-  each of the reverse proxy requests. In this case, we will use the
-  admin_deploy user:
+  The user that nginx creates and uses when creating OS processes for each of
+  the reverse proxy requests does not have sudo privileges. You can check which
+  user nginx will use when creating OS process by:
 </p>
 
 <pre>
 # Verify the default user, created by a default nginx install
 $ cat /etc/nginx/nginx.conf | ag "user " -Q
 user www-data;
+</pre>
 
-# change that user to be admin_deploy and verify that it has changed:
-$ cat /etc/nginx/nginx.conf | ag "user " -Q
-user admin_deploy;
+<p>
+  And verify it does not have sudo privileges:
+</p>
 
-# And restart nginx, as sudo:
-$ sudo nginx -s reload
+<pre>
+$ sudo -l -U www-data
+User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 </pre>
 
 <p>
   Security checkpoint: Our nginx reverse proxy is configured and routes all
-  network traffic to port 4000 (where the Phoenix application will ultimately
-  be listening on). The OS processes that handle the requests are created with
-  the admin_deploy user's priviledges (but without sudo).
+  network traffic to port 4000 (where the Phoenix application will use). The OS
+  processes that handle the requests are created by the www-data user, who does
+  not have sudo privileges.
 </p>
 
 <h3>
@@ -402,19 +404,25 @@ $ sudo nginx -s reload
 <pre>
 # Let's change to the postgres user
 $ sudo su postgres
+
 # now you are the postgres user
 # Let's call psql to interact with PostgreSQL as the postgres user
 $ psql
+
 # now you get a psql shell, interacting directly with PostgreSQL
 # Let's change the password for the postgres user to... drumroll... postgres
 postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
+
 # Let's exit the psql shell
 postgres=# \q
+
 # now you exited the psql shell and have a shell under the postgres user, which
 # we want to exit back to admin_deploy
 $ exit
+
 # we now have a shell under admin_deploy, you can verify with:
-$ whoami # admin_deploy
+$ whoami
+admin_deploy
 </pre>
 
 <p>
@@ -423,6 +431,35 @@ $ whoami # admin_deploy
   change the password for the database anyways since they could `sudo su
   postgres` and change the password themselves. Maybe there is room for
   improvement in this step, I will update the post as I learn more about it.
+</p>
+
+<h3>
+  Preparing the machine: Create a user that will be responsible for running the
+  Phoenix application, without sudo privileges
+</h3>
+
+<p>
+  We should create a user responsible for running the Phoenix application. This
+  user should not have sudo privileges. We will use this new user to run the
+  Phoenix application later on.
+</p>
+
+<pre>
+# Let's change to the postgres user
+$ sudo adduser app
+# And set a password for the app user
+
+# We can confirm the app user doesn't have sudo privileges with:
+$ sudo -l -U app
+[sudo] password for admin_deploy: # enter password
+User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
+</pre>
+
+<p>
+  Security checkpoint: We created a user so that even if a malicious attacker
+  somehow finds a way to execute remote commands through the Phoenix
+  application (who knows, maybe the application runs commands directly on the
+  OS) the user that would run those commands would not have sudo privileges.
 </p>
 
 <h3>
@@ -453,17 +490,22 @@ $ whoami # admin_deploy
 
 <p>
   Now that we have the source code, we can get ready to run the server in
-  "production" (on the machine we created). Below are commands to run so we can
-  run the server.
+  "production". Due to our security focus, we want to run the server as a user
+  that does not have sudo access (app user). Elixir helps us in that regard by
+  providing us an abstraction called
+  <a href="https://hexdocs.pm/phoenix/releases.html">releases</a>,
+  where we create a self-contained package with all of the code we need. So, we
+  will create a release for the application and have the app user run it in the
+  end.
 </p>
 
 <pre>
-# Install Phoenix
-$ mix archive.install hex phx_new 1.5.8
-
 #
 # `cd` to the project's directory, and from there, continue below
 #
+
+# Install Phoenix
+$ mix archive.install hex phx_new 1.5.8
 
 # Fetch dependencies
 $ mix deps.get
@@ -477,7 +519,7 @@ $ mix phx.gen.secret
 </pre>
 
 <p>
-  Create a .env file with the following in the root of the project we cloned:
+  Create a `.env` file with the following in the root of the project we cloned:
 </p>
 
 <pre>
@@ -486,22 +528,34 @@ SECRET_KEY_BASE=the_secret_you_copied_above
 </pre>
 
 <p>
-  Create a folder for logs and create a file to hold the log, in the
-  project's root directory
+  Now, let's prepare the app user filesystem so it can run our release. Note
+  that this is under the app user's directory.
 </p>
 
 <pre>
-$ mkdir logs
-$ touch logs/logs.log
+# Set up logs in the app filesystem
+$ sudo mkdir /home/app/logs
+$ sudo touch /home/app/logs/logs.log
 </pre>
 
 <p>
-  And finally:
+  If you don't have the code prepared for Phoenix releases, the only change you
+  need to make is the following, documented <a
+  href="https://hexdocs.pm/phoenix/releases.html#releases-assemble">here</a>:
+  you need to add `server: true` to the Endpoint configuration in
+  `config/prod.secret.exs`. Now that this is done, let's continue:
 </p>
 
 <pre>
+#
+# As admin_deploy, `cd` to the project's root directory
+#
+
+# Export env vars
+$ export $(cat .env | xargs)
+
 # Create the database, run the migrations
-$ export $(cat .env | xargs) && MIX_ENV=prod mix do ecto.create, ecto.migrate
+$ MIX_ENV=prod mix do ecto.create, ecto.migrate
 
 # Fetch dependencies, production only
 $ mix deps.get --only prod
@@ -515,18 +569,31 @@ $ npm run deploy --prefix ./assets
 # Compile assets part 2: Move the files to the `priv` folder
 $ mix phx.digest
 
-# Run the server, outputting to the log file
-$ export $(cat .env | xargs) && MIX_ENV=prod mix phx.server >> logs/logs.log
+# Create a release
+$ MIX_ENV=prod mix release
+
+# Copy release to /home/app/_build so we can run it as the app user
+$ sudo cp -r _build/ /home/app/_build/
+
+# Change to the app user, so we are not operating under the user that has
+# sudo privileges and go to its home directory where we have the releases folder
+# and logs folder
+$ su app
+$ cd ~
+
+#
+# And finally:
+#
+
+# Run the server as the app user, outputting to the log file
+$ _build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
 </pre>
 
 <p>
-  Security checkpoint: Note how we run the Phoenix server as the admin_user,
-  therefore without access to root.
-</p>
-
-<p>
-  ** Another interesting article would be to use releases instead of running
-  the server directly like I do above. <a href="https://hexdocs.pm/phoenix/releases.html">Here are the docs for it.</a>
+  Security checkpoint: Note how we run the Phoenix server as the app user, a
+  user without sudo privileges.  You can verify that the Phoenix application is
+  run as the app user by doing `ps aux | ag beam.smp` and you will see the BEAM
+  process under the app user's ownership.
 </p>
 
 <h3>
@@ -535,16 +602,18 @@ $ export $(cat .env | xargs) && MIX_ENV=prod mix phx.server >> logs/logs.log
 
 <p>
   Now that the Phoenix application is deployed, we can monitor some interesting
-  things. Note how we need `sudo` for certain ones (the ones that are located
-  inside `/var`) and not for the others.
+  things.
 </p>
 
 <pre>
+# As the admin_user
+$ su admin_user
+
 # Monitor nginx traffic logs
 $ sudo tail -f /var/log/nginx/access.log
 
-# Monitor the Phoenix application's logs. From the project's root:
-$ tail -f logs/logs.log
+# Monitor the Phoenix application's logs
+$ sudo tail -f /home/app/logs/logs.log
 
 # Monitor authentication attempts on the machine
 $ sudo tail -f /var/log/auth.log
@@ -557,8 +626,8 @@ $ htop
   I use tmux and have the above running on different windows. There is a lot, a
   lot of bot activity probing the machine. This likely is a blog post in
   itself, where I show some of the most common attacks that one receives after
-  putting a machine online. The types of attacks the bots try make you wonder
-  if folks even try to secure a machine.
+  putting a machine online. The types of attacks the bots attempt make me
+  wonder if folks even try to secure a machine.
 </p>
 
 <h2>
