@@ -101,8 +101,14 @@
   you local machine. You will be able to login as root on that machine, with
   `ssh root@ip_for_your_new_box`. Once you select SSH for authentication,
   logging in with a password is disabled by DO (which is excellent). We also
-  don't know the password for root, by default.
+  don't know the password for the root user on the machine, by default. We can
+  verify that password logins are disabled by running:
 </p>
+
+<pre>
+$ cat /etc/ssh/sshd_config | ag "PasswordAuthentication no" -Q
+PasswordAuthentication no
+</pre>
 
 <h3>
   Securing the machine: Configure firewall: ufw
@@ -179,7 +185,7 @@ $ usermod -aG sudo admin_deploy
 </h3>
 
 <p>
-  Now that we have the user, let's set up SSH for it so we can use connect to
+  Now that we have the user, let's set up SSH for it so we can connect to
   the machine without connecting as root.
 </p>
 
@@ -208,7 +214,8 @@ $ service ssh restart
 
 <p>
   You should be able to SSH from your local machine as the admin_deploy user.
-  Do so from now on.
+  Do so from now on, this is the user that will be used as our main user on the
+  machine.
 </p>
 
 <p>
@@ -483,7 +490,7 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   local machine and they can log into this remote machine and would also be
   able to access to the repo you just cloned. Honestly, if your private SSH key
   is compromised, I'd bet this is the least of your worries, but I thought I
-  should mention in. Hardly no change to security in this step.
+  should mention it. Hardly no change to security in this step.
 </p>
 
 <h3>
