@@ -467,21 +467,23 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 </h3>
 
 <p>
-  In this case, we use Github and the repo is a private. A good solution is to
+  In this case, we use Github and the repo is private. A good solution is to
   create an SSH key on the machine and configure a
   <a
      href="https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys">deploy
      token</a>.
   With it in place, we can clone the repo to the machine in a safe and secure
-  way. Follow the steps the link to set that up.
+  way. Follow the steps the link to set that up, select "Read only" when adding
+  the key to the repo. Note that the SSH key should be created for the
+  admin_deploy user, the one that still has sudo privileges.
 </p>
 
 <p>
   Security checkpoint: If someone is able to get your private SSH key on your
-  local machine and they can log into the remote machine, they would also be
-  able to have access to the repo you just cloned. Honestly, if your private
-  SSH key is compromised, I'd bet this is the least of your worries, but I
-  thought I should mention in. Hardly no change to security in this step.
+  local machine and they can log into this remote machine and would also be
+  able to access to the repo you just cloned. Honestly, if your private SSH key
+  is compromised, I'd bet this is the least of your worries, but I thought I
+  should mention in. Hardly no change to security in this step.
 </p>
 
 <h3>
