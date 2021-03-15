@@ -106,8 +106,10 @@
 </p>
 
 <pre>
-$ cat /etc/ssh/sshd_config | ag "PasswordAuthentication no" -Q
+$ cat /etc/ssh/sshd_config | grep "PasswordAuthentication"
 PasswordAuthentication no
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication, then enable this but set PasswordAuthentication
 </pre>
 
 <h3>
@@ -204,9 +206,9 @@ $ touch .ssh/authorized_keys
 # same one.
 $ cat ~/.ssh/id_rsa.pub | xclip -sel c
 
-# Then on the remote machine:
+# Then paste your public SSH key that you have copied on your clipboard to the
+# remote machine
 $ vim .ssh/authorized_keys
-# and add your public SSH key that you have copied on your clipboard
 
 # then, restart the ssh service:
 $ service ssh restart
@@ -412,16 +414,8 @@ User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 # Let's change to the postgres user
 $ sudo su postgres
 
-# now you are the postgres user
-# Let's call psql to interact with PostgreSQL as the postgres user
-$ psql
-
-# now you get a psql shell, interacting directly with PostgreSQL
 # Let's change the password for the postgres user to... drumroll... postgres
-postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
-
-# Let's exit the psql shell
-postgres=# \q
+$ psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 
 # now you exited the psql shell and have a shell under the postgres user, which
 # we want to exit back to admin_deploy
@@ -438,6 +432,40 @@ admin_deploy
   change the password for the database anyways since they could `sudo su
   postgres` and change the password themselves. Maybe there is room for
   improvement in this step, I will update the post as I learn more about it.
+</p>
+
+<h3>
+  Preparing the machine: Install and configure Fail2ban
+</h3>
+
+<p>
+  I came across a good <a
+    href="https://linuxhandbook.com/fail2ban-basic">guide</a> on how to install
+  and configure Fail2ban on the machine. I subscribed to their newsletter,
+  let's hope it is good :). They give some details about
+</p>
+
+<pre>
+# Copy the default files to avoid issues when there are updates.
+sudo cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+
+# Let's edit the /etc/fail2ban/jail.local file so we can make the "maxretry"
+# variable smaller, meaning we immediately go for the ban if we have a bad ssh
+# attempt
+$ sudo vim /etc/fail2ban/jail.local
+
+# and change maxretry, from 5, to 1. Save and close the file.
+maxretry = 1
+
+# And finally, let's turn it on:
+$ sudo systemctl start fail2ban
+$ sudo systemctl enable fail2ban
+</pre>
+
+<p>
+  Security checkpoint: Fail2ban will help deter bot activity that keep probing
+  the ssh port.
 </p>
 
 <h3>
@@ -470,7 +498,8 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 </p>
 
 <h3>
-  Preparing the deploy: Create a deploy user SSH key for this machine to be used with Github/Gitlab/etc
+  Preparing the deploy: Create a deploy user SSH key for this machine to be
+  used with Github/Gitlab/etc
 </h3>
 
 <p>
@@ -483,6 +512,11 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   way. Follow the steps the link to set that up, select "Read only" when adding
   the key to the repo. Note that the SSH key should be created for the
   admin_deploy user, the one that still has sudo privileges.
+</p>
+
+<p>
+  Clone the repo to the remote machine. If the key was set up correctly, you
+  should have the source code now.
 </p>
 
 <p>
@@ -500,7 +534,7 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 <p>
   Now that we have the source code, we can get ready to run the server in
   "production". Due to our security focus, we want to run the server as a user
-  that does not have sudo access (app user). Elixir helps us in that regard by
+  that does not have sudo access (the app user). Elixir helps us in that regard by
   providing us an abstraction called
   <a href="https://hexdocs.pm/phoenix/releases.html">releases</a>,
   where we create a self-contained package with all of the code we need. So, we
@@ -508,13 +542,17 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   end.
 </p>
 
+<p>
+  Let's run the following to prepare the project for the release:
+</p>
+
 <pre>
+# Install Phoenix
+$ mix archive.install hex phx_new 1.5.8
+
 #
 # `cd` to the project's directory, and from there, continue below
 #
-
-# Install Phoenix
-$ mix archive.install hex phx_new 1.5.8
 
 # Fetch dependencies
 $ mix deps.get
@@ -527,24 +565,73 @@ $ cd assets && npm install && node node_modules/webpack/bin/webpack.js --mode de
 $ mix phx.gen.secret
 </pre>
 
-<p>
-  Create a `.env` file with the following in the root of the project we cloned:
-</p>
+<h3>
+  Preparing the deploy: Let's create some files to help with the process
+</h3>
+
+Let's do the following:
+
+<ol>
+  <li>
+    Create a `.env` file
+  </li>
+  <li>
+    Create a `build_release.sh` file
+  </li>
+  <li>
+    Create an `entrypoint.sh` file
+  </li>
+  <li>
+    Create a log file to hold the Phoenix application's logs
+  </li>
+</ol>
 
 <pre>
+#
+# As admin_deploy, `cd` to the project's root directory
+#
+
+# 1) Create a `.env` file with the following:
 DATABASE_URL=ecto://postgres:postgres@localhost/database
 SECRET_KEY_BASE=the_secret_you_copied_above
-</pre>
 
-<p>
-  Now, let's prepare the app user filesystem so it can run our release. Note
-  that this is under the app user's directory.
-</p>
 
-<pre>
-# Set up logs in the app filesystem
-$ sudo mkdir /home/app/logs
-$ sudo touch /home/app/logs/logs.log
+# 2) Create a `build_release.sh` file and add this to the file:
+
+#!/bin/bash
+echo "Building Phoenix release"
+git pull origin master
+export $(cat .env | xargs)
+mix deps.get --only prod
+MIX_ENV=prod mix ecto.migrate
+MIX_ENV=prod mix compile
+npm run deploy --prefix ./assets
+mix phx.digest
+MIX_ENV=prod mix release
+
+
+# make it executable
+$ sudo chmod +x build_release.sh
+
+# 3) Create script to run the server as the app user, `entrypoint.sh`
+$ sudo touch entrypoint.sh
+
+# make it executable
+$ sudo chmod +x entrypoint.sh
+
+# add this to the file. Make sure to replace `your_app_name` with... your app
+# name.
+
+#!/bin/bash
+echo "Starting the Phoenix server as $(whoami)"
+cd ~
+_build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
+
+
+# 4) Set up logs in the app user directory
+sudo mkdir /home/app/logs
+sudo touch /home/app/logs/log.log
+sudo chown app /home/app/logs/log.log
 </pre>
 
 <p>
@@ -552,8 +639,14 @@ $ sudo touch /home/app/logs/logs.log
   need to make is the following, documented <a
   href="https://hexdocs.pm/phoenix/releases.html#releases-assemble">here</a>:
   you need to add `server: true` to the Endpoint configuration in
-  `config/prod.secret.exs`. Now that this is done, let's continue:
+  `config/prod.secret.exs`. Also, since we have a domain, plug it into
+  `config/prod.exs` instead of `example.com`. Now that this is done, let's
+  continue:
 </p>
+
+<h3>
+  Preparing the deploy: Let's deploy!
+</h3>
 
 <pre>
 #
@@ -561,41 +654,24 @@ $ sudo touch /home/app/logs/logs.log
 #
 
 # Export env vars
-$ export $(cat .env | xargs)
+export $(cat .env | xargs)
 
-# Create the database, run the migrations
-$ MIX_ENV=prod mix do ecto.create, ecto.migrate
+# Create the database. We will only do this one time, so we are doing it here:
+# MIX_ENV=prod mix ecto.create
 
-# Fetch dependencies, production only
-$ mix deps.get --only prod
-
-# Compile
-$ MIX_ENV=prod mix compile
-
-# Compile assets part 1
-$ npm run deploy --prefix ./assets
-
-# Compile assets part 2: Move the files to the `priv` folder
-$ mix phx.digest
-
-# Create a release
-$ MIX_ENV=prod mix release
+# Build the release
+$ ./build_release.sh
 
 # Copy release to /home/app/_build so we can run it as the app user
 $ sudo cp -r _build/ /home/app/_build/
-
-# Change to the app user, so we are not operating under the user that has
-# sudo privileges and go to its home directory where we have the releases folder
-# and logs folder
-$ su app
-$ cd ~
 
 #
 # And finally:
 #
 
-# Run the server as the app user, outputting to the log file
-$ _build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
+# Run the entrypoint file, which runs the server as the app user, outputting to
+# the log file. From the root of the project, as admin_deploy, run:
+$ sudo -u app "./entrypoint.sh"
 </pre>
 
 <p>
@@ -603,6 +679,27 @@ $ _build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
   user without sudo privileges.  You can verify that the Phoenix application is
   run as the app user by doing `ps aux | ag beam.smp` and you will see the BEAM
   process under the app user's ownership.
+</p>
+
+<h3>
+  TODO: Nah ... Post deploy: Locking the admin_deploy user
+</h3>
+
+<pre>
+$ sudo /usr/bin/passwd --lock admin_deploy
+</pre>
+
+<p>
+  Security checkpoint: Let's say an attacker gets shell access through the
+  Phoenix app somehow. In the current setup, the `app` user can't do much, but
+  one thing it could do is to try to login to the `admin_deploy` and
+  potentially brute force the password we set for that user. Yes, this would
+  mean the attacker somehow knows the user that has sudo privileges before
+  getting access to the machine since `app` can't tell them about it. Let's
+  imagine they do know the user, maybe they read this blog post :). When we
+  lock the admin_deploy password, the attacker can't log as the user at all.
+  The only thing the user could potentially do at this point is stop our server
+  from running (since it owns the process) and take our app down.
 </p>
 
 <h3>
@@ -615,9 +712,6 @@ $ _build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
 </p>
 
 <pre>
-# As the admin_user
-$ su admin_user
-
 # Monitor nginx traffic logs
 $ sudo tail -f /var/log/nginx/access.log
 
@@ -626,6 +720,9 @@ $ sudo tail -f /home/app/logs/logs.log
 
 # Monitor authentication attempts on the machine
 $ sudo tail -f /var/log/auth.log
+
+# Monitor Fail2ban logs
+$ sudo tail -f /var/log/fail2ban.log
 
 # Run htop to see how the machine is doing
 $ htop
@@ -638,6 +735,26 @@ $ htop
   putting a machine online. The types of attacks the bots attempt make me
   wonder if folks even try to secure a machine.
 </p>
+
+<h3>
+  Post deploy: Future deployments
+</h3>
+
+<p>
+  Create a script
+</p>
+
+<pre>
+unlock admin_deploy
+
+get code,
+deps, compile, digest, etc create release 
+
+rm release from other folder
+copy the new one
+
+lock admin_deploy
+</pre>
 
 <h2>
   Conclusion
@@ -683,6 +800,10 @@ $ htop
   directly with different usernames/passwords (our machine is not accessible
   through passwords, so this doesn't work), send malicious http requests to the
   machine attempting to gain useful info, among other interesting things.
+  Fail2ban helps with this issue. I still think it would be interesting to go
+  through this article again, skip Fail2ban protection, stand a hello world
+  Phoenix app, wait for a few days to collect data and then analyze that data.
+  Maybe for a future blog post.
 </p>
 
 <p>
@@ -706,7 +827,7 @@ $ htop
     <a href="https://doriankarter.com/">Dorian Karter</a> - Helped me with setting up nginx correctly, general discussions
   </li>
   <li>
-    <a href="https://twitter.com/hiagomeels">Hiago Mels</a> - General discussions about nginx and security
+    <a href="https://twitter.com/hiagomeels">Hiago Souza</a> - General discussions about nginx and security
   </li>
   <li>
     <a href="https://twitter.com/mrjfernando">Jorge Motarueda</a> - General discussions about nginx and security
