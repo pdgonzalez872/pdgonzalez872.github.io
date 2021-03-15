@@ -665,6 +665,9 @@ $ ./build_release.sh
 # Copy release to /home/app/_build so we can run it as the app user
 $ sudo cp -r _build/ /home/app/_build/
 
+# And give access to app:
+$ sudo chown app /home/app/_build/
+
 #
 # And finally:
 #
@@ -679,27 +682,6 @@ $ sudo -u app "./entrypoint.sh"
   user without sudo privileges.  You can verify that the Phoenix application is
   run as the app user by doing `ps aux | ag beam.smp` and you will see the BEAM
   process under the app user's ownership.
-</p>
-
-<h3>
-  TODO: Nah ... Post deploy: Locking the admin_deploy user
-</h3>
-
-<pre>
-$ sudo /usr/bin/passwd --lock admin_deploy
-</pre>
-
-<p>
-  Security checkpoint: Let's say an attacker gets shell access through the
-  Phoenix app somehow. In the current setup, the `app` user can't do much, but
-  one thing it could do is to try to login to the `admin_deploy` and
-  potentially brute force the password we set for that user. Yes, this would
-  mean the attacker somehow knows the user that has sudo privileges before
-  getting access to the machine since `app` can't tell them about it. Let's
-  imagine they do know the user, maybe they read this blog post :). When we
-  lock the admin_deploy password, the attacker can't log as the user at all.
-  The only thing the user could potentially do at this point is stop our server
-  from running (since it owns the process) and take our app down.
 </p>
 
 <h3>
@@ -741,20 +723,116 @@ $ htop
 </h3>
 
 <p>
-  Create a script
+  We would use the `build_release.sh` script and copy over the release to the
+  app user directory. Should be good enough for now.
+</p>
+
+<h3>
+  More security: Restrict the app user so all it knows is how to run the
+  release
+</h3>
+
+<p>
+  Let's attempt to make the app user even less capable. In this case, let's
+  give it only what it needs to run the release, nothing else. Here is some
+  more info on how to  <a
+                    href="https://stackoverflow.com/questions/21498667/how-to-limit-user-commands-in-linux">restrict
+                    users</a> and attempt to restrict their experience.
+  The overall idea is to only list commands that you'd like the user to issue
+  and restrict everything else. So, we create a ".bashrc" file for this
+  purpose. I have it <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/.deploy_user_bashrc">here</a>
+  in case you'd like to copy it directly, or, you can create one with these
+  contents however you'd like. I prefer to pull the dotfiles directory and do a
+  `cp`. Here are the file contents for the `.bashrc`:
 </p>
 
 <pre>
-unlock admin_deploy
+alias cd="printf 'not today \n'"
 
-get code,
-deps, compile, digest, etc create release 
-
-rm release from other folder
-copy the new one
-
-lock admin_deploy
+PATH=$HOME/bin
+export PATH
 </pre>
+
+<p>
+  If you cloned the dotfiles repository, do this:
+</p>
+
+<pre>
+$ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
+</pre>
+
+<p>
+  With the file created, all new shells for the app user will use the special
+  `.bashrc` file and therefore do very little.
+</p>
+
+<pre>
+#
+# Great ideas in this thread: https://stackoverflow.com/a/52251951/3163631
+#
+
+# Make user use restricted bash
+$ sudo chsh -s /bin/rbash app
+
+# Create a bin directory for the app user
+$ sudo mkdir /home/app/bin
+$ sudo chmod 755 /home/app/bin
+
+# We need to symlink only the tools the user needs to run the release
+# I listed them here: https://github.com/pdgonzalez872/dotfiles/blob/master/ln_for_app_user.sh
+# If you have the dotfiles repo locally, you can run `./ln_for_app_user.sh`. If not, do the below:
+$ sudo ln -s /usr/bin/whoami /home/app/bin/
+$ sudo ln -s /usr/bin/readlink /home/app/bin
+$ sudo ln -s /usr/bin/dirname /home/app/bin
+$ sudo ln -s /usr/bin/cut /home/app/bin
+$ sudo ln -s /usr/bin/sed /home/app/bin
+$ sudo ln -s /usr/bin/cat /home/app/bin
+$ sudo ln -s /usr/bin/grep /home/app/bin
+$ sudo ln -s /usr/bin/basename /home/app/bin
+
+# make it so `app` can't edit the file
+$ sudo chattr +i /home/app/.bashrc
+</pre>
+
+<p>
+  Security checkpoint: The app user shell is very limited, only has enough to
+  run the release.
+</p>
+
+<h3>
+  More security: let's lock some known users
+</h3>
+
+<p>
+  If an attacker gets shell access in our system, they could potentially
+  attempt to brute force other accounts  using `su postgres` for example. For
+  that reason, let's lock some of the users we dealt with in this article, so
+  there is no possible way of using password logins within the machine.
+</p>
+
+<p>
+  I chose to keep the admin_deploy user unlocked meaning you still need a
+  password to get in and if you know the password, it would let you in. Unlike
+  the locked option, where even with the correct passwod, it would not let you
+  in. Tradeoffs. I preferred to not have a passwordless sudo user in the
+  system.
+</p>
+
+<pre>
+$ sudo /usr/bin/passwd --lock app
+$ sudo /usr/bin/passwd --lock root
+$ sudo /usr/bin/passwd --lock postgres
+$ sudo /usr/bin/passwd --lock www-data
+</pre>
+
+<p>
+  Security checkpoint: One can't log into the accounts above. An attacker could
+  still attempt to brute force the admin_deploy user password if they get
+  access to a shell that is not restricted like the app user is. I don't know
+  how one would do this, but I'm not a hacker and there are pros out there.
+  Everything is possible. :)
+</p>
 
 <h2>
   Conclusion
@@ -776,7 +854,7 @@ lock admin_deploy
 
 <ul>
   <li>
-    Security and dealing with bots => The machine is safe, but it is exposed to
+    Security => The machine is safe, but it is exposed to
     the internet. Folks will continue to attempt exploits. We have CloudFlare
     to deter DDoS attacks, but I'm usually paranoid about these things. My
     customers' data is too important to chance it, regardless of how decent of
