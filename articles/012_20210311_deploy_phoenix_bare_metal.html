@@ -472,8 +472,16 @@ $ sudo systemctl enable fail2ban
   the ssh port.
 </p>
 
+<p>
+  After monitoring some of the incoming http requests, you see a pattern where
+  bots attempt known vulnerabilities in other technology (wordpress, php
+  websites) and keep issuing requests to our machine. Currently, we are good
+  ssh wise, but let's make it so we are good on the http side as well. At
+  least, better than we were before:
+</p>
+
 <pre>
-# Install it on the machine:
+# Add this to /etc/fail2ban/jail.local
 $ sudo apt install fail2ban
 
 </pre>
@@ -796,10 +804,6 @@ $ sudo chattr +i /home/app/.bashrc
 </p>
 
 <pre>
-#
-# Great ideas in this thread: https://stackoverflow.com/a/52251951/3163631
-#
-
 # Make user use restricted bash
 $ sudo chsh -s /bin/rbash app
 
