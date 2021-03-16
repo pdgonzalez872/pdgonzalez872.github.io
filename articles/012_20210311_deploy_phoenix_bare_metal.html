@@ -721,7 +721,7 @@ $ sudo tail -f /var/log/auth.log
 # Monitor Fail2ban logs
 $ sudo tail -f /var/log/fail2ban.log
 
-# IEx shell on the release:
+# IEx shell on the release, from the project's root:
 _build/prod/rel/pb/bin/pb remote
 
 # Run htop to see how the machine is doing
@@ -733,7 +733,8 @@ $ htop
   lot of bot activity probing the machine. This likely is a blog post in
   itself, where I show some of the most common attacks that one receives after
   putting a machine online. The types of attacks the bots attempt make me
-  wonder if folks even try to secure a machine.
+  wonder if folks even try to secure a machine. My new hobby is tailing the
+  fail2ban logs and watching bots get banned.
 </p>
 
 <h3>
@@ -744,6 +745,11 @@ $ htop
   We would use the `build_release.sh` script and copy over the release to the
   app user directory. Should be good enough for now.
 </p>
+
+<pre>
+$ A one liner would look something like this, from the project's root::
+sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/app/_build/
+</pre>
 
 <h3>
   More security: Restrict the app user so all it knows is how to run the
@@ -767,6 +773,7 @@ $ htop
 
 <pre>
 alias cd="printf 'not today \n'"
+alias exit="printf 'not today \n'"
 
 PATH=$HOME/bin
 export PATH
@@ -778,6 +785,9 @@ export PATH
 
 <pre>
 $ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
+
+# make it so `app` can't edit the file
+$ sudo chattr +i /home/app/.bashrc
 </pre>
 
 <p>
@@ -797,10 +807,17 @@ $ sudo chsh -s /bin/rbash app
 $ sudo mkdir /home/app/bin
 $ sudo chmod 755 /home/app/bin
 
-# We need to symlink only the tools the user needs to run the release
-# I listed them here: https://github.com/pdgonzalez872/dotfiles/blob/master/ln_for_app_user.sh
-# If you have the dotfiles repo locally, you can run `./ln_for_app_user.sh`. If not, do the below:
+# We need to symlink only the tools the user needs to run the release I
+# listed them here:
+# https://github.com/pdgonzalez872/dotfiles/blob/master/ln_for_app_user.sh
+# If you have the dotfiles repo locally, you can run `./ln_for_app_user.sh`.
+# If not, do the below:
+
+# We allow this to print the current user when running the release. Not needed
+# to run the release per say.
 $ sudo ln -s /usr/bin/whoami /home/app/bin/
+
+# These are needed to run the release:
 $ sudo ln -s /usr/bin/readlink /home/app/bin
 $ sudo ln -s /usr/bin/dirname /home/app/bin
 $ sudo ln -s /usr/bin/cut /home/app/bin
@@ -808,9 +825,6 @@ $ sudo ln -s /usr/bin/sed /home/app/bin
 $ sudo ln -s /usr/bin/cat /home/app/bin
 $ sudo ln -s /usr/bin/grep /home/app/bin
 $ sudo ln -s /usr/bin/basename /home/app/bin
-
-# make it so `app` can't edit the file
-$ sudo chattr +i /home/app/.bashrc
 </pre>
 
 <p>
