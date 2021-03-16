@@ -472,6 +472,17 @@ $ sudo systemctl enable fail2ban
   the ssh port.
 </p>
 
+<pre>
+# Install it on the machine:
+$ sudo apt install fail2ban
+
+</pre>
+
+<p>
+  Security checkpoint: Fail2ban will also refuse requests from malicious users
+  trying things with http requests.
+</p>
+
 <h3>
   Preparing the machine: Create a user that will be responsible for running the
   Phoenix application, without sudo privileges
@@ -620,9 +631,6 @@ $ sudo chmod +x build_release.sh
 # 3) Create script to run the server as the app user, `entrypoint.sh`
 $ sudo touch entrypoint.sh
 
-# make it executable
-$ sudo chmod +x entrypoint.sh
-
 # add this to the file. Make sure to replace `your_app_name` with... your app
 # name.
 
@@ -631,6 +639,9 @@ echo "Starting the Phoenix server as $(whoami)"
 cd ~
 _build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
 
+
+# make it executable
+$ sudo chmod +x entrypoint.sh
 
 # 4) Set up logs in the app user directory
 sudo mkdir /home/app/logs
