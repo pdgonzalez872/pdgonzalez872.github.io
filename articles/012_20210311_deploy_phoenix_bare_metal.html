@@ -459,7 +459,7 @@ sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 # attempt
 $ sudo vim /etc/fail2ban/jail.local
 
-# and change maxretry, from 5, to 1. Save and close the file.
+# and change maxretry in the Default section, from 5, to 1. Save and close the file.
 maxretry = 1
 
 # And finally, let's turn it on:
@@ -475,20 +475,129 @@ $ sudo systemctl enable fail2ban
 <p>
   After monitoring some of the incoming http requests, you see a pattern where
   bots attempt known vulnerabilities in other technology (wordpress, php
-  websites) and keep issuing requests to our machine. Currently, we are good
-  ssh wise, but let's make it so we are good on the http side as well. At
-  least, better than we were before:
+  websites) and keep issuing those bogus requests to our machine. Currently, we
+  are good ssh wise, but let's make it so we are good on the http side as well.
+  At least, better than we were before. Fail2ban comes with a pre-set "jail"
+  called `[nginx-http-auth]` to handle bad nginx login attempts. We will enable
+  the existing one and add a couple more specific jails and filters for these
+  jails.  We will use the strategies detailed here:
+  <a href="https://www.digitalocean.com/community/tutorials/how-to-protect-an-nginx-server-with-fail2ban-on-ubuntu-14-04">here</a>,
+  an excellent article by Digital Ocean.
 </p>
 
 <pre>
-# Add this to /etc/fail2ban/jail.local
-$ sudo apt install fail2ban
+# Open the file with an editor:
+$ sudo vim /etc/fail2ban/jail.local
 
+# Find the [nginx-http-auth] directive and set it to enabled:
+[nginx-http-auth]
+
+enabled  = true # add this
+filter   = nginx-http-auth
+port     = http,https
+logpath  = /var/log/nginx/error.log
+
+
+# Add an [nginx-noscript] jail:
+[nginx-noscript]
+
+enabled  = true
+port     = http,https
+filter   = nginx-noscript
+logpath  = /var/log/nginx/access.log
+maxretry = 2
+
+# Add an [nginx-badbots] jail:
+[nginx-noscript]
+
+enabled  = true
+port     = http,https
+filter   = nginx-badbots
+logpath  = /var/log/nginx/access.log
+maxretry = 2
+
+
+# Add an [nginx-nohome] jail:
+[nginx-nohome]
+
+enabled  = true
+port     = http,https
+filter   = nginx-nohome
+logpath  = /var/log/nginx/access.log
+maxretry = 2
+
+
+# Add an [nginx-noproxy] jail:
+[nginx-noproxy]
+
+enabled  = true
+port     = http,https
+filter   = nginx-noproxy
+logpath  = /var/log/nginx/access.log
+maxretry = 2
+</pre>
+
+<p>
+  Now we add the filters for these jails
+</p>
+
+<pre>
+# [nginx-http-auth] filter: Update the nginx-http-auth filter
+$ sudo vim /etc/fail2ban/filter.d/nginx-http-auth.conf
+
+# and add the second line to the failregex specification:
+failregex = ^ \[error\] \d+#\d+: \*\d+ user "\S+":? (password mismatch|was not found in ".*"), client: <HOST>, server: \S+, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"\s*$
+            ^ \[error\] \d+#\d+: \*\d+ no user/password was provided for basic authentication, client: <HOST>, server: \S+, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"\s*$
+
+
+# [nginx-badbots] filter: Reuse an existing bot filter file:
+$ sudo cp /etc/fail2ban/filter.d/apache-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
+
+# [nginx-noscript] filter: Create a noscript filter file:
+$ sudo touch /etc/fail2ban/filter.d/nginx-noscript.conf
+$ sudo vim /etc/fail2ban/filter.d/nginx-noscript.conf
+
+# and add:
+[Definition]
+
+failregex = ^<HOST> -.*GET.*(\.php|\.asp|\.exe|\.pl|\.cgi|\.scgi)
+
+ignoreregex =
+
+
+# [nginx-nohome] filter: Create a nohome filter file:
+$ sudo touch /etc/fail2ban/filter.d/nginx-nohome.conf
+$ sudo vim /etc/fail2ban/filter.d/nginx-nohome.conf
+
+# and add:
+[Definition]
+
+failregex = ^<HOST> -.*GET .*/~.*
+
+ignoreregex =
+
+
+# [nginx-noproxy] filter: Create filter for the noproxy jail
+$ sudo touch /etc/fail2ban/filter.d/nginx-noproxy.conf
+$ sudo vim /etc/fail2ban/filter.d/nginx-noproxy.conf
+
+# and add:
+[Definition]
+
+failregex = ^<HOST> -.*GET http.*
+
+ignoreregex =
+
+
+# And finally, restart the service:
+$ sudo systemctl restart fail2ban
+$ sudo systemctl enable fail2ban
 </pre>
 
 <p>
   Security checkpoint: Fail2ban will also refuse requests from malicious users
-  trying things with http requests.
+  trying sneaky things with http requests. Our fail2ban log will hopefully have
+  a lot of bans now.
 </p>
 
 <h3>
