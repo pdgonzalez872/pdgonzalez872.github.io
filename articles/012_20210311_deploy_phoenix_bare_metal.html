@@ -440,12 +440,16 @@ admin_deploy
 
 <p>
   I came across a good <a
-    href="https://linuxhandbook.com/fail2ban-basic">guide</a> on how to install
-  and configure Fail2ban on the machine. I subscribed to their newsletter,
-  let's hope it is good :). They give some details about
+                         href="https://linuxhandbook.com/fail2ban-basic">guide</a>
+  on how to install and configure Fail2ban on the machine. I subscribed to
+  their newsletter, let's hope it is good :). They give great details about
+  fail2ban, but the main parts are:
 </p>
 
 <pre>
+# Install it on the machine:
+$ sudo apt install fail2ban
+
 # Copy the default files to avoid issues when there are updates.
 sudo cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
 sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
