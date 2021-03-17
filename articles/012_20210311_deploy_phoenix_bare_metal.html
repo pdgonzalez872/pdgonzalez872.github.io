@@ -709,11 +709,8 @@ MIX_ENV=prod mix release
 # make it executable
 $ sudo chmod +x build_release.sh
 
-# 3) Create script to run the server as the app user, `entrypoint.sh`
-$ sudo touch entrypoint.sh
-
-# add this to the file. Make sure to replace `your_app_name` with... your app
-# name.
+# 3) Create script to run the server as the app user, `entrypoint.sh and `add
+this to the file. Make sure to replace `your_app_name` with... your app name.
 
 #!/bin/bash
 echo "Starting the Phoenix server as $(whoami)"
