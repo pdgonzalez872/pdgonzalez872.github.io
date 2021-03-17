@@ -491,77 +491,59 @@ $ sudo systemctl enable fail2ban
 # Open the file with an editor:
 $ sudo vim /etc/fail2ban/jail.local
 
-# Find the [nginx-http-auth] directive and set it to enabled:
+# Find the [nginx-http-auth] directive and set it to enabled, add the port and the logpath:
 [nginx-http-auth]
 
-enabled  = true # add this
+enabled  = true
 filter   = nginx-http-auth
 port     = http,https
 logpath  = /var/log/nginx/error.log
 
-
-# Add an [nginx-noscript] jail:
+# Add these other 4 directives:
 [nginx-noscript]
 
 enabled  = true
 port     = http,https
 filter   = nginx-noscript
 logpath  = /var/log/nginx/access.log
-maxretry = 2
+maxretry = 1
 
-# Add an [nginx-badbots] jail:
-[nginx-noscript]
+[nginx-badbots]
 
 enabled  = true
 port     = http,https
 filter   = nginx-badbots
 logpath  = /var/log/nginx/access.log
-maxretry = 2
+maxretry = 1
 
-
-# Add an [nginx-nohome] jail:
 [nginx-nohome]
 
 enabled  = true
 port     = http,https
 filter   = nginx-nohome
 logpath  = /var/log/nginx/access.log
-maxretry = 2
+maxretry = 1
 
-
-# Add an [nginx-noproxy] jail:
 [nginx-noproxy]
 
 enabled  = true
 port     = http,https
 filter   = nginx-noproxy
 logpath  = /var/log/nginx/access.log
-maxretry = 2
+maxretry = 1
 </pre>
 
 <p>
-  Now we add the filters for these jails
+  Now we add the filters for these jails. As I said before, I'm just moving
+  them from my dotfiles. Please inspect them before doing this.
 </p>
 
 <pre>
-# [nginx-http-auth] filter: Update the nginx-http-auth filter
-$ sudo vim /etc/fail2ban/filter.d/nginx-http-auth.conf
-
-# and add the second line to the failregex specification:
-failregex = ^ \[error\] \d+#\d+: \*\d+ user "\S+":? (password mismatch|was not found in ".*"), client: <HOST>, server: \S+, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"\s*$
-            ^ \[error\] \d+#\d+: \*\d+ no user/password was provided for basic authentication, client: <HOST>, server: \S+, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"\s*$
-
-
-# [nginx-badbots] filter: Copy an existing bot filter file:
+# Copy an existing bot filter file:
 $ sudo cp /etc/fail2ban/filter.d/apache-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
 
-########################
-
-CONTINUE HERE -> cp over files from dotfiles
-
-########################
-
 # Copy over the filters for each directive
+$ sudo cp dotfiles/fail2ban_nginx-http-auth.conf /etc/fail2ban/filter.d/nginx-http-auth.conf
 $ sudo cp dotfiles/fail2ban_nginx-noscript.conf /etc/fail2ban/filter.d/nginx-noscript.conf
 $ sudo cp dotfiles/fail2ban_nginx-nohome.conf /etc/fail2ban/filter.d/nginx-nohome.conf
 $ sudo cp dotfiles/fail2ban_nginx-noproxy.conf /etc/fail2ban/filter.d/nginx-noproxy.conf
@@ -571,6 +553,9 @@ $ sudo systemctl restart fail2ban
 
 # you can confirm the fail2ban status with:
 $ sudo systemctl status fail2ban
+
+# and confirm a specific fail2ban client:
+$ sudo fail2ban-client status nginx-nohome
 </pre>
 
 <p>
