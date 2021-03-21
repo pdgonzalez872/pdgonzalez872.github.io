@@ -451,8 +451,8 @@ admin_deploy
 $ sudo apt install fail2ban
 
 # Copy the default files to avoid issues when there are updates.
-sudo cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
-sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+$ sudo cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
+$ sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 
 # Let's edit the /etc/fail2ban/jail.local file so we can make the "maxretry"
 # variable smaller, meaning we immediately go for the ban if we have a bad ssh
