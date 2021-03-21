@@ -747,10 +747,10 @@ $ sudo chown app /home/app/logs/log.log
 #
 
 # Export env vars
-export $(cat .env | xargs)
+$ export $(cat .env | xargs)
 
 # Create the database. We will only do this one time, so we are doing it here:
-# MIX_ENV=prod mix ecto.create
+$ MIX_ENV=prod mix ecto.create
 
 # Build the release
 $ ./build_release.sh
