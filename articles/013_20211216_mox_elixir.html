@@ -1,0 +1,205 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2021-12-16 | Using Mox in unit tests
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+  Let's take a look at setting up <a href="https://github.com/dashbitco/mox">Mox</a>
+  to help defining contracts within an Elixir application. Below are simplified
+  `git diff`s from an example application I created to demonstrate Mox from
+  first principles. You can find the link to it below. Each of the diffs is a
+  commit in the repo.
+</p>
+
+<h3>
+  1) Add it as a dependency and run `mix deps.get`:
+</h3>
+
+<pre></code># mix.exs
+   defp deps do
+     [
++      {:mox, "~> 1.0", only: :test}
+     ]
+   end
+
+# mix.lock
++%{
++  "mox": {:hex, :mox, "1.0.1", "b651bf0113265cda0ba3a827fcb691f848b683c373b77e7d7439910a8d754d6e", [:mix], [], "hexpm", "35bc0dea5499d18db4ef7fe4360067a59b06c74376eb6ab3bd67e6295b133469"},
++}
+</code></pre>
+
+<h3>
+  2) Add behaviour, defining the contract:
+</h3>
+
+<pre></code># lib/weather_behaviour.ex
+defmodule WeatherBehaviour do
+  @callback get_weather(binary()) :: {:ok, map()} | {:error, binary()}
+end
+</code></pre>
+
+<h3>
+  3) Add implementation for the behaviour
+</h3>
+
+<pre></code># lib/weather_impl.ex
+defmodule WeatherImpl do
+  @moduledoc """
+  An implementation of a WeatherBehaviour
+  """
+
+  @behaviour WeatherBehaviour
+
+  @impl WeatherBehaviour
+  def get_weather(city) when is_binary(city) do
+    # Here you could call an external api directly with an HTTP, use a third
+    # party library that does that work for you. In this example we send a
+    # request using a `httpc` to get back some html, which we can process later.
+
+    :inets.start()
+    :ssl.start()
+
+    case :httpc.request(:get, {"https://www.google.com/search?q=weather+#{city}", []}, [], []) do
+      {:ok, {_, _, html_content}} -> {:ok, %{body: html_content}}
+      error -> {:error, "Error getting weather: #{inspect(error)}"}
+    end
+  end
+end
+```
+</code></pre>
+
+<h3>
+  4) Add a switch: This can pull from your config/config.exs, config/test.exs,
+  or, you can have no config as shown below and rely on a default. We also add a
+  function to a higher level abstraction that will call the correct
+  implementation:
+</h3>
+
+<pre></code># bound.ex, the main context we chose to call this function from
+defmodule Bound do
+  def get_weather(city) do
+    weather_impl().get_weather(city)
+  end
+
+  defp weather_impl() do
+    Application.get_env(:bound, :weather, WeatherImpl)
+  end
+end
+</code></pre>
+
+<h3>
+  5) Define the mock so it is used during tests:
+</h3>
+
+<pre></code># in test/test_helper.exs
++Mox.defmock(WeatherBehaviourMock, for: WeatherBehaviour)
++Application.put_env(:bound, :weather, WeatherBehaviourMock)
+ ExUnit.start()
+</code></pre>
+
+<h3>
+  6) Create a test and use `expect` so we can assert on the arguments that are
+  passed to the mock.
+</h3>
+
+<pre></code># test/bound_test.exs
+defmodule BoundTest do
+  use ExUnit.Case
+
+  import Mox
+
+  setup :verify_on_exit!
+
+  describe "get_weather/1" do
+    test "fetches weather based on a location" do
+      expect(WeatherBehaviourMock, :get_weather, fn args ->
+        # here we can assert on the arguments that get passed to the function
+        assert args == "Chicago"
+
+        # here we decide what the mock returns
+        {:ok, %{body: "Some html with weather data"}}
+      end)
+
+      assert {:ok, _} = Bound.get_weather("Chicago")
+    end
+  end
+end
+</code></pre>
+
+<p>
+  And there we go, we have implemented Mox in an Elixir project!
+</p>
+
+<p>
+  Mox helps setting clear boundaries and contracts not only with third party
+  apis/libraries/resources but also code from other teams or contexts in a
+  large application. It has been extremely useful in my career while working
+  with Elixir. I highly suggest using it above other alternatives.
+</p>
+
+<p>
+  Usually, we call to third party APIs (or anything that crosses a
+  boundary/contract) to get some data so we can then do something else with it.
+  In this simple example, we added a function to a higher level abstraction to
+  interact with the implementation. It's pretty silly, but it demonstrates how
+  Mox can verify the arguments that are passed to that function and assert that
+  the mock is called in the execution. Let's explore something that would
+  resemble a feature we would see in a production application:
+</p>
+
+<pre></code># Example A
+defmodule DailyUserEmail do
+  require Logger
+
+  def send_emails(users) do
+    Logger.info("Started to send daily emails")
+
+    result = Enum.reduce(users, %{success_count: 0, error_count: 0}, fn user ->
+      with {:ok, %{city: city}} <- Accounts.get_user_city(user),
+           {:ok, weather_details} <- weather_impl().get_weather(city),
+           {:ok, _} <- email_client_impl().send_email(%{user: user, template: :daily}) do
+        Logger.info("Successfully sent daily email to user_id #{user.id}")
+        %{acc | success_count: acc.success_count + 1}
+      else
+        error ->
+          Logger.error("Unable to send email to user_id #{user.id}, error: #{inspect(error)}")
+          %{acc | error_count: acc.error_count + 1}
+      end
+    end)
+
+    Logger.info("Finished sending daily emails, result: #{inspect(result)}")
+    result
+  end
+
+  defp weather_impl() do
+    Application.get_env(:bound, :weather, WeatherImpl)
+  end
+
+  defp email_client_impl() do
+    Application.get_env(:bound, :email, MailGunImpl)
+  end
+end
+</code></pre>
+
+<p>
+  Both the implementations above could be mocked in our unit tests.
+</p>
+
+<p>
+  Here is the code for the <a href="https://github.com/pdgonzalez872/bound/commits/main">example app</a> I created,
+  feel free to look at the <a href="https://github.com/pdgonzalez872/bound/commits/main">commits</a>.
+  Here is the <a href="https://elixirschool.com/en/lessons/libraries/mox">Mox documentation</a> and a
+  <a href="https://hexdocs.pm/mox/Mox.html">Mox lesson in Elixir School</a>.
+</p>
+
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
