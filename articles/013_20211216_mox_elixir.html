@@ -50,8 +50,8 @@ defmodule WeatherImpl do
 
   @impl WeatherBehaviour
   def get_weather(city) when is_binary(city) do
-    # Here you could call an external api directly with an HTTP, use a third
-    # party library that does that work for you. In this example we send a
+    # Here you could call an external api directly with an HTTP client or use
+    # a third party library that does that work for you. In this example we send a
     # request using a `httpc` to get back some html, which we can process later.
 
     :inets.start()
