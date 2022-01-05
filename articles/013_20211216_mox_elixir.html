@@ -155,7 +155,7 @@ defmodule DailyUserEmail do
     result = Enum.reduce(users, %{success_count: 0, error_count: 0}, fn user ->
       with {:ok, %{city: city}} <- Accounts.get_user_city(user),
            {:ok, weather_details} <- weather_impl().get_weather(city),
-           {:ok, _} <- email_client_impl().send_email(%{user: user, template: :daily}) do
+           {:ok, _} <- email_client_impl().send_email(%{user: user, template: :daily, weather_details: weather_details}) do
         Logger.info("Successfully sent daily email to user_id #{user.id}")
         %{acc | success_count: acc.success_count + 1}
       else
