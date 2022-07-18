@@ -20,24 +20,23 @@ Derive and Inspect in Elixir - using `@derive` [0]
 <pre><code>Erlang/OTP 24 [erts-12.2] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit]
 
 Interactive Elixir (1.13.4) - press Ctrl+C to exit (type h() ENTER for help)
-iex(1)> defmodule User do
-...(1)>   @derive {Inspect, except: [:ssn, :passport, :internal_id]}
-...(1)>   defstruct name: nil, ssn: nil, passport: nil, internal_id: nil
-...(1)> end
+iex(1)&lt; defmodule User do
+...(1)&lt;   @derive {Inspect, except: [:ssn, :passport, :internal_id]}
+...(1)&lt;   defstruct name: nil, ssn: nil, passport: nil, internal_id: nil
+...(1)&lt; end
 {:module, User,
- <<70, 79, 82, 49, 0, 0, 7, 8, 66, 69, 65, 77, 65, 116, 85, 56, 0, 0, 0, 194, 0,
+ &lt;&lt;70, 79, 82, 49, 0, 0, 7, 8, 66, 69, 65, 77, 65, 116, 85, 56, 0, 0, 0, 194, 0,
    0, 0, 19, 12, 69, 108, 105, 120, 105, 114, 46, 84, 121, 108, 101, 114, 8, 95,
-   95, 105, 110, 102, 111, 95, 95, 10, ...>>, #User<name: nil, ...>}
-iex(2)> tyler = %User{name: "tyler", ssn: 123455768, internal_id: 1}
-#User<name: "tyler", ...>
-iex(3)> IO.inspect(tyler)
-#User<name: "tyler", ...>
-#User<name: "tyler", ...>
-iex(4)> inspect tyler
-"#User<name: \"tyler\", ...>"
-iex(5)> tyler.ssn
+   95, 105, 110, 102, 111, 95, 95, 10, ...&gt;&gt;, #User&lt;name: nil, ...&gt;}
+iex(2)&lt; tyler = %User{name: "tyler", ssn: 123455768, internal_id: 1}
+#User&lt;name: "tyler", ...>
+iex(3)&lt; IO.inspect(tyler)
+#User&lt;name: "tyler", ...>
+#User&lt;name: "tyler", ...>
+iex(4)&lt; inspect tyler
+"#User&lt;name: \"tyler\", ...>"
+iex(5)&lt; tyler.ssn
 123455768
-iex(6)>
 </code></pre>
 
 <p>
