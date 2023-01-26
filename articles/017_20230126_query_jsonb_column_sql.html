@@ -1,0 +1,36 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2023-01-26 | Query JSONB column in Postgres
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+This was a Today I Learned (TIL) for me. Here is the syntax to query a JSONB column in Postgres:
+</p>
+
+<pre><code>
+
+Code example
+select id, worker, errors
+from oban_jobs
+where args ->> 'an_id' = 'c2d70b80-b4b2-4e96-b0ed-ca746a0fc631'
+order by inserted_at desc
+</code></pre>
+
+<h2>
+  Conclusion
+</h2>
+
+<p>
+So cool!
+</p>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
