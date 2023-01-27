@@ -11,8 +11,6 @@ This was a Today I Learned (TIL) for me. Here is the syntax to query a JSONB col
 </p>
 
 <pre><code>
-
-Code example
 select id, worker, errors
 from oban_jobs
 where args ->> 'an_id' = 'c2d70b80-b4b2-4e96-b0ed-ca746a0fc631'
