@@ -136,7 +136,13 @@ defmodule ChordProTest do
         """
         |> ChordProParser.call()
 
-      assert result == "Some [Bm]things in life are [G]bad\nThey can [C]really make you [Am]mad"
+      expected = """
+      Some [Bm]things in life are [G]bad
+      They can [C]really make you [Am]mad
+      """
+      |> String.trim()
+
+      assert result == expected
     end
 
     test "works as expected - 2 lines, easy case - eddi 1" do
@@ -147,7 +153,9 @@ defmodule ChordProTest do
         """
         |> ChordProParser.call()
 
-      assert result == "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+      expected = "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+
+      assert result == expected
     end
 
     test "works as expected - 2 lines, easy case - eddi 2" do
@@ -158,7 +166,9 @@ defmodule ChordProTest do
         """
         |> ChordProParser.call()
 
-      assert result == "[Cm]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+      expected = "[Cm]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+
+      assert result == expected
     end
 
     test "works as expected - example in https://www.chordpro.org/" do
@@ -179,16 +189,17 @@ defmodule ChordProTest do
 
       result = ChordProParser.call(input)
 
-      IO.puts("")
-      IO.puts("")
-      IO.puts(input)
-      IO.puts("")
-      IO.puts("")
-      IO.puts(result)
-      IO.puts("")
+      expected = """
+      Some [Bm]things in life are [G]bad
+      They can [C]really make you [Am]mad
+      Other [Dm]things just make you [G]swear and [C]curse
+      When you are [Dm]chewing on life's [G]gristle
+      Don't [C]grumble give a [Am]whistle
+      And [D7]this'll will make things turn out for the [G7]best
+      """
+      |> String.trim()
 
-      assert result ==
-                "Some [Bm]things in life are [G]bad\nThey can [C]really make you [Am]mad\nOther [Dm]things just make you [G]swear and [C]curse\nWhen you are [Dm]chewing on life's [G]gristle\nDon't [C]grumble give a [Am]whistle\nAnd [D7]this'll will make things turn out for the [G7]best"
+      assert result == expected
     end
 
     test "works as expected - eddy example" do
@@ -205,8 +216,15 @@ defmodule ChordProTest do
 
       result = ChordProParser.call(input)
 
-      assert result ==
-                "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie\n[G]Con más noches que la [Am]luna, [F]estaba todo[G] bien\n[C]Probaste for[G]tuna en [F]19[C]96\n[G]De Málaga hasta La C[Am]oruña, [F]durmiendo en la estació[G]n de tren"
+      expected = """
+      [C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie
+      [G]Con más noches que la [Am]luna, [F]estaba todo[G] bien
+      [C]Probaste for[G]tuna en [F]19[C]96
+      [G]De Málaga hasta La C[Am]oruña, [F]durmiendo en la estació[G]n de tren
+      """
+      |> String.trim()
+
+      assert result == expected
     end
   end
 
@@ -223,8 +241,7 @@ defmodule ChordProTest do
                 ChordProParser.clump_words("Some things in life are bad")
     end
   end
-end
-  
+end 
 </code></pre>
 
 <h2>
@@ -232,7 +249,7 @@ end
 </h2>
 
 <p>
-  None really :), just a fun exercise.
+  None really :), just a fun exercise. I added the code to a gist -> https://gist.github.com/pdgonzalez872/fca8876a3a59bea78a30b173dbaaee95
 </p>
 
 --------------
