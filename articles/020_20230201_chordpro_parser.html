@@ -1,0 +1,244 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2023-02-24 | ChordPro parser
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+  My brother asked me about a script that would convert chorded songs to the ChordPro(https://www.chordpro.org/) format. This seems to work.
+</p>
+
+<h3>
+  Standalone Elixir script (save it to a file and run it as `elixir file_name.exs`)
+</h3>
+
+<pre><code>
+ExUnit.start()
+
+defmodule ChordProTest do
+  use ExUnit.Case
+
+  defmodule ChordProParser do
+    @moduledoc """
+    Parses text from the normal chord format to the ChordPro format.
+
+    It takes an input like this:
+
+          Bm                 G
+    Some things in life are bad
+              C               Am
+    They can really make you mad
+          Dm                   G         C
+    Other things just make you swear and curse
+                  Dm                G
+    When you are chewing on life's gristle
+          C              Am
+    Don't grumble give a whistle
+        D7                                        G7
+    And this'll will make things turn out for the best
+
+
+    And converts it to:
+
+    Some [Bm]things in life are [G]bad
+    They can [C]really make you [Am]mad
+    Other [Dm]things just make you [G]swear and [C]curse
+    When you are [Dm]chewing on life's [G]gristle
+    Don't [C]grumble give a [Am]whistle
+    And [D7]this'll will make things turn out for the [G7]best
+
+    More info here: https://www.chordpro.org/
+    """
+
+    require Logger
+
+    @doc """
+    Entrypoint to the parser.
+    """
+    def call(input) when is_binary(input) do
+      input
+      |> String.split("\n", trim: true)
+      |> Enum.chunk_every(2)
+      |> Enum.map(fn [chords, lyrics] ->
+        clumped_chords = clump_words(chords)
+
+        lyrics
+        |> String.split("", trim: true)
+        |> Enum.with_index()
+        |> Enum.reduce(" ", fn {char, index}, acc ->
+          result = Map.get(clumped_chords, "#{index}")
+
+          if result do
+            acc <> "[#{result}]" <> char
+          else
+            acc <> char
+          end
+        end)
+      end)
+      |> Enum.map(fn el -> String.trim_leading(el) end)
+      |> Enum.join("\n")
+    end
+
+    @doc """
+    Helps with determining which column a chord should be inserted
+    """
+    def clump_words(chord_line) when is_binary(chord_line) do
+      with character_split <- String.split(chord_line, "", trim: true),
+            with_index <- Enum.with_index(character_split),
+            clumped <-
+              Enum.reduce(with_index, %{}, fn
+                {" ", _index}, acc ->
+                  acc
+
+                {char, 0 = index}, acc ->
+                  next_chars = get_next_char(Enum.drop(character_split, index + 1))
+                  Map.put(acc, "#{index}", char <> next_chars)
+
+                {char, index}, acc ->
+                  # don't process 6 if we have 5
+                  if Enum.at(character_split, index - 1) == " " do
+                    next_chars = get_next_char(Enum.drop(character_split, index + 1))
+                    Map.put(acc, "#{index}", char <> next_chars)
+                  else
+                    acc
+                  end
+              end) do
+        clumped
+      else
+        error ->
+          error |> IO.inspect(label: "Error\n\n")
+      end
+    end
+
+    defp get_next_char([]) do
+      ""
+    end
+
+    defp get_next_char([" " | _rest]) do
+      ""
+    end
+
+    defp get_next_char([char | rest]) do
+      char <> get_next_char(rest)
+    end
+  end
+
+  describe "call/1" do
+    test "works as expected - 2 lines, easy case" do
+      result =
+        """
+              Bm                 G
+        Some things in life are bad
+                  C               Am
+        They can really make you mad
+        """
+        |> ChordProParser.call()
+
+      assert result == "Some [Bm]things in life are [G]bad\nThey can [C]really make you [Am]mad"
+    end
+
+    test "works as expected - 2 lines, easy case - eddi 1" do
+      result =
+        """
+        C                 G       F           C
+        Más bonita que ninguna, ponía a la peña de pie
+        """
+        |> ChordProParser.call()
+
+      assert result == "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+    end
+
+    test "works as expected - 2 lines, easy case - eddi 2" do
+      result =
+        """
+        Cm                G       F           C
+        Más bonita que ninguna, ponía a la peña de pie
+        """
+        |> ChordProParser.call()
+
+      assert result == "[Cm]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+    end
+
+    test "works as expected - example in https://www.chordpro.org/" do
+      input = """
+            Bm                 G
+      Some things in life are bad
+                C               Am
+      They can really make you mad
+            Dm                   G         C
+      Other things just make you swear and curse
+                    Dm                G
+      When you are chewing on life's gristle
+            C              Am
+      Don't grumble give a whistle
+          D7                                        G7
+      And this'll will make things turn out for the best
+      """
+
+      result = ChordProParser.call(input)
+
+      IO.puts("")
+      IO.puts("")
+      IO.puts(input)
+      IO.puts("")
+      IO.puts("")
+      IO.puts(result)
+      IO.puts("")
+
+      assert result ==
+                "Some [Bm]things in life are [G]bad\nThey can [C]really make you [Am]mad\nOther [Dm]things just make you [G]swear and [C]curse\nWhen you are [Dm]chewing on life's [G]gristle\nDon't [C]grumble give a [Am]whistle\nAnd [D7]this'll will make things turn out for the [G7]best"
+    end
+
+    test "works as expected - eddy example" do
+      input = """
+      C                 G       F           C
+      Más bonita que ninguna, ponía a la peña de pie
+      G                     Am    F          G
+      Con más noches que la luna, estaba todo bien
+      C           G       F C
+      Probaste fortuna en 1996
+      G                   Am     F                      G
+      De Málaga hasta La Coruña, durmiendo en la estación de tren
+      """
+
+      result = ChordProParser.call(input)
+
+      assert result ==
+                "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie\n[G]Con más noches que la [Am]luna, [F]estaba todo[G] bien\n[C]Probaste for[G]tuna en [F]19[C]96\n[G]De Málaga hasta La C[Am]oruña, [F]durmiendo en la estació[G]n de tren"
+    end
+  end
+
+  describe "clump_words/1" do
+    test "can clump chord lines" do
+      assert %{"24" => "G", "5" => "Bm"} = ChordProParser.clump_words("     Bm                 G")
+
+      assert %{"25" => "G", "5" => "Bm7"} =
+                ChordProParser.clump_words("     Bm7                 G")
+
+      assert %{"19" => "Am", "3" => "C"} = ChordProParser.clump_words("   C               Am")
+
+      assert %{"12" => "in", "15" => "life", "20" => "are", "24" => "bad", "5" => "things"} =
+                ChordProParser.clump_words("Some things in life are bad")
+    end
+  end
+end
+  
+</code></pre>
+
+<h2>
+  Conclusion
+</h2>
+
+<p>
+  None really :), just a fun exercise.
+</p>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
