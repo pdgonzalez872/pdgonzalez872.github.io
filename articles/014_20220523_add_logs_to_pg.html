@@ -84,6 +84,14 @@ paulo@s76 ~ $ sudo tail -f /var/lib/postgresql/14/main/log/postgresql-2022-05-23
 2022-05-23 16:52:32.812 CDT,"postgres","postgres",293399,"127.0.0.1:39830",628c0213.47a17,1,"SELECT",2022-05-23 16:52:19 CDT,4/141,0,ERROR,42P01,"relation ""does_not_exist"" does not exist",,,,,,"select count(1) from does_not_exist;",22,,"psql","client backend",,0
 </code></pre>
 
+<p>
+  If you want to see ALL the logs, you can set the below to `all` and it will log all queries. Just don't do it in a prod server.
+</p>
+
+<pre></code>
+log_statement = all
+</code></pre>
+
 <h2>
   Conclusion -> Postgres rocks :)
 </h2>
