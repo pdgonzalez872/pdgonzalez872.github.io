@@ -1,0 +1,99 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2023-02-24 | Custom Cowboy Stream Handler for a Phoenix app
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+  Here is an example of how to write a custom cowboy stream handler.
+  This could be useful to debug/add additional loggin when your application does not behave the way you'd want.
+  Sometimes, things just get nuked and this is a way to get some type of warning/control when that happens.
+</p>
+
+<h3>
+  Custom Cowboy Stream Handler
+</h3>
+
+<pre><code>
+diff --git a/lib/your_app_web/endpoint.ex b/lib/your_app_web/endpoint.ex
+index 199ceaf..c7bd7b8 100644
+--- a/lib/your_app_web/endpoint.ex
++++ b/lib/your_app_web/endpoint.ex
+@@ -59,7 +59,22 @@ defmodule YourAppWeb.Endpoint do
+        config
+        |> Keyword.put(:secret_key_base, secret_key_base)
+        |> Keyword.merge(
+-        http: [port: port, protocol_options: [idle_timeout: 180_000]]
++        http: [
++          port: port,
++          protocol_options: [idle_timeout: 180_000],
++          # Here is more info on `stream_handlers`. We are using the
++          # `cowboy_telemetry_h`
++          # (https://github.com/beam-telemetry/cowboy_telemetry#usage) the
++          # default `cowboy_stream_h`
++          # (https://ninenines.eu/docs/en/cowboy/2.5/manual/cowboy_stream/) and
++          # our own for logging purposes (which delegates to `:cowboy_stream`
++          # on all calls)
++          stream_handlers: [
++            :cowboy_telemetry_h,
++            :cowboy_stream_h,
++            YourApp.StreamHandlers.YourAppStreamHandler
++          ]
++        ]
+        )
+        |> Keyword.merge(
+          url: [
+diff --git a/lib/your_app_web/stream_handlers/your_app_stream_handler.ex b/lib/your_app_web/stream_handlers/your_app_stream_handler.ex
+new file mode 100644
+index 0000000..3de7e62
+--- /dev/null
++++ b/lib/your_app_web/stream_handlers/your_app_stream_handler.ex
+@@ -0,0 +1,37 @@
++defmodule YourApp.StreamHandlers.YourAppStreamHandler do
++  @moduledoc """
++  Delegates to :cowboy_stream.
++
++  At the moment, used for adding logs and introspection to the app.
++  """
++
++  @behaviour :cowboy_stream
++
++  require Logger
++
++  @impl :cowboy_stream
++  def init(stream_id, req, opts) do
++    :cowboy_stream.init(stream_id, req, opts)
++  end
++
++  @impl :cowboy_stream
++  def data(stream_id, is_fin, data, state) do
++    :cowboy_stream.data(stream_id, is_fin, data, state)
++  end
++
++  @impl :cowboy_stream
++  def info(stream_id, info, state) do
++    :cowboy_stream.info(stream_id, info, state)
++  end
++
++  @impl :cowboy_stream
++  def terminate(stream_id, reason, state) do
++    Logger.info("#{__MODULE__} terminating connection, reason: #{inspect(reason)}")
++    :cowboy_stream.terminate(stream_id, reason, state)
++  end
++
++  @impl :cowboy_stream
++  def early_error(stream_id, reason, partial_req, resp, opts) do
++    :cowboy_stream.early_error(stream_id, reason, partial_req, resp, opts)
++  end
++end
+</code></pre>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
