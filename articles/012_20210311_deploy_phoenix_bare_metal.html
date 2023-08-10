@@ -6,6 +6,8 @@
 
 <h3> (Turn your phone sideways if you are on mobile) </h3>
 
+<h3> Update: Updated to Phoenix 1.7.7 (using esbuild and tailwind) </h3>
+
 <h3> Goals for this article: </h3>
 
 <p>
@@ -275,12 +277,6 @@ $ service ssh restart
   </li>
   <li>
     PostgreSQL
-  </li>
-  <li>
-    nodejs
-  </li>
-  <li>
-    npm
   </li>
 </ul>
 
@@ -654,7 +650,7 @@ $ mix archive.install hex phx_new 1.5.8
 $ mix deps.get
 
 # Prepare the assets to be served and create the correct config files.
-$ cd assets && npm install && node node_modules/webpack/bin/webpack.js --mode development && cd ..
+$ mix assets.setup && mix assets.build
 
 # Create a secret that Phoenix will use to sign and encrypt data
 # Copy the output when you get it.
@@ -689,6 +685,7 @@ Let's do the following:
 
 # 1) Create a `.env` file with the following:
 DATABASE_URL=ecto://postgres:postgres@localhost/database
+PHX_SERVER=true
 SECRET_KEY_BASE=the_secret_you_copied_above
 
 
@@ -696,13 +693,13 @@ SECRET_KEY_BASE=the_secret_you_copied_above
 
 #!/bin/bash
 echo "Building Phoenix release"
-git pull origin master
+git pull origin main
 export $(cat .env | xargs)
 mix deps.get --only prod
 MIX_ENV=prod mix ecto.migrate
 MIX_ENV=prod mix compile
-npm run deploy --prefix ./assets
-mix phx.digest
+MIX_ENV=prod mix assets.build
+MIX_ENV=prod mix assets.deploy
 MIX_ENV=prod mix release
 
 
@@ -751,6 +748,9 @@ $ export $(cat .env | xargs)
 
 # Create the database. We will only do this one time, so we are doing it here:
 $ MIX_ENV=prod mix ecto.create
+
+# Set up tailwind and esbuild
+$ mix assets.setup
 
 # Build the release
 $ ./build_release.sh
