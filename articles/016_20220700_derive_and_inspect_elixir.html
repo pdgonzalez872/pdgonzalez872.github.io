@@ -32,7 +32,6 @@ iex(2)&lt; tyler = %User{name: "tyler", ssn: 123455768, internal_id: 1}
 #User&lt;name: "tyler", ...>
 iex(3)&lt; IO.inspect(tyler)
 #User&lt;name: "tyler", ...>
-#User&lt;name: "tyler", ...>
 iex(4)&lt; inspect tyler
 "#User&lt;name: \"tyler\", ...>"
 iex(5)&lt; tyler.ssn
@@ -41,13 +40,13 @@ iex(5)&lt; tyler.ssn
 
 <p>
 Note how I went with the `except` approach rather than the `only`. If possible
-and I have a say I usually prefer this approach for this particular issue
-(logging). This is because I've approved a lot of code that tried to be too
-expose fields AFTER a bug had happened. It takes time to get that code to prod
-(many hotfixes too) and that was critical time that our customers were
-experiencing errors and our app was malfunctioning. It's also very error prone
-to expect that folks will remember to add their newly added field to the `only`
-key when they create one. `except` reduces surprises and that's a great thing!
+and I have a say I prefer this approach for this particular issue (logging).
+This is because I've approved a lot of code that tried to hide fields AFTER a
+bug had happened. It takes time to get that code to prod (many hotfixes too)
+and that was critical time that our customers were experiencing errors and our
+app was malfunctioning. It's also very error prone to expect that folks will
+remember to add their newly added field to the `only` key when they create one.
+`except` reduces surprises and that's a great thing!
 </p>
 
 <h2>
