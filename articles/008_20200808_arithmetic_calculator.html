@@ -49,6 +49,18 @@ I'll be of the solution. If you have any suggestions, please contact me.
 </p>
 
 <h3>
+Update - 2023/12/21 -> Thoughts on the implementation that follows:
+</h3>
+
+<p>
+A few years back, some folks in the community were experimenting with the idea of what we now call "tagged tuples".
+At the time, it was cool (like many things in life). However, I (and most of the community too) now see this pattern as a smell.
+It's a smell because it misses the chance to create an api that follows the ok/error tuple convention. The else clauses become massive, lines become long.
+The alternative is to extract functions that return ok/error tuples or modules if needed. A future exercise (for when life allows me)
+would be to refactor the code below to not use tagged tuples. With that said, it was a good v1 but it has unfortunately not aged well in my opinion.
+</p>
+
+<h3>
 Elixir Implementation of a stack based calculator:
 </h3>
 
