@@ -1,0 +1,110 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2024-01-07 | Custom Currency using `Money` (ElixirForum answer)
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+  This was answered on ElixirForum here <a href="https://elixirforum.com/t/how-can-i-customize-the-symbol-for-a-currency-in-the-money-package/60825/3">https://elixirforum.com/t/how-can-i-customize-the-symbol-for-a-currency-in-the-money-package/60825/3</a>
+</p>
+
+<h3>
+  Header
+</h3>
+
+<p>
+  Nice, that's a fair approach! I was curious and wanted to see what it would look like to use config like the docs suggest.
+</p>
+
+<p>
+  TLDR: create a custom currency since the display seems to be different <a href="https://github.com/elixirmoney/money/blob/master/lib/money/currency.ex#L49-L50">than the other BOL options</a>.
+</p>
+
+<p>
+  If you are past the TLDR, after creating a new mix project, this diff does the job:
+</p>
+
+<pre><code>
+commit 2c545bd7df55b4eff0ae889937a5640647736bd2
+Author: Paulo Daniel Gonzalez
+Date:   Sun Jan 7 13:31:48 2024 -0600
+
+    Solve https://elixirforum.com/t/how-can-i-customize-the-symbol-for-a-currency-in-the-money-package/60825
+
+diff --git a/config/config.exs b/config/config.exs
+new file mode 100644
+index 0000000..5df6358
+--- /dev/null
++++ b/config/config.exs
+@@ -0,0 +1,19 @@
++import Config
++
++config :money,
++  default_currency: :BOV2,
++  separator: ",",
++  delimiter: ".",
++  symbol: true,
++  symbol_on_right: false,
++  symbol_space: true,
++  fractional_unit: true,
++  strip_insignificant_zeros: false,
++  code: false,
++  minus_sign_first: true,
++  strip_insignificant_fractional_unit: false,
++  custom_currencies: [
++    BOV2: %{name: "BolivianoBs", symbol: "Bs.", exponent: 2}
++  ]
++
++import_config "#{config_env()}.exs"
+diff --git a/config/dev.exs b/config/dev.exs
+new file mode 100644
+index 0000000..e69de29
+diff --git a/config/test.exs b/config/test.exs
+new file mode 100644
+index 0000000..e69de29
+diff --git a/mix.exs b/mix.exs
+index 79efc4f..cffe122 100644
+--- a/mix.exs
++++ b/mix.exs
+@@ -21,6 +21,7 @@ defmodule MoneyForum.MixProject do
+    # Run "mix help deps" to learn about dependencies.
+    defp deps do
+      [
++      {:money, "~> 1.12"}
+        # {:dep_from_hexpm, "~> 0.3.0"},
+        # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      ]
+diff --git a/mix.lock b/mix.lock
+new file mode 100644
+index 0000000..a043fc3
+--- /dev/null
++++ b/mix.lock
+@@ -0,0 +1,3 @@
++%{
++  "money": {:hex, :money, "1.12.4", "9d9817aa79d1317871f6b006721c264bf1910fb28ba2af50746514f0d7e8ddbe", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}, {:ecto, "~> 1.0 or ~> 2.0 or ~> 3.0", [hex: :ecto, repo: "hexpm", optional: true]}, {:phoenix_html, "~> 2.0 or ~> 3.0 or ~> 4.0", [hex: :phoenix_html, repo: "hexpm", optional: true]}], "hexpm", "87e4bb907df1da184cb4640569d8df99ee6d88c84ce4f5da03cb2fab8d433eb9"},
++}
+diff --git a/test/money_forum_test.exs b/test/money_forum_test.exs
+index 5ab245a..e9d417b 100644
+--- a/test/money_forum_test.exs
++++ b/test/money_forum_test.exs
+@@ -3,6 +3,8 @@ defmodule MoneyForumTest do
+    doctest MoneyForum
+  
+    test "greets the world" do
+-    assert MoneyForum.hello() == :world
++    assert %Money{amount: 123_450, currency: :BOV2} = bol2 = Money.new(1_234_50, :BOV2)
++    assert "Bs." = Money.Currency.symbol(bol2)
++    assert "Bs. 1,234.50" = Money.to_string(bol2)
+    end
+  end
+</code></pre>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
