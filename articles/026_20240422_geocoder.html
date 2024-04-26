@@ -6,6 +6,11 @@
 
 <h3> (Turn your phone sideways if you are on mobile) </h3>
 
+<h3>
+  TLDR: Open Source Software is beautiful. What an amazing time to be alive and
+  work with software.
+</h3>
+
 <p>
   Addresses are a fascinating vertical. I've worked with addresses in the past
   in side projects, consulting projects and full time jobs. I learned thing or
@@ -15,21 +20,23 @@
 </p>
 
 <p>
-  Plotting a single point or a few points is straightforward.
-  You need a lat/lon value that generates a point, then, you use that point in a map.
-  One of the ways to do this is to use a geocoding api, send your address to it, pay
-  for usage, get the lat/lon back and call it a day. I've done this in the past and it's a legit way
-  to build things. In this side project, for science reasons, I wanted to see what it
-  would take to do get a lat/lon for a bunch of values, not just one. These api services have caps on them. Google Maps
-  gives you 100k requests a month, 500k if you ask (beg) them for it. There is another one that has tiers, one for 100k
-  ($10)
-  and one for 1mil ($50) a month. In this case, I
-  pretended I had a couple of million existing records that I wanted to backpopulate/hydrate
-  with lat/lon values. This blog explores an alternative to the api route: using
-  open source tools (Postgresql, Postgis[0]) and data (OpenStreetMaps) to solve the geocoding problem. In short, the
-  problem statement is: when given an address in the US, please give me the lat/lon values
-  for it. Now, do it for X addresses. It's a simple ask, for the non technical folks and a fairly
-  interesting problem for the technical ones. I'll explain some takeaways below.
+  Plotting a single point or a few points is straightforward.  You need a
+  lat/lon value that generates a point, then, you use that point in a map.  One
+  of the ways to do this is to use a geocoding api, send your address to it, pay
+  for usage, get the lat/lon back and call it a day. I've done this in the past
+  and it's a legit way to build things. In this side project, for science
+  reasons, I wanted to see what it would take to do get a lat/lon for a bunch of
+  values, not just one. These api services have caps on them. Google Maps gives
+  you 100k requests a month, 500k if you ask (beg) them for it. There is another
+  one that has tiers, one for 100k ($10/mo) and one for 1mil ($50/mo). In this
+  case, I pretended I had a couple of million existing records that I wanted to
+  backpopulate/hydrate with lat/lon values. This blog explores an alternative to
+  the api route: using open source tools (Postgresql, Postgis[0]) and data
+  (OpenStreetMaps) to solve the geocoding problem. In short, the problem
+  statement is: when given an address in the US, please give me the lat/lon
+  values for it. Now, do it for X addresses. It's a simple ask, for the non
+  technical folks and a fairly interesting problem for the technical ones. I'll
+  explain some takeaways below.
 </p>
 
 <p>
@@ -88,21 +95,22 @@ Time: 13359.711 ms (00:13.360)
 </p>
 
 <h4>
-  Load data for all 50 states
+  Loading data for all 50 states
 </h4>
 
 <p>
-  The one thing that Ryan's article and the Tiger + PostGis docs [4] didn't cover was how to get the data for all
-  of the US. I had to modify the command above to pass in a list of all the 50
-  states. Then, I had to do some `sed` work to replace the `PGPASSWORD` that
-  was hardcoded incorrectly and also the database (since I didn't pass it in
-  like Ryan did above). The errors were good and lead you to solutions though,
-  no complaints. Once I had that, I monitored the first couple of states, saw
-  the tables be created in the database and did some quick back of the napkin
-  math to see if my little machine[5] in the living room would have enough room
-  to fit all the data we were putting in. I decided to do it and went to bed, so
-  I don't know how long it took for everything to load. It was ready when I woke
-  up though. In the end, it was 136GB for all of the US.
+  The one thing Ryan's article and the Tiger + PostGis docs [4] didn't give
+  snipets for was how to get the data for all of the US in one go. I had to
+  modify the command above to pass in a list of all the 50 states. Then, I had
+  to do some `sed` work to replace the `PGPASSWORD` that was hardcoded
+  incorrectly and also the database (since I didn't pass it in like Ryan did
+  above). The errors were good and lead you to solutions though, no complaints.
+  Once I had that, I monitored the first couple of states, saw the tables be
+  created in the database and did some quick back of the napkin math to see if
+  my little machine[5] in the living room would have enough room to fit all the
+  data we were putting in. I decided to do it and went to bed, so I don't know
+  how long it took for everything to load.  It was ready when I woke up though.
+  In the end, it was 136GB for all of the US.
 </p>
 
 <pre><code># I had a one liner, but it was too long for this blog. I asked GPT for a multiline one:
@@ -171,11 +179,12 @@ sudo ./all_states_load.sh
 </h3>
 
 <h4>
-  Creating scripts leveraging pg
+  Creating scripts leveraging Postgres
 </h4>
 
 <p>
-  One cool thing I saw was how folks were able to build a table to create scripts: Here is part of the process:
+  One cool thing I saw was how folks were able to leverage a table in Postgres
+  to create text files (scripts) locally: Here is part of the process:
 </p>
 
 <code><pre>-- Source: https://github.com/postgis/postgis/blob/master/extras/tiger_geocoder/tiger_loader_2023.sql#L218-L240
@@ -345,6 +354,30 @@ chmod +x co_script_load.sh
   I'd love to benchmark this on a very powerful machine. That's for another time
   (maybe decade?) though.
 </p>
+
+<h3>
+  OpenStreetMaps db size and shape
+</h3>
+
+<p>
+  As I mentioned above, in the end of the process I had 136GB in the database,
+  at least, according to DBeaver. A friend asked me about the counts in some
+  tables, so I looked into it. The loading scripts organize the data into
+  different schemas (tiger, tiger_data, tiger_staging)  and then in different
+  tables for each state. It names them appropriately as well.
+</p>
+
+<p>
+  Let's isolate IL in this case. In the `tiger_data` schema, we have a few tables for IL:
+</p>
+
+<img src="../images/il_tiger_data_sizes.png" alt="jellyfish" style="max-width: 100%;max-height: 100%;">
+
+<p>
+  And here are some counts for IL:
+</p>
+
+<img src="../images/il_tiger_data_counts.png" alt="jellyfish" style="max-width: 100%;max-height: 100%;">
 
 <h3>
   Links / Resources:
