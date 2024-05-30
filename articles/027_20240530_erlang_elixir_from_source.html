@@ -1,0 +1,90 @@
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<h2>
+  2024-05-30 | How do I... build Erlang and Elixir from source and use it in a project?
+</h2>
+
+<h3> (Turn your phone sideways if you are on mobile) </h3>
+
+<p>
+  Sometimes we want to build things from source and use it in a project we
+  already have. `asdf` is excellent, but building from source has its merits as
+  well. It's good to verify release candidates, new features and potentially
+  identify issues if needed. I've asked myself the question above, so here is
+  the answer!
+</p>
+
+<h3>
+  Clone projects locally and get OS dependencies for build process
+</h3>
+
+<p>
+  What has worked for me in this case is to have both projects under a folder.
+  I usually call this folder `oss` (short for open source software).
+</p>
+
+<pre><code># on Mac:
+$ brew install autoconf wxmac wxwidgets libtool automake fop
+
+# on ubuntu:
+$ sudo apt-get install build-essential autoconf libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev
+</code></pre>
+
+<p>
+  Now, we build both languages locally:
+</p>
+
+<pre><code># Erlang
+# Per https://github.com/erlang/otp/blob/master/HOWTO/DEVELOPMENT.md:
+# from /otp recently cloned
+# inside your_path/oss
+$ git clone git@github.com:erlang/otp.git
+$ cd otp
+$ ./otp_build configure && make
+
+# Elixir
+# Per https://github.com/elixir-lang/elixir?tab=readme-ov-file#compiling-from-source
+# inside your_path/oss
+$ git clone git@github.com:elixir-lang/elixir.git
+$ cd elixir
+$ make clean && make
+</code></pre>
+
+<p>
+  Now, we configure paths so we choose which Erlang and Elixir to pick up. We
+  will set that up for a specific shell, you may update your dotfiles
+  accordingly so it's picked up in every new shell.
+</p>
+
+<pre><code># from a folder that has both otp and elixir repos under them, in my case, `oss`
+# set vars up
+oss $ export ERL_TOP=`pwd`/otp
+oss $ echo $ERL_TOP
+/Users/pg/dev/oss/otp
+oss $ export LOCAL_ELIXIR_PATH=`pwd`/elixir
+oss $ echo $LOCAL_ELIXIR_PATH
+/Users/pg/dev/oss/elixir
+
+# update PATH
+oss $ export PATH=$ERL_TOP/bin:$PATH
+oss $ export PATH=$LOCAL_ELIXIR_PATH/bin:$PATH
+
+# and verify!
+$ iex
+Erlang/OTP 28 [DEVELOPMENT] [erts-15.0] [source-cf8c426765] [64-bit] [smp:12:12] [ds:12:12:10] [async-threads:1]
+
+Interactive Elixir (1.18.0-dev) - press Ctrl+C to exit (type h() ENTER for help)
+iex(1)>
+</code></pre>
+
+<h2>
+  Now you can use whatever Erlang and Elixir versions you like!
+</h2>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
