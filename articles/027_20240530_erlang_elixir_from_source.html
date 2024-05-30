@@ -30,9 +30,9 @@ $ brew install autoconf wxmac wxwidgets libtool automake fop
 $ sudo apt-get install build-essential autoconf libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev
 </code></pre>
 
-<p>
-  Now, we build both languages locally:
-</p>
+<h3>
+  Build projects locally
+</h3>
 
 <pre><code># Erlang
 # Per https://github.com/erlang/otp/blob/master/HOWTO/DEVELOPMENT.md:
@@ -49,6 +49,10 @@ $ git clone git@github.com:elixir-lang/elixir.git
 $ cd elixir
 $ make clean && make
 </code></pre>
+
+<h3>
+  Update `PATH`
+</h3>
 
 <p>
   Now, we configure paths so we choose which Erlang and Elixir to pick up. We
@@ -77,9 +81,9 @@ Interactive Elixir (1.18.0-dev) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)>
 </code></pre>
 
-<h2>
+<h4>
   Now you can use whatever Erlang and Elixir versions you like!
-</h2>
+</h4>
 
 --------------
 
