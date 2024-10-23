@@ -1,5 +1,4 @@
 defmodule PgBlog.Blog do
-
   defmodule Parser do
     def parse(path, contents) do
       {:ok, doc} = Floki.parse_document(contents)
@@ -9,7 +8,7 @@ defmodule PgBlog.Blog do
         author: extract_text(doc, "#author"),
         description: extract_text(doc, "#description"),
         tags: extract_text(doc, "#tags") |> String.split(",", trim: true),
-        id: extract_text(doc, "#id"),
+        id: extract_text(doc, "#id")
       }
 
       {attrs, contents}
@@ -40,4 +39,3 @@ defmodule PgBlog.Blog do
   def all_posts, do: @posts
   def all_tags, do: @tags
 end
-

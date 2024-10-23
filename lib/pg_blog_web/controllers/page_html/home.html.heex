@@ -3,9 +3,9 @@
   <%= for post <- @posts do %>
     <li class="mb-2">
       <a href={"#{post.id}.html"}>
-      <%= post.title %>
-    </a>
-    <small class="text-gray-500"><%= post.date %></small>
+        <%= post.title %>
+      </a>
+      <small class="text-gray-500"><%= post.date %></small>
     </li>
   <% end %>
 </ul>

@@ -9,7 +9,8 @@ module.exports = {
   content: [
     "./js/**/*.js",
     "../lib/pg_blog_web.ex",
-    "../lib/pg_blog_web/**/*.*ex"
+    "../lib/pg_blog_web/**/*.*ex",
+    "../priv/posts/**/*.html",
   ],
   theme: {
     extend: {
