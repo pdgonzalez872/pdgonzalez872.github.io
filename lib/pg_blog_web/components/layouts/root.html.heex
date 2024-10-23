@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= assigns[:page_title] || "PG's Blog" %></title>
+    <link rel="stylesheet" href="assets/app.css" />
+  </head>
+  <body>
+    <main role="main" class="container mx-auto p-4">
+      <%= @inner_content %>
+    </main>
+  </body>
+</html>
