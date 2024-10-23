@@ -1,0 +1,11 @@
+<h1 class="text-3xl font-bold mb-4 bg-red-100">My Blog</h1>
+<ul>
+  <%= for post <- @posts do %>
+    <li class="mb-2">
+      <a href={"#{post.id}.html"}>
+      <%= post.title %>
+    </a>
+    <small class="text-gray-500"><%= post.date %></small>
+    </li>
+  <% end %>
+</ul>
