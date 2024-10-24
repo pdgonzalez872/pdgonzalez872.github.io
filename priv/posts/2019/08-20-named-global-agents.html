@@ -1,30 +1,25 @@
-<div id="id">named-global-agents</div>
-<div id="title">Named Global Agents</div>
-<div id="author">Paulo Gonzalez</div>
-<div id="tags">elixir,genservers,otp,global,programming</div>
-  <a href="https://pdgonzalez872.github.io">Home</a>
+<div hidden id="id">named-global-agents</div>
+<div hidden id="title">Named Global Agents</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir,genservers,otp,global,programming</div>
 
-  <h2>2019-08-20 | An example using named `global` Agents:</h2>
+<p class="mb-4">
+  You can create named <span class="bg-gray-200">Agents</span> that can be called from any connected node in a
+  cluster. This technique can be helpful when you have a cluster, don't
+  necessarily know which node will handle the work and you want to ensure
+  consistency between nodes by avoiding duplication between nodes. If you
+  don't, you can run into a situation where a you have multiple Agents with
+  different states in different nodes.
+</p>
 
-  <h3>(Turn your phone sideways if you are on mobile)</h3>
+<p>
+  If you ever choose to use this technique, consider using a Supervision tree
+  that tries to keep its state across nodes. If one of your Agents goes
+  down, you'd probably want to handle that somehow. There are libraries that
+  currently support this functionality. On to the example:
+</p>
 
-  <p>
-    You can create named Agents that can be called from any connected node in a
-    cluster. This technique can be helpful when you have a cluster, don't
-    necessarily know which node will handle the work and you want to ensure
-    consistency between nodes by avoiding duplication between nodes. If you
-    don't, you can run into a situation where a you have multiple Agents with
-    different states in different nodes.
-  </p>
-
-  <p>
-    If you ever choose to use this technique, consider using a Supervision tree
-    that tries to keep its state across nodes. If one of your Agents goes
-    down, you'd probably want to handle that somehow. There are libraries that
-    currently support this functionality. On to the example:
-  </p>
-
-  <pre><code>
+<pre class="text-xs"><code>
 Create two named `iex` instances in two separate terminal instances:
 
 # On terminal 1:
@@ -53,7 +48,7 @@ Agent.start_link(fn -> %{t1: true, t2: false} end, name: {:global, "choose a nam
 Agent.get({:global, "choose a name"}, & &1) #=> %{t1: true, t2: false}
 </code></pre>
 
-  <pre><code>
+<pre class="text-xs"><code>
 ## Visual
 
 |--------|    |--------|
@@ -67,13 +62,11 @@ Agent.get({:global, "choose a name"}, & &1) #=> %{t1: true, t2: false}
 - At1 -> `global` named Agent
 </code></pre>
 
-  <h2>Conclusion</h2>
-  <p>
-    `t2` can communicate with `At1` in a connected BEAM cluster
-  </p>
+<h2>Conclusion</h2>
+<p>
+  `t2` can communicate with `At1` in a connected BEAM cluster
+</p>
 
-  <p>
-    Thanks for reading, PDG
-  </p>
-
-  <a href="https://pdgonzalez872.github.io">Home</a>
+<p>
+  Thanks for reading!
+</p>
