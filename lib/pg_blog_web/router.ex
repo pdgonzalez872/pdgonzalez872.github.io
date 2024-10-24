@@ -8,7 +8,7 @@ defmodule PgBlogWeb.Router do
     plug :put_root_layout, html: {PgBlogWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :handle_app_css_link
+    plug PgBlogWeb.LinksPlug
   end
 
   pipeline :api do
@@ -42,15 +42,5 @@ defmodule PgBlogWeb.Router do
       live_dashboard "/dashboard", metrics: PgBlogWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
-  end
-
-  def handle_app_css_link(conn, _) do
-    app_css_link = if System.get_env("MIX_ENV") == "prod" do
-      "assets/app.css"
-    else
-      "/assets/app.css"
-    end
-
-    assign(conn, :app_css_link, app_css_link)
   end
 end

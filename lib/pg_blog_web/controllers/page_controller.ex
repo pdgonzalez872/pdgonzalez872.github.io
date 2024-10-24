@@ -6,10 +6,14 @@ defmodule PgBlogWeb.PageController do
 
     if System.get_env("MIX_ENV") == "prod" do
       all = Enum.map(all, fn p -> Map.put(p, :link, "#{p.id}.html") end)
-      render(conn, :home, posts: all, layout: false)
+
+      conn
+      |> render(:home, posts: all)
     else
       all = Enum.map(all, fn p -> Map.put(p, :link, "/posts/#{p.id}") end)
-      render(conn, :home, posts: all, layout: false)
+
+      conn
+      |> render(:home, posts: all)
     end
   end
 end

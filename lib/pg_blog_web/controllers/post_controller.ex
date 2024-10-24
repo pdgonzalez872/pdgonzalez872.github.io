@@ -6,7 +6,9 @@ defmodule PgBlogWeb.PostController do
     post = Enum.find(all, &(&1.id == id))
 
     if post do
-      render(conn, :show, post: post, layout: false)
+      conn
+      |> PgBlogWeb.LinksPlug.call([])
+      |> render(:show, post: post)
     else
       send_resp(conn, 404, "Not Found")
     end

@@ -25,5 +25,5 @@ end
 
 # Start the Bandit server
 {:ok, _} = Bandit.start_link(plug: SimpleServer, port: 4001)
-IO.puts("Server running at http://localhost:4000")
+IO.puts("Server running")
 Process.sleep(:infinity)
