@@ -16,6 +16,9 @@ Views here are my own.
 
 ```elixir
 elixir server.exs
+
+# or do both at the same time:
+./build.sh && elixir server.exs
 ```
 
 And visit `http://localhost:4001/index.html`
@@ -29,4 +32,5 @@ mix phx.server
 ## Using Github pages
 
 I have the repo configured to serve files from `/docs`, so that's where I put
-the files we generate.
+the files we generate. Run the build script every time before pushing and
+things should work :)
