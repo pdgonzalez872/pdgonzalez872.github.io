@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+  </head>
+
+  <body>
+    <nav class="w-full bg-gray-200 p-3 h-16">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl font-semibold text-gray-800 hover:text-white">
+          Blog
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl font-semibold text-gray-800 hover:text-white">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Named Global Agents</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-4">2019-08-20 | tags: elixir, genservers, otp, global, programming</p>
+
+<div class="prose">
+<div hidden id="id">named-global-agents</div>
+<div hidden id="title">Named Global Agents</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir,genservers,otp,global,programming</div>
+
+<p class="mb-4">
+  You can create named <span class="bg-gray-200">Agents</span> that can be called from any connected node in a
+  cluster. This technique can be helpful when you have a cluster, don't
+  necessarily know which node will handle the work and you want to ensure
+  consistency between nodes by avoiding duplication between nodes. If you
+  don't, you can run into a situation where a you have multiple Agents with
+  different states in different nodes.
+</p>
+
+<p>
+  If you ever choose to use this technique, consider using a Supervision tree
+  that tries to keep its state across nodes. If one of your Agents goes
+  down, you'd probably want to handle that somehow. There are libraries that
+  currently support this functionality. On to the example:
+</p>
+
+<pre class="text-xs"><code>
+Create two named `iex` instances in two separate terminal instances:
+
+# On terminal 1:
+iex --name t1@127.0.0.1
+
+# On terminal 2:
+iex --name t2@127.0.0.1
+
+# Connect instances together. From either t1 or t2, connect to the other
+# instance:
+
+# from t2
+Node.connect(:"t1@127.0.0.1") #=> true
+
+# Assert we are connected. Check from either instance:
+# from t2
+Node.list() #=> [:"t1@127.0.0.1"]
+
+# from t1
+Node.list() #=> [:"t2@127.0.0.1"]
+
+# Now, let's create an Agent from from `t1`:
+Agent.start_link(fn -> %{t1: true, t2: false} end, name: {:global, "choose a name"})
+
+# from `t2`
+Agent.get({:global, "choose a name"}, & &1) #=> %{t1: true, t2: false}
+</code></pre>
+
+<pre class="text-xs"><code>
+## Visual
+
+|--------|    |--------|
+|   t1   |----|   t2   |
+|--------|    |--------|
+|        |    |        |
+|   At1  |    |        |
+|        |    |        |
+|--------|    |--------|
+
+- At1 -> `global` named Agent
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">Conclusion</div>
+<p>
+  <span class="bg-gray-200">`t2`</span>
+  can communicate with <span class="bg-gray-200">`At1`</span>
+  in a connected BEAM cluster
+</p>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+
+</div>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>

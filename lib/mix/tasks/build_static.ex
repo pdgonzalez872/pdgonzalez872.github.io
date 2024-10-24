@@ -20,7 +20,7 @@ defmodule Mix.Tasks.BuildStatic do
 
   defp generate_page(path, filename, build_dir) do
     conn = build_conn(path)
-    content = conn.resp_body |> IO.inspect(label: "SHEEP")
+    content = conn.resp_body
     File.write!(Path.join(build_dir, filename), content)
     IO.puts("Generated #{filename}")
   end
@@ -42,7 +42,11 @@ defmodule Mix.Tasks.BuildStatic do
   end
 
   defp copy_assets(build_dir) do
-    # Copy contents of priv/static into build directory
+    # Instead of all assets, maybe just copy what we need, which isn't a lot.
+    # TODO: HERE
     File.cp_r!("priv/static/.", build_dir)
+
+    File.cp("priv/static/favicon.ico", Path.join([build_dir, "images", "favicon.ico"]))
+    |> IO.inspect(label: "cp")
   end
 end

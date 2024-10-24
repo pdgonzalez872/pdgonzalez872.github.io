@@ -1,6 +1,6 @@
 defmodule PgBlog.Blog do
   defmodule Parser do
-    def parse(path, contents) do
+    def parse(_path, contents) do
       {:ok, doc} = Floki.parse_document(contents)
 
       attrs = %{
