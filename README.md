@@ -1,8 +1,8 @@
 # PgBlog
 
-Even though this is a Phoenix app, this is not a Phoenix app. I only use it to
-generate html that works nicely with Tailwind so I could use Github Pages to
-host it.
+My turn to overengineer a blog. Even though this is a Phoenix app, this is not
+a Phoenix app. I only use it to generate html that works nicely with Tailwind
+so I could use Github Pages to host it.
 
 Views here are my own.
 
