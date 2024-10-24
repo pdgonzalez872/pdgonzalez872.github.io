@@ -1,18 +1,30 @@
 # PgBlog
 
-To start your Phoenix server:
+Even though this is a Phoenix app, this is not a Phoenix app. I only use it to
+generate html that works nicely with Tailwind so I could use Github Pages to
+host it.
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+Views here are my own.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Build
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+```sh
+./build.sh
+```
 
-## Learn more
+## dev server to test the /docs directory
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+```elixir
+elixir server.exs
+```
+
+## dev server while writing the posts
+
+```elixir
+mix phx.server
+```
+
+## Using Github pages
+
+I have the repo configured to serve files from `/docs`, so that's where I put
+the files we generate.

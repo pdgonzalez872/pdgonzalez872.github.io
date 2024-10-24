@@ -2,7 +2,7 @@
 <ul>
   <%= for post <- @posts do %>
     <li class="mb-2">
-      <a href={"#{post.id}.html"}>
+      <a href={post.link}>
         <%= post.title %>
       </a>
       <small class="text-gray-500"><%= post.date %></small>

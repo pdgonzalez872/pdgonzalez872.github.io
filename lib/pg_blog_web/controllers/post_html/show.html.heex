@@ -1,6 +1,13 @@
 <h1 class="text-3xl font-bold mb-2"><%= @post.title %></h1>
 <h1 class="text-3xl font-bold mb-2"><%= @post.author %></h1>
 <p class="text-gray-500 mb-4"><%= @post.date %></p>
+
+<div id="id"><%= @post.id %></div>
+<div id="title"><%= @post.id %></div>
+<div id="author"><%= @post.id %></div>
+<div id="tags"><%= @post.id %></div>
+<div id="description"><%= @post.id %></div>
+
 <div class="prose">
   <%= raw(@post.body) %>
 </div>
