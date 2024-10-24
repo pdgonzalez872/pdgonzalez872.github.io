@@ -18,6 +18,8 @@ Views here are my own.
 elixir server.exs
 ```
 
+And visit `http://localhost:4001/index.html`
+
 ## dev server while writing the posts
 
 ```elixir
