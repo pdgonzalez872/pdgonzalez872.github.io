@@ -1,7 +1,14 @@
 <h1 class="text-3xl font-bold mb-2"><%= @post.title %></h1>
 <h1 class="text font-bold mb-2">by <%= @post.author %></h1>
-<p class="text-gray-500 mb-4"><%= @post.date %> | tags: <%= Enum.join(@post.tags, " ") %></p>
+<p class="text-gray-500 mb-2">
+  <%= @post.date %> |
+  <%= for tag <- @post.tags do %>
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+      <%= tag %>
+    </span>
+  <% end %>
+</p>
 
-<div class="prose">
+<div class="prose mt-4">
   <%= raw(@post.body) %>
 </div>
