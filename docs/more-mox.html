@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">More on Mox (ElixirForum answer)</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2023-12-11 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ mox
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ testing
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ elixir-forum
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ answer
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>more-mox</div>
+<div hidden id=title>More on Mox (ElixirForum answer)</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, mox, testing, elixir-forum, answer</div>
+
+<p class="my-4">
+  This was answered on ElixirForum here <a
+    href="https://elixirforum.com/t/how-to-use-mox-to-define-tesla-mocks/60177/3"
+    class="text-blue-400"
+  target="_blank">https://elixirforum.com/t/how-to-use-mox-to-define-tesla-mocks/60177/2</a>
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  More on Mox (ElixirForum answer)
+</div>
+
+<p class="my-4">
+  Hi!
+
+  I'd like to answer this question by framing it differently: not how to
+  "mocking Tesla" but about how to define our Requests domain and create a
+  boundary around it.
+</p>
+
+<p class="my-4">
+  I like how you used the word abstraction, because that's exactly what we'll
+  address here.
+
+  In order to do so, I wanted to add some context I find extremely important
+    when discussing these topics. It's the three categories that code falls
+    under in <a href="https://www.manning.com/books/grokking-simplicity"
+      class="text-blue-400" target="_blank">Grokking Simplicity</a> This book
+    is such a fantastic resource by the way, I highly suggest getting a copy.
+    There, Eric Normand mentions the three categories functional programmers
+    group code:
+</p>
+
+<ul>
+  <li class="mb-2">- Actions</li>
+  <li class="mb-2">- Calculations</li>
+  <li class="mb-2">- Data</li>
+</ul>
+
+<p class="my-4">
+  This technique works with whatever Action you are dealing with. On page 10,
+  the author defines an Action as:
+</p>
+
+<q>
+  Anything that depends on when it is run, or how many times it is run, or
+  both, is an action. If I send an urgent email today, it's much different from
+  sending it next week. And of course, sending the same email 10 times is
+  different from sending it 0 times or 1 time.
+</q>
+
+<p class="my-4">
+  In my humble attempt (the book does a better job at this), I summarize them as:
+</p>
+
+<ul>
+  <li class="mb-2">- Actions - things that make stuff happen, you don't "own", potentially hard to test, could break in prod while all other tests pass</li>
+  <li class="mb-2">- Calculations - Input in, output out, always the same result. The more of these, the better.</li>
+  <li class="mb-2">- Data - what we operate on, the ingredients in all of this</li>
+</ul>
+
+<p class="my-4">
+HTTP requests fall in that Actions category. In the very least, if you send a
+request to an api and they are down shows that it is not a calculation. This is
+when you start to see an opportunity to create a boundary around this part of
+the code. If you dig a little deeper, you may see the abstraction and be able
+to create a "domain".
+</p>
+
+<p class="my-4">
+Actions give you hints about your domain and where to set your boundaries. In
+Elixir/Phoenix land, we have great tools to deal with these boundaries:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - behaviours
+  </li>
+  <li class="mb-2">
+    - implementations
+  </li>
+  <li class="mb-2">
+    <a href="https://hexdocs.pm/phoenix/contexts.html" class="text-blue-400"
+                                                       target="_blank">Phoenix
+                                                       Contexts (Contexts —
+                                                     Phoenix v1.7.10 1)</a>
+  </li>
+</ul>
+
+<p class="my-4">
+  Contexts are an excellent way to think about this. It's such a fantastic
+  approach. I don't think there is a mention of the word domain in the Phoenix
+  Contexts docs, but we should likely try to add it. Maybe it's done on purpose
+  to not get so academic about it and avoid bikeshedding. But I personally see
+  Contexts and "domains" as somewhat interchangeable here.
+</p>
+
+<p class="my-4">
+  Now, with all of this said, we can put everything together:
+</p>
+
+<ul>
+  <li class="mb-2">- Your domain is "HTTP requests" in this case</li>
+  <li class="mb-2">- Create a context module called Requests or HTTPRequests</li>
+  <li class="mb-2">- Create a behaviour: This is personal preference, but I prefer appending behaviour to Behaviour modules and also adding it to file names. I've found it to help folks navigate the code better, especially less senior folks. In this case: RequestsBehaviour</li>
+  <li class="mb-2">- Create an implementation (impl) that implements the behaviour: RequestsTeslaImpl/RequestsReqImpl (I like Req ❤️)</li>
+  <li class="mb-2">- The Requests module chooses which impl to pick (you can have multiple… this is what makes this important: you can switch them as you need.</li>
+  <li class="mb-2">- Set up Mox for that behaviour</li>
+  <li class="mb-2">- In your tests, you can enjoy Mox, add your expects as usual</li>
+</ul>
+
+<p class="my-4">
+  Let's walk through it:
+</p>
+
+<pre class="text-xs"><code>
+# The context
+# lib/my_app/requests.ex
+defmodule MyApp.Requests do
+  def get(args) do
+    impl().get(args)
+  end
+
+  # this is the switch that chooses which impl to use at runtime
+  defp impl do
+    Application.get_env(:my_app, :requests_impl)
+  end
+end
+
+# The behaviour
+# lib/my_app/requests/requests_behaviour.ex
+defmodule MyApp.Requests.RequestsBehaviour do
+  @callback get(map()) :: {:ok, map()} | {:error, map()}
+end
+
+# The implementation (impl)
+# lib/my_app/requests/requests_hackney_impl.ex
+defmodule MyApp.Requests.RequestsHackneyImpl do
+  @behaviour MyApp.RequestsBehaviour
+
+  @impl true
+  def get(args) do
+    args
+    |> :hackney.get()
+    # you can normalize the output here. Seems like it returns a tuple
+    # rather than an {:ok, map()}, which the others are all standard
+    |> case do
+      {:ok, _status, body} -> {:ok, %{body: body}}
+      error -> error
+    end
+  end
+end
+</code></pre>
+
+<p class="my-4">
+Then, you can set up Mox. The readme should get you going, but let's add the
+steps that leverage config here as well:
+</p>
+
+<pre class="text-xs"><code>
+# in test/test_helper.exs
+Mox.defmock(RequestsBehaviourMock, for: MyApp.RequestsBehaviour
+
+# config/config.exs
+config :my_app, :requests_impl, MyApp.Requests.RequestsHackneyImpl
+
+# config/test.exs
+config :my_app, :requests_impl, RequestsBehaviourMock
+</code></pre>
+
+<p class="my-4">
+Sorry I didn't address your problem at hand (dealing with the `Tesla.Mock`
+thing). It felt a little bit like an XY problem to me and a chance to address
+something I see often.
+</p>
+
+<p class="my-4">
+Another thing that I want to address is that the example above uses `hackney`.
+That's because I didn't write the above today, I wrote it to a friend of mine
+that asked me about this just last week. I think that once you approach the
+problem the way I mention above, things become much easier to solve. In your
+case, with Tesla, the `MyApp.Requests.RequestsHackneyImpl` would likely look
+like:
+</p>
+
+<pre class="text-xs"><code>
+# The implementation (impl)
+# lib/my_app/requests/requests_tesla_impl.ex
+defmodule MyApp.Requests.RequestsTeslaImpl do
+  @behaviour MyApp.RequestsBehaviour
+
+  @impl true
+  def get(args) do
+    Tesla.get(args)
+  end
+end
+</code></pre>
+
+<p class="my-4">
+  Side note: Once you have the set up with the behaviours and such, it should be straight forward to move to Req ❤️
+</p>
+
+<p class="my-4">
+  Side note 2: I also don't mean to diss/put down the current approach. I'm not
+  versed in that library, maybe others can chime in to help. It's a non-issue
+  when approaching the problem as above. I hope my answer is not seen this way.
+</p>
+
+<p class="my-4">
+Hope this helps!
+</p>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
