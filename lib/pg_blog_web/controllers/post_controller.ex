@@ -13,4 +13,10 @@ defmodule PgBlogWeb.PostController do
       send_resp(conn, 404, "Not Found")
     end
   end
+
+  def show_to_format(conn, _) do
+    conn
+    |> PgBlogWeb.LinksPlug.call([])
+    |> render(:to_format)
+  end
 end
