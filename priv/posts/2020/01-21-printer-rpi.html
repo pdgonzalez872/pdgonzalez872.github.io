@@ -1,0 +1,53 @@
+<div hidden id="id">printer-rpi</div>
+<div hidden id="title">Connecting a printer (Brother 2240) to a Raspberry Pi 4</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, devices, networking, printer</div>
+
+<p class="mb-4">
+  It is neat to be able to send things to the printer from any machine within the
+  network. Saves some steps, saves having to connect the printer USB to your
+  machine. A better reason is: great to learn a little bit more about the amazing
+  open source tools we have at our disposal.
+</p>
+
+<p class="mb-4">
+  <a href="https://pimylifeup.com/raspberry-pi-print-server" class="text-blue-400" target="_blank">
+    PiMyLifeUp
+  </a>
+  is a great resource. I've started following them on
+  Twitter and it has been great to see new articles.
+</p>
+
+<p class="mb-4">
+  I followed parts of the tutorial[0] on PiMyLifeUp. The model for the printer I
+  have (Brother 2240) didn't show up in the CUPS admin interface,
+  <a href="https://njh.eu/printer" class="text-blue-400" target="_blank">but you can get
+the PPF file from a source</a>, follow the instructions there and things should work.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Workflow
+</div>
+
+<pre class="text-xs"><code>## Copy from local (your machine) to remote (the pi), place it in `~` on the pi
+$ scp file_on_my_local_machine.pdf pi@192.168.0.42:.
+
+## Copy from remote to local (just to show how this would work)
+$ scp pi@192.168.0.42:/home/pi/dev/file_on_the_remote.txt new_file_name.txt
+pi@192.168.0.42's password: # I entered the password correctly
+
+## Once you moved the file to the pi, you can ssh into it and print it:
+
+## ssh into the pi and print
+$ ssh pi@192.168.0.42
+## it will ask you for your password. If you don't have a password, STOP
+## EVERYTHING and go set one. If you password is "raspberry" (the default), STOP
+## EVERYTHING and go change it.
+
+## Select the file and print
+$ pi@raspberry:~ $ lp article_on_the_remote.pdf
+</code></pre>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
