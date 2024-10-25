@@ -1,0 +1,94 @@
+<div hidden id=id>add-logs-to-pg</div>
+<div hidden id=title>Add logs to Postgres</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>postgres, logs, introspection</div>
+
+<p class="my-4">
+  Following up on the concept of introspection, I thought it would be
+  interesting to see Postgres' runtime logs. They are turned off by default (a
+  lot happens in Postgres :) ) but we can turn them on and it is beneficial to
+  see more info about what is going on under the hood. There was a good
+  <a
+    href="https://chartio.com/resources/tutorials/how-to-log-queries-in-postgresql/#verifying-log-generation" class="text-blue-400" target="_blank">article</a>
+  that showed the steps to set it up. Here are the steps I did to get the logs going:
+</p>
+
+<p class="my-4">
+In order to enable logs, we should figure out where the config file is located
+as well as where the logs will be output to.
+</p>
+
+<pre class="text-xs"><code># Get the location for the config file
+postgres=# show config_file;
+               config_file
+-----------------------------------------
+ /etc/postgresql/14/main/postgresql.conf
+(1 row)
+
+# Now, let's see where the data folder is located:
+postgres=# show data_directory;
+       data_directory
+-----------------------------
+ /var/lib/postgresql/14/main
+(1 row)
+</code></pre>
+
+<p class="my-4">
+  So let's open up the config file and make some changes:
+</p>
+
+<pre class="text-xs"><code># I made these changes:
+# sudo vim /etc/postgresql/14/main/postgresql.conf
+
+log_destination = 'csvlog'
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_min_messages = debug1
+</code></pre>
+
+<p class="my-4">
+  With these changes, we can restart the service and check some logs out:
+</p>
+
+<pre class="text-xs"><code>sudo service postgresql restart
+</code></pre>
+
+<p class="my-4">
+  Now, let's make a typo and force a log (ERROR):
+</p>
+
+<pre class="text-xs"><code>paulo@s76 ~ $ psql -h localhost -U postgres
+Password for user postgres:
+psql (14.2 (Ubuntu 14.2-1.pgdg20.04+1+b1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+postgres=# select count(1) from does_not_exist;
+ERROR:  relation "does_not_exist" does not exist
+LINE 1: select count(1) from does_not_exist;
+                             ^
+postgres=#
+</code></pre>
+
+<p class="my-4">
+  Here is the log!
+</p>
+
+<pre class="text-xs"><code>
+paulo@s76 ~ $ sudo tail -f /var/lib/postgresql/14/main/log/postgresql-2022-05-23_164455.csv | ag ERROR
+2022-05-23 16:52:32.812 CDT,"postgres","postgres",293399,"127.0.0.1:39830",628c0213.47a17,1,"SELECT",2022-05-23 16:52:19 CDT,4/141,0,ERROR,42P01,"relation ""does_not_exist"" does not exist",,,,,,"select count(1) from does_not_exist;",22,,"psql","client backend",,0
+</code></pre>
+
+<p class="my-4">
+  If you want to see ALL the logs, you can set the below to `all` and it will log all queries. Just don't do it in a prod server.
+</p>
+
+<pre class="text-xs"><code>
+log_statement = all
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Conclusion -> Postgres rocks :)
+</div>
