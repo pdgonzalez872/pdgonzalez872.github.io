@@ -1,0 +1,310 @@
+<div hidden id="id">nand-to-tetris-gates</div>
+<div hidden id="title">NandToTetris Project 1 and general thoughts about the book/course</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, nand-to-tetris, book, programming</div>
+
+<p>
+For this blog post I build on the introspection theme I've written about
+before. The intent here is to understand the abstrations that make computing
+possible.
+</p>
+
+<p>
+ We return to NandToTetris[0] once again, This is Project 1 in the course[1],
+ but in Elixir.
+</p>
+
+<h3>
+  Project 1 - Boolean Logic - Create logic gates used in a typical 16-bit machine
+</h3>
+
+<p>
+The Nand gate is the starting abstraction of the whole NandToTetris[0] project.
+We are supposed to create all the remaining gates (and abstractions that use
+gates) based on it. Below are all of the gates required for Project 1 [1] and
+their suggested order. I skipped the 16 bit examples for simplicity sake.
+</p>
+
+<ul>
+  <li> Nand </li>
+  <li> Not </li>
+  <li> And </li>
+  <li> Or </li>
+  <li> Xor </li>
+  <li> Mux </li>
+  <li> DMux </li>
+</ul>
+
+<p>
+I used nandgame.com[3] to help visualize the problems. Honestly, without
+the visual feedback I would not have been able to solve any of the problems
+above.
+
+I had to look up the Mux implementation[4]. Amazing solution. Once I understood
+what DMux meant, the solution was straight forward. But to understand it, I
+read material that basically said what the implementation would look like.
+</p>
+
+<pre></code>
+defmodule Nand2TetrisProject1Test do
+  use ExUnit.Case
+
+  defmodule Gates do
+    @moduledoc """
+    I'm naming the functions with `_gate` so they don't collide with functions
+    from `Kernel`.
+    """
+
+    @doc """
+    |   a   |   b   | nand(a, b) |
+    |   0   |   0   |     1      |
+    |   0   |   1   |     1      |
+    |   1   |   0   |     1      |
+    |   1   |   1   |     0      |
+    """
+    def nand_gate(0, 0), do: 1
+    def nand_gate(0, 1), do: 1
+    def nand_gate(1, 0), do: 1
+    def nand_gate(1, 1), do: 0
+
+    @doc """
+    |  in   |  out  |
+    |   0   |   1   |
+    |   1   |   0   |
+    """
+    def not_gate(a) do
+      nand_gate(a, a)
+    end
+
+    @doc """
+    |   a   |   b   |  and  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   0   |
+    |   1   |   0   |   0   |
+    |   1   |   1   |   1   |
+    """
+    def and_gate(a, b) do
+      a
+      |> nand_gate(b)
+      |> not_gate()
+    end
+
+    @doc """
+    |   a   |   b   |  out  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   1   |
+    |   1   |   0   |   1   |
+    |   1   |   1   |   1   |
+    """
+    def or_gate(a, b) do
+      not_a = not_gate(a)
+      not_b = not_gate(b)
+      nand_gate(not_a, not_b)
+    end
+
+    @doc """
+    |   a   |   b   |  out  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   1   |
+    |   1   |   0   |   1   |
+    |   1   |   1   |   0   |
+    """
+    def xor_gate(a, b) do
+      nand_output = nand_gate(a, b)
+      or_output = or_gate(a, b)
+
+      nand_output
+      |> nand_gate(or_output)
+      |> not_gate()
+    end
+
+    @doc """
+    |   a   |   b   |  sel  |  out  |
+    |   0   |   0   |   0   |   0   |
+    |   0   |   0   |   1   |   0   |
+    |   0   |   1   |   0   |   0   |
+    |   0   |   1   |   1   |   1   |
+    |   1   |   0   |   0   |   1   |
+    |   1   |   0   |   1   |   0   |
+    |   1   |   1   |   0   |   1   |
+    |   1   |   1   |   1   |   1   |
+    """
+    def mux_gate(a, b, sel) do
+      first_and = and_gate(not_gate(sel), a)
+      second_and = and_gate(sel, b)
+
+      or_gate(first_and, second_and)
+    end
+
+    @doc """
+    |  in   |  sel  |   a   |   b   |
+    |   0   |   0   |   0   |   0   |
+    |   0   |   1   |   0   |   0   |
+    |   1   |   0   |   1   |   0   |
+    |   1   |   1   |   0   |   1   |
+    """
+    def dmux_gate(input, sel) do
+      output_1 = and_gate(input, sel)
+      output_2 = and_gate(input, not_gate(sel))
+
+      # Unsure why the order here is as it is. Maybe a convention of some sort.
+      {output_2, output_1}
+    end
+  end
+
+  # Making the tests so they look like the truth tables, easier to follow.
+
+  test "Nand gate works as expected" do
+    assert Gates.nand_gate(0, 0) == 1
+    assert Gates.nand_gate(0, 1) == 1
+    assert Gates.nand_gate(1, 0) == 1
+    assert Gates.nand_gate(1, 1) == 0
+  end
+
+  test "Not gate works as expected" do
+    assert Gates.not_gate(0) == 1
+    assert Gates.not_gate(1) == 0
+  end
+
+  test "And gate works as expected" do
+    assert Gates.and_gate(0, 0) == 0
+    assert Gates.and_gate(0, 1) == 0
+    assert Gates.and_gate(1, 0) == 0
+    assert Gates.and_gate(1, 1) == 1
+  end
+
+  test "Or gate works as expected" do
+    assert Gates.or_gate(0, 0) == 0
+    assert Gates.or_gate(0, 1) == 1
+    assert Gates.or_gate(1, 0) == 1
+    assert Gates.or_gate(1, 1) == 1
+  end
+
+  test "Xor gate works as expected" do
+    assert Gates.xor_gate(0, 0) == 0
+    assert Gates.xor_gate(0, 1) == 1
+    assert Gates.xor_gate(1, 0) == 1
+    assert Gates.xor_gate(1, 1) == 0
+  end
+
+  test "Mux gate works as expected" do
+    assert Gates.mux_gate(0, 0, 0) == 0
+    assert Gates.mux_gate(0, 0, 1) == 0
+    assert Gates.mux_gate(0, 1, 0) == 0
+    assert Gates.mux_gate(0, 1, 1) == 1
+    assert Gates.mux_gate(1, 0, 0) == 1
+    assert Gates.mux_gate(1, 0, 1) == 0
+    assert Gates.mux_gate(1, 1, 0) == 1
+    assert Gates.mux_gate(1, 1, 1) == 1
+  end
+
+  test "DMux gate works as expected" do
+    assert Gates.dmux_gate(0, 0) == {0, 0}
+    assert Gates.dmux_gate(0, 1) == {0, 0}
+    assert Gates.dmux_gate(1, 0) == {1, 0}
+    assert Gates.dmux_gate(1, 1) == {0, 1}
+  end
+end
+</code></pre>
+
+<h2>
+  Conclusion
+</h2>
+
+<p>
+I'm so happy this book and course exist. I've had this book for a couple of
+years now and it doesn't seem like I can ever fully grasp its content. It feels
+like a bible, a reference book that I will continue to always refer back to and
+dig a little deeper.
+</p>
+
+<p>
+The videos (coursera course, can be found on youtube) are very important. They
+help close gaps. The book is concise, each sentence in the book is heavy and
+means a lot.
+</p>
+
+<p>
+As an example, I worked on a concept mentioned in the book. It was a side
+passage, just a paragraph noting that calculations could be done using stacks.
+It lieterally took me a couple of days (stack based calculator) to implement
+something that the book mentioned as trivial. The result was pretty neat[5] in
+my opinion.
+</p>
+
+<p>
+For the sake of time, I will continue to treat this book as a reference and
+something I will continue to come back to (as I've done multiple times already)
+in my career.
+</p>
+
+<p>
+The main technical idea (the crux) in the book is the concept of abstractions.
+There comes a point in pretty much everything in life where one must choose a
+layer of abstraction that works for their use cases. The book does a great job
+a giving abstractions to the student when they deem necessary. We don't
+implement Nand gates. We don't implement Flip Flop gates. Jack is a small
+language. The OS doesn't do everything that all OSes do. Implementations of the
+projects are not optimized. The authors of course are the first ones to let the
+students know. Choosing abstractions that add value is an art.
+</p>
+
+<p>
+This blissful ignorance of choosing an abstraction layer can be seen as both a
+feature or a bug. I think it is important to know the layers exist and even
+more important that they are non-trivial. A critical error here would be to
+think that a single individual (an arrogant, naive one) deems the layers as
+"simple" or "easy". They are not. So much work, so many geniuses worked on
+every single layer so we could get what we have today.
+</p>
+
+<p>
+The computer is my favorite invention of all time. Hands down.
+</p>
+
+<h3>
+Resources
+</h3>
+
+<ul>
+  <li> [0] Elements of Computing Systems website:
+    <a href="https://www.nand2tetris.org">https://www.nand2tetris.org/book</a></li>
+  <li> [1] NandToTetris Project 1:
+    <a href="www.nand2tetris.org/project01"</a>www.nand2tetris.org/project01</a></li>
+  <li> [3] Nandgame:
+    <a href="http://www.nandgame.com"</a>http://www.nandgame.com</a></li>
+  <li> [4] Creating Multiplexers Using Logic Gates:
+    <a href="http://improve.dk/creating-multiplexers-using-logic-gates"</a>http://improve.dk/creating-multiplexers-using-logic-gates</a></li>
+  <li> [5] Stack Arithmetic Calculator:
+    <a href="https://pdgonzalez872.github.io/articles/008_20200808_arithmetic_calculator.html"</a>https://pdgonzalez872.github.io/articles/008_20200808_arithmetic_calculator.html</a></li>
+  <li> CrashCourse - How Computers Calculate - the ALU: Crash Course Computer Science #5:
+    <a href="https://www.youtube.com/watch?v=1I5ZMmrOfnA"</a>https://www.youtube.com/watch?v=1I5ZMmrOfnA</a></li>
+  <li> In One Lesson - See How Computers Add Numbers In One Lesson:
+    <a href="https://www.youtube.com/watch?v=VBDoT8o4q00"</a>https://www.youtube.com/watch?v=VBDoT8o4q00</a></li>
+</ul>
+
+<h3>
+"How do I run this?"
+</h3>
+
+<p>
+If you'd like to run the above on your machine, I suggest the below. This time
+the instructions are shorter, since I've shared specifics on the Arithmetic
+Calculator post. Check it out if you need any more help, or, feel free to
+contact me.
+</p>
+
+<ul>
+  <li> Install Elixir on your machine </li>
+  <li> Create a Mix project </li>
+  <li> Create a file called `nand2tetris_test.exs` inside the `test` directory and copy and paste the code above inside it  </li>
+  <li> Run `mix test nand2tetris_test.exs` from the root of the mix project </li>
+</ul>
+
+--------------
+
+<p>
+Thanks for reading, PDG
+</p>
+
+<a href="https://pdgonzalez872.github.io">Home</a>
