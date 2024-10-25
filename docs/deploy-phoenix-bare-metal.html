@@ -187,7 +187,7 @@ elixir
   verify that password logins are disabled by running:
 </p>
 
-<pre>
+<pre class="text-xs">
 $ cat /etc/ssh/sshd_config | grep "PasswordAuthentication"
 PasswordAuthentication no
 # PasswordAuthentication.  Depending on your PAM configuration,
@@ -205,7 +205,7 @@ PasswordAuthentication no
   is a good enough one.
 </p>
 
-<pre>
+<pre class="text-xs">
 $ ufw allow ssh
 $ ufw allow http
 $ ufw allow https
@@ -216,7 +216,7 @@ $ ufw enable
   And you can verify things worked by running:
 </p>
 
-<pre>
+<pre class="text-xs">
 $ ufw status
 Status: active
 
@@ -250,7 +250,7 @@ To                         Action      From
   call this new user admin_deploy.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Think of a password and use it when running the below:
 $ adduser admin_deploy
 $ usermod -aG sudo admin_deploy
@@ -273,7 +273,7 @@ $ usermod -aG sudo admin_deploy
   the machine without connecting as root.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Change to the admin_deploy user:
 $ su admin_deploy
 
@@ -316,7 +316,7 @@ $ service ssh restart
   kill the one that let's you do anything on the machine (root SSH).
 </p>
 
-<pre>
+<pre class="text-xs">
 $ sudo vim /etc/ssh/sshd_config
 # Find this line:
 # PermitRootLogin yes
@@ -407,7 +407,7 @@ $ service ssh restart
   the config file to the appropriate location.
 </p>
 
-<pre>
+<pre class="text-xs">
 $ sudo rm /etc/nginx/sites-available/default
 $ sudo cp dotfiles/available-sites-example /etc/nginx/sites-available/default
 $ sudo cat /etc/nginx/sites-available/default
@@ -419,7 +419,7 @@ $ sudo nginx -s reload
   with the following:
 </p>
 
-<pre>
+<pre class="text-xs">
 server {
   listen 80;
   server_name phoenix 0.0.0.0;
@@ -458,7 +458,7 @@ server {
   user nginx will use when creating OS process by:
 </p>
 
-<pre>
+<pre class="text-xs">
 # Verify the default user, created by a default nginx install
 $ cat /etc/nginx/nginx.conf | ag "user " -Q
 user www-data;
@@ -468,7 +468,7 @@ user www-data;
   And verify it does not have sudo privileges:
 </p>
 
-<pre>
+<pre class="text-xs">
 $ sudo -l -U www-data
 User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 </pre>
@@ -499,7 +499,7 @@ User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   clear enough.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Let's change to the postgres user
 $ sudo su postgres
 
@@ -537,7 +537,7 @@ admin_deploy
   fail2ban, but the main parts are:
 </p>
 
-<pre>
+<pre class="text-xs">
 # Install it on the machine:
 $ sudo apt install fail2ban
 
@@ -581,7 +581,7 @@ $ sudo systemctl enable fail2ban
   directives below:
 </p>
 
-<pre>
+<pre class="text-xs">
 # Open the file with an editor:
 $ sudo vim /etc/fail2ban/jail.local
 
@@ -632,7 +632,7 @@ maxretry = 1
   them from my dotfiles. Please inspect them before doing this.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Copy an existing bot filter file:
 $ sudo cp /etc/fail2ban/filter.d/apache-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
 
@@ -669,7 +669,7 @@ $ sudo fail2ban-client status nginx-nohome
   Phoenix application later on.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Let's add the app user
 $ sudo adduser app
 # And set a password for the app user
@@ -741,7 +741,7 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   Let's run the following to prepare the project for the release:
 </p>
 
-<pre>
+<pre class="text-xs">
 # Install Phoenix
 $ mix archive.install hex phx_new 1.5.8
 
@@ -779,7 +779,7 @@ Let's do the following:
   </li>
 </ol>
 
-<pre>
+<pre class="text-xs">
 #
 # As admin_deploy, `cd` to the project's root directory
 #
@@ -842,7 +842,7 @@ $ sudo chown app /home/app/logs/log.log
   Preparing the deploy: Let's deploy!
 </div>
 
-<pre>
+<pre class="text-xs">
 #
 # As admin_deploy, `cd` to the project's root directory
 #
@@ -890,7 +890,7 @@ $ sudo -u app "./entrypoint.sh"
   things.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Monitor nginx traffic logs
 $ sudo tail -f /var/log/nginx/access.log
 
@@ -928,7 +928,7 @@ $ htop
   app user directory. Should be good enough for now.
 </p>
 
-<pre>
+<pre class="text-xs">
 $ A one liner would look something like this, from the project's root::
 sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/app/_build/
 </pre>
@@ -966,7 +966,7 @@ sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/
   `cp`. Here are the file contents for the `.bashrc`:
 </p>
 
-<pre>
+<pre class="text-xs">
 alias cd="printf 'not today \n'"
 alias exit="printf 'not today \n'"
 
@@ -978,7 +978,7 @@ export PATH
   If you cloned the dotfiles repository, do this:
 </p>
 
-<pre>
+<pre class="text-xs">
 $ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
 
 # make it so `app` can't edit the file
@@ -990,7 +990,7 @@ $ sudo chattr +i /home/app/.bashrc
   `.bashrc` file and therefore do very little.
 </p>
 
-<pre>
+<pre class="text-xs">
 # Make user use restricted bash
 $ sudo chsh -s /bin/rbash app
 
@@ -1042,7 +1042,7 @@ $ sudo ln -s /usr/bin/basename /home/app/bin
   system.
 </p>
 
-<pre>
+<pre class="text-xs">
 $ sudo /usr/bin/passwd --lock app
 $ sudo /usr/bin/passwd --lock root
 $ sudo /usr/bin/passwd --lock postgres
