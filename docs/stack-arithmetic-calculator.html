@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="w-full p-3 h-16">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Stack Arithmetic Calculator</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2020-08-08 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ stacks
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ data-structures
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ programming
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id="id">stack-arithmetic-calculator</div>
+<div hidden id="title">Stack Arithmetic Calculator</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, stacks, data-structures, programming</div>
+
+<p class="mb-4">
+I often operate at a very abstracted level in the computer, translating human
+thought to a high level programming language (Elixir) and creating applications
+that are then run by on top of the computer's operating system. My applications
+often interact with other applications, also running on top of the operating
+system. A good example here is Postgres, a database engine my applications use
+for persistence.
+</p>
+
+<p class="mb-4">
+I think it is important to always look inward to try to fill the gaps we all
+have in different aspects in our lives. I enjoy my job but realize there is
+more to computers than the things I get to do on a daily basis.
+</p>
+
+<p class="mb-4">
+A great book that outlines these ideas/gaps is "The Elements of Computing
+Systems"
+
+  <a href="https://www.nand2tetris.org/book" class="text-blue-400" target="_blank">
+    "The Elements of Computing Systems"
+  </a>
+
+, where the authors discuss a first principles of computing. Here is
+a great
+<a href="https://www.ted.com/talks/shimon_schocken_the_self_organizing_computer_course" class="text-blue-400" target="_blank">
+  TED Talk
+</a>
+about the book (and education as well).
+
+</p>
+
+<p class="mb-4">
+`The Elements of Computing Systems` mentions the concept of "Stack Arithmetic"
+in chapter 7 (on Virtual Machines). It mentions a very interesting observation:
+"any arithmetic and Boolen expression - no matter how complex - can be
+systematically converted into, and evaluated by, a sequence of simple
+operations on a stack".
+</p>
+
+<p class="mb-4">
+With that in mind, I thought it would be interesting to create a calculator
+that does just that: takes in a valid math expression (text) and uses stacks to
+do the calculation (without calling `eval` and friends).
+</p>
+
+<p class="mb-4">
+I'm sure there are better ways of approaching this problem, but this is my
+current MVP. It handles precedence, parentheses and returns the correct values
+for the test cases I have below. The more test cases I have, the more confident
+I'll be of the solution. If you have any suggestions, please contact me.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Update - 2023/12/21 -> Thoughts on the implementation that follows:
+</div>
+
+<p class="mb-4">
+A few years back, some folks in the community were experimenting with the idea
+of what we now call "tagged tuples".  At the time, it was cool (like many
+things in life). However, I (and most of the community too) now see this
+pattern as a smell.  It's a smell because it misses the chance to create an api
+that follows the ok/error tuple convention. The else clauses become massive,
+lines become long.  The alternative is to extract functions that return
+ok/error tuples or modules if needed. A future exercise (for when life allows
+me) would be to refactor the code below to not use tagged tuples. With that
+said, it was a good v1 but it has <span class="underline text-red-400">unfortunately not aged well in my opinion</span>.
+</p>
+
+<h3>
+Elixir Implementation of a stack based calculator:
+</h3>
+
+<pre class="text-xs"><code>
+ExUnit.start()
+
+defmodule VM  do
+  defmodule Calculator do
+    @moduledoc """
+    A stack based calculator.
+
+    Notes:
+    - I'm ommitting @spec, @doc for simplicity
+    - Instead of growing downwards like the usual examples, the stack "grows to
+      the left".
+    - Error handling can be more robust. At this time, we are just handling happy
+      paths and hoping people don't input things like "4+a/1"
+
+    Resources:
+    - "The Elements of Computer Systems"
+    - http://www2.lawrence.edu/fast/GREGGJ/CMSC150/071Calculator/Calculator.html
+    """
+
+    @supported_operands ["(", ")", "*", "/", "+", "-"]
+
+    def call(expression) when is_binary(expression) do
+      calculate([], [], String.split(expression, " ", trim: true))
+    end
+
+    defp calculate([final_value], [], []) do
+      final_value
+    end
+
+    defp calculate(
+           values,
+           [_ | _] = operands,
+           ["(" = h_expression | t_expression]
+         ) do
+      operands = increment_stack(operands, h_expression, :operand)
+      calculate(values, operands, t_expression)
+    end
+
+    defp calculate(
+           values,
+           [_ | _] = operands,
+           [")" | t_expression]
+         ) do
+      calculate(values, operands, t_expression)
+    end
+
+    defp calculate(values, operands, [last_token]) do
+      values = increment_stack(values, last_token, :value)
+      operands = increment_stack(operands, last_token, :operand)
+      [a, b | t_values] = values
+      [operand | t_operands] = operands
+      result = evaluate([a, b], operand)
+      calculate([result | t_values], t_operands, [])
+    end
+
+    defp calculate(
+           values,
+           operands,
+           [h_expression | t_expression] = expression
+         ) do
+      with {:has_two_values, [_a, _b | _]} <- {:has_two_values, values},
+           {:current_operand, [current_operand | _]} <- {:current_operand, operands},
+           {:next_token, [next_token | _]} <- {:next_token, expression},
+           {:next_token_is_operand, true} <- {:next_token_is_operand, is_operand(next_token)},
+           {:current_operand_is_parens, false} <-
+             {:current_operand_is_parens, current_operand == "(" or current_operand == ")"},
+           {:precedence, false} <-
+             {:precedence, precedence_value(next_token) > precedence_value(current_operand)} do
+        [a, b | t_values] = values
+        [operand | t_operands] = operands
+        result = evaluate([a, b], operand)
+        calculate([result | t_values], t_operands, expression)
+      else
+        _reason ->
+          values = increment_stack(values, h_expression, :value)
+          operands = increment_stack(operands, h_expression, :operand)
+          calculate(values, operands, t_expression)
+      end
+    end
+
+    defp calculate(
+           [_, _ | _] = values,
+           ["(" | t_operands],
+           [] = expression
+         ) do
+      calculate(values, t_operands, expression)
+    end
+
+    defp calculate(
+           [a, b | t_values],
+           [h_operands | t_operands],
+           [] = expression
+         ) do
+      result = evaluate([a, b], h_operands)
+      calculate([result | t_values], t_operands, expression)
+    end
+
+    # The order in the args here matters. Since this is a stack, the list
+    # "head" is actually the stack's last element.
+    defp evaluate([a, b], "+") do
+      b + a
+    end
+
+    defp evaluate([a, b], "-") do
+      b - a
+    end
+
+    defp evaluate([a, b], "*") do
+      b * a
+    end
+
+    defp evaluate([a, b], "/") do
+      b / a
+    end
+
+    defp increment_stack(stack, token, :value) do
+      if is_value(token) do
+        {int, _} = Integer.parse(token)
+        [int | stack]
+      else
+        stack
+      end
+    end
+
+    defp increment_stack(stack, token, :operand) do
+      if is_operand(token), do: [token | stack], else: stack
+    end
+
+    defp is_operand(token) when token in @supported_operands, do: true
+    defp is_operand(_), do: false
+
+    defp is_value(token), do: !is_operand(token)
+
+    defp precedence_value(operand) do
+      case operand do
+        "*" -> 2
+        "/" -> 2
+        "+" -> 1
+        "-" -> 1
+        e -> raise "not implemented yet #{inspect(e)}"
+      end
+    end
+  end
+
+  #
+  # Tests
+  #
+
+  use ExUnit.Case
+
+  describe "StackArithmetic" do
+    @tag :solved
+    test "calculates expressions, solved" do
+      assert 10 ==  Calculator.call("4 + 6")
+      assert 24 == Calculator.call("4 * 6")
+      assert 8 == Calculator.call("2 + 3 * 4 - 6")
+      assert 34 == Calculator.call("4 + 5 * 6")
+      assert 2 == Calculator.call("3 / 3 + 1")
+      assert 2 == Calculator.call("3 / 3 + 4 / 4")
+      assert 8 == Calculator.call("4 * ( 4 - 2 )")
+      assert 8 == Calculator.call("4 * ( 6 - 2 * ( 4 - 2 ) )")
+      assert 27 == Calculator.call("4 / 2 + 8 * 4 - ( 5 + 2 )")
+    end
+
+    @tag :in_progress
+    test "calculates expressions, in progress" do
+      # Add more expressions you'd like to try here, see the test fail and work
+      # on it until it passes! Then, move them above and keep going.
+      assert true
+    end
+  end
+end
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  How do I run the code above?
+</div>
+
+<p class="mb-4">
+If you'd like to run the above on your machine, I suggest the following:
+</p>
+
+<ul>
+  <li class="mb-2"> - Install Elixir on your machine</li>
+  <li class="mb-2"> - Copy and paste the code above to a file called `calculator_test.exs`</li>
+  <li class="mb-2"> - Run `elixir calculator_test.exs`</li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Resources
+</div>
+
+<ul>
+  <li class="mb-2">
+    <a
+      href=""https://www.nand2tetris.org/book""
+      class="text-blue-400"
+      target="_blank"
+    >
+      - Nand To Tetris Book
+    </a>
+  </li>
+
+  <li class="mb-2">
+    <a href="https://www.ted.com/talks/shimon_schocken_the_self_organizing_computer_course" class="text-blue-400" target="_blank">
+      - TED Talk about Nand To Tetris
+    </a>
+  </li>
+  <li class="mb-2">
+    <a href="https://www2.lawrence.edu/fast/GREGGJ/CMSC150/073Calculator/Calculator.html" class="text-blue-400" target="_blank">
+      - Joe Gregg's (Lawrence University) CMSC150's lecture notes about this problem
+    </a>
+  </li>
+</ul>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
