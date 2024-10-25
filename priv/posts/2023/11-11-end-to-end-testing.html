@@ -1,0 +1,80 @@
+<div hidden id=id>end-to-end-testing</div>
+<div hidden id=title>On end to end testing (ElixirForum answer)</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, testing, elixir-forum, answer</div>
+
+<p class="my-4">
+  This was answered on ElixirForum here <a href="https://elixirforum.com/t/http-client-e2e-testing/59998/11" class="text-blue-400" target="_blank">https://elixirforum.com/t/http-client-e2e-testing/59998/11</a>
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  On end to end testing (ElixirForum answer)
+</div>
+
+<p class="my-4">
+  Good question. Here are my 2c:
+
+  I've seen that VCR and the likes “feel” great but as folks here pointed out, they get outdated. It's a picture/snapshot in time saying that things may have worked given a certain set up you had. A green VCR test doesn't give me confidence, unfortunately. Much like a test that relies only on Mox/unit tests.
+</p>
+
+<p class="my-4">
+  Bypass works well, but I personally feel like the tests are too complex. That's just my preference, I'm a simple person 🙂 Even when the tests are done correctly, I don't have good confidence from a successful test run.
+</p>
+
+<p class="my-4">
+  I've seen projects that leverage their own http server and I personally dislike those. It's a layer of complexity that I haven't seen yield good returns in practice, but that may be biased to my experience (as all of the points in this answer by the way).
+</p>
+
+<p class="my-4">
+  What gives me the most confidence is having integration tests that exercise the live implementation and you need to load the correct keys and such, just like Dashbit discusses here <a href="https://dashbit.co/blog/mocks-and-explicit-contracts" class="text-blue-400" target="_blank">(https://dashbit.co/blog/mocks-and-explicit-contracts)</a>:
+</p>
+
+
+<ul>
+  <li class="mb-2">
+    - set boundaries in your code so you can leverage Mox (do what the readme says <a href="https://github.com/dashbitco/mox#basic-usage">https://github.com/dashbitco/mox#basic-usage</a>)
+  </li>
+  <li class="mb-2">
+    - create a test where you load real envs and the live impl is chosen.
+  </li>
+  <li class="mb-2">
+    - set things up so these are excluded from ci runs, as they are meant to be run locally with the correct env vars/keys. You can use `@moduletag` or multiple `@tags`. So, ci runs will just exercise the boundary and args (your Mox unit tests).
+  </li>
+  <li class="mb-2">
+    - every once in a while run those from your local machine. You can set up mix aliases to help here. Depending on the service/whatever you are testing maybe you pay for calls/only have a certain number. In certain projects, before merging a PR (after reviews, dev, etc), I'd run these locally to gain confidence.
+  </li>
+</ul>
+
+<p class="my-4">
+  This setup has given me (and a few teams) the most confidence when working with things we don't fully control (when we should use Mox). I've personally seen:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - the feedback loop be drastically decreased
+  </li>
+  <li class="mb-2">
+    - caught errors in docs → docs say something, service does something else. You can now prove it and not be seen as a maniac on your team, questioning your sanity.
+  </li>
+  <li class="mb-2">
+    - added documentation → since you can assert on results, this is very helpful to see outputs and help onboard folks into projects
+  </li>
+  <li class="mb-2">
+    - caught staging/prod discrepancies an api → Things worked in the tests, but cried in prod. Now you can repro and discuss, you have proof. It's a little surprise when it happens, but a lot of times these would happen and go undocumented/discussed. Once you can repro (by running the tests) you are playing a much better game imo :).
+  </li>
+</ul>
+
+<p class="my-4">
+  Downsides: Usually these tests hit test environments/sandboxes, which in turn
+  are NOT prod. Even though these have given me the most confidence, you can
+  still get little surprises in prod. As usual, make sure you have log and
+  metrics to give yourself a better shot of handling the surprises, because
+  they will come 🙂
+</p>
+
+<p class="my-4">
+  I've also seen a successful mix of Bypass and integration tests: <a href="https://github.com/HGInsights/avalanche/blob/main/test/integration_test.exs#L1" class="text-blue-400" target="_blank">https://github.com/HGInsights/avalanche/blob/main/test/integration_test.exs#L1</a>. Even though there is no switch there (there is no live impl for Avalanche) but we achieve the integration/live tests by not intercepting the request. It works well in this case.
+</p>
+<p class="my-4">
+  PS: Oh, I mention `integration` tests and I realized that this is an overloaded term. Much like a `mock` → in some contexts/communities means something to some people and others it's different. So maybe a better name for these tests would be `live unit tests`, but naming things is hard.
+</p>
