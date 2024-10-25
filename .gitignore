@@ -43,6 +43,9 @@ docs/favicon-*
 docs/assets/app-*
 docs/images/logo-*
 docs/assets/app.*.gz
+# any files that get digested
+priv/static/images/*-*.*
+docs/images/*-*.*
 
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log

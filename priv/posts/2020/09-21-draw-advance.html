@@ -1,0 +1,265 @@
+<div hidden id="id">draw-advance</div>
+<div hidden id="title">Advancing a player in a draw</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, tennis, trees, data-structures, programming</div>
+
+<p class="mb-4">
+  2020 has been interesting (to say the least) for a number of reasons. One of
+  them is the fact that Roland Garros (the only clay court Grand Slam in the
+  season) was moved from June to September. A usual clay court season is
+  comprised of multiple tournaments on clay so players can get rhythm and be at
+  the top of their game when it comes to RG. RG is the last of the clay court
+  tournaments (at least the highest level ones) in the season. So my favorite
+  tennis season is happenning as we speak! This is excellent.
+</p>
+
+<p class="mb-4">
+  Racket sports have been a big part of my life. Competing in these sports
+  has also played a big part in my life. I was never involved with managing
+  tournaments, only played them. You basically followed orders: got a time, a
+  court and went out to play your match.
+</p>
+
+<p class="mb-4">
+  Now that we were watching some tennis on tv, I wondered how things work under
+  the hood. Lots of interesting questions and fairly complex problems come up
+  when you are managing a tournament. Creating the draw, scheduling the matches,
+  managing the results and many more non-trivial issues. The issue I want to
+  discuss today is a fairly simple one: how to deal with the result of a match
+  and advance the winner to the correct position in the next round.
+</p>
+
+<p class="mb-2">
+  Imagine the following 4 player tournament:
+</p>
+
+<pre class="text-sm"></code>
+Semifinals
+|-----------------------|
+|         Paulo         |
+|-----------------------|---------
+|       Rafa Nadal      |        |         Finals
+|-----------------------|        |-----------------------|
+                                 |           ?           |
+                                 |-----------------------|
+                                 |           ?           |
+                                 |-----------------------|
+|-----------------------|        |
+|         Silvia        |        |
+|-----------------------|---------
+|     Roger Federer     |
+|-----------------------|
+</code></pre>
+
+<p class="my-4">
+  You get the following results:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - Paulo beats Rafa Nadal 6/7 7/6 7/6
+  </li>
+  <li class="mb-2">
+    - Silvia beats Roger Federer 6/2 6/0
+  </li>
+</ul>
+
+<p class="mb-4">
+  You then need to update the tournament draw to show the below:
+</p>
+
+<pre class="text-sm"></code>
+Semifinals
+|-----------------------|
+|         Paulo         |
+|-----------------------|---------
+|       Rafa Nadal      |        |         Finals
+|-----------------------|        |-----------------------|
+                                 |         Paulo         |
+                                 |-----------------------|
+                                 |         Silvia        |
+                                 |-----------------------|
+|-----------------------|        |
+|         Silvia        |        |
+|-----------------------|---------
+|     Roger Federer     |
+|-----------------------|
+</code></pre>
+
+<p class="mb-4">
+  The approach below seems to work for our use case and is a great example of how
+  important it is to frame a problem and play with the data.
+</p>
+
+
+<p class="mb-4">
+  As with every problem, it is imperative to try different approaches and how you
+  frame the problem means a lot. I've seen that the solution (and how fast you can
+  get to it) is directly correlated to how a problem is framed.
+</p>
+
+<p class="mb-4">
+  After talking to Kels and Kristen for a little bit, we arrived at the following:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - A round will have different matches
+  </li>
+  <li class="mb-2">
+    - A round also have positions, starting from the 1 going top to
+    bottom
+  </li>
+  <li class="mb-2">
+    - Each of the matches in the round should have a number, starting from 1 going
+    top to bottom
+  </li>
+  <li class="mb-2">
+    - A match will have two positions: top and bottom
+  </li>
+</ul>
+
+<pre class="text-sm"></code>
+# Data Structure
+
+                A
+    |-----------------------|
+    |  1       A1P1         |
+ A1 |-----------------------|---------
+    |  2       A1P2         |        |           B
+    |-----------------------|        |-----------------------|
+                                     |  1       B1P1         |
+                                  B1 |-----------------------|
+                                     |  2       B1P2         |
+                                     |-----------------------|
+    |-----------------------|        |
+    |  3        A2P1        |        |
+ A2 |-----------------------|---------
+    |  4        A2P2        |
+    |-----------------------|
+
+Legend:
+- A is a round
+- B is a round
+- A1 is a match in the A round
+- A2 is a match in the A round
+- A1P1 is the top position in the A2 match
+- And so on
+</code></pre>
+
+<p class="my-4">
+  In order to solve for "how to advance a player" we looked at an existing draw in
+  a tournament that is about to start this week in <a
+    href="https://www.atptour.com/en/scores/archive/hamburg/414/2020/draws"
+    class="text-blue-400"
+    target="_blank" >Hamburg</a>
+  applied the structure above and jotted own a few scenarios, as seen below:
+</p>
+
+<div class="overflow-x-auto">
+  <table class="table-fixed min-w-[480px] max-w-full border border-gray-300">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="w-1/5 p-2 border border-gray-300 text-left">Name</th>
+        <th class="w-1/5 p-2 border border-gray-300 text-left">Match Number</th>
+        <th class="w-1/5 p-2 border border-gray-300 text-left">Position Round</th>
+        <th class="w-1/5 p-2 border border-gray-300 text-left">Result Match Number</th>
+        <th class="w-1/5 p-2 border border-gray-300 text-left">Result Position Round</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="p-2 border border-gray-300">rudd</td>
+        <td class="p-2 border border-gray-300">3</td>
+        <td class="p-2 border border-gray-300">5</td>
+        <td class="p-2 border border-gray-300">2</td>
+        <td class="p-2 border border-gray-300">3</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">paire</td>
+        <td class="p-2 border border-gray-300">3</td>
+        <td class="p-2 border border-gray-300">6</td>
+        <td class="p-2 border border-gray-300">2</td>
+        <td class="p-2 border border-gray-300">3</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">monfils</td>
+        <td class="p-2 border border-gray-300">12</td>
+        <td class="p-2 border border-gray-300">24</td>
+        <td class="p-2 border border-gray-300">6</td>
+        <td class="p-2 border border-gray-300">12</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">hanfman</td>
+        <td class="p-2 border border-gray-300">12</td>
+        <td class="p-2 border border-gray-300">23</td>
+        <td class="p-2 border border-gray-300">6</td>
+        <td class="p-2 border border-gray-300">12</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">fritz</td>
+        <td class="p-2 border border-gray-300">15</td>
+        <td class="p-2 border border-gray-300">29</td>
+        <td class="p-2 border border-gray-300">8</td>
+        <td class="p-2 border border-gray-300">15</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">cuevas</td>
+        <td class="p-2 border border-gray-300">15</td>
+        <td class="p-2 border border-gray-300">30</td>
+        <td class="p-2 border border-gray-300">8</td>
+        <td class="p-2 border border-gray-300">15</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">sandgren</td>
+        <td class="p-2 border border-gray-300">8</td>
+        <td class="p-2 border border-gray-300">15</td>
+        <td class="p-2 border border-gray-300">4</td>
+        <td class="p-2 border border-gray-300">8</td>
+      </tr>
+      <tr>
+        <td class="p-2 border border-gray-300">rublev</td>
+        <td class="p-2 border border-gray-300">8</td>
+        <td class="p-2 border border-gray-300">16</td>
+        <td class="p-2 border border-gray-300">4</td>
+        <td class="p-2 border border-gray-300">8</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="mb-4">
+  Here is a screenshot of the draw:
+</p>
+
+<img src="/images/hamburg.png" alt="hamburg-draw"
+  class="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto my-4 rounded-lg shadow-md object-cover"/>
+
+<p class="my-4">
+  It was a lot easier to reason about things when I had the table above to look
+  at. To me, it was clear that the algorithm to advance a player to the correct
+  position is as follows:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - In order to get the next round's match number: If the match number
+    is even, divide by 2. If odd, add 1 and divide by 2. The result
+    is the match number in the next round.
+  </li>
+  <li class="mb-2">
+    - In order to get the next round's position: this will be the same as the
+    match number where the player came from.
+  </li>
+</ul>
+
+<p class="my-4">
+  If we look at Silvia's example above, she had position #3 and was playing
+  match #2 in the round. So, (match #2 is even) -> 2 / 2 -> 1. So she is playing
+  in next round's match #1. Since she came from match #2, her position in the
+  next round's match #1 will be #2.
+</p>
+
+<p class="mb-4">
+  Thanks for Kels and Kristen who helped me solve this after dinner!
+</p>
