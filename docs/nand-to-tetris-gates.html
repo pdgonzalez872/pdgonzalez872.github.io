@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="w-full p-3 h-16">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">NandToTetris Project 1 and general thoughts about the book/course</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2021-02-08 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ nand-to-tetris
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ book
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ programming
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id="id">nand-to-tetris-gates</div>
+<div hidden id="title">NandToTetris Project 1 and general thoughts about the book/course</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, nand-to-tetris, book, programming</div>
+
+<p class="my-4">
+For this blog post I build on the introspection theme I've written about
+before. The intent here is to understand the abstrations that make computing
+possible.
+</p>
+
+<p class="my-4">
+ We return to <a href="https://www.nand2tetris.org" class="text-blue-400" target="_blank"=>NandToTetris Book</a> once
+ again. This is <a href="www.nand2tetris.org/project01" class="text-blue-400" target="_blank"</a>Project 1 in the
+ course</a>, but in Elixir.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Project 1 - Boolean Logic - Create logic gates used in a typical 16-bit machine
+</div>
+
+<p class="my-4">
+The Nand gate is the starting abstraction of the whole <a
+  href="https://www.nand2tetris.org" class="text-blue-400"
+  target="_blank"=>NandToTetris project</a>.  We are supposed to create all the
+remaining gates (and abstractions that use gates) based on it. Below are all of
+the gates required for Project 1 and their suggested order. I skipped the 16
+bit examples for simplicity sake.
+</p>
+
+<ul>
+  <li>- Nand </li>
+  <li>- Not </li>
+  <li>- And </li>
+  <li>- Or </li>
+  <li>- Xor </li>
+  <li>- Mux </li>
+  <li>- DMux </li>
+</ul>
+
+<p class="my-4">
+I used <a href="http://www.nandgame.com" class="text-blue-400"
+target="_blank"</a>http://www.nandgame.com</a> to help visualize the
+problems. Honestly, without the visual feedback I would not have been able to
+solve any of the problems above.
+
+I had to look up the <a href="http://improve.dk/creating-multiplexers-using-logic-gates" class="text-blue-400"
+target="_blank"</a>Mux implementation</a>. Amazing solution. Once I understood
+what DMux meant, the solution was straight forward. But to understand it, I
+read material that basically said what the implementation would look like.
+</p>
+
+<pre class="text-xs"><code>
+defmodule Nand2TetrisProject1Test do
+  use ExUnit.Case
+
+  defmodule Gates do
+    @moduledoc """
+    I'm naming the functions with `_gate` so they don't collide with functions
+    from `Kernel`.
+    """
+
+    @doc """
+    |   a   |   b   | nand(a, b) |
+    |   0   |   0   |     1      |
+    |   0   |   1   |     1      |
+    |   1   |   0   |     1      |
+    |   1   |   1   |     0      |
+    """
+    def nand_gate(0, 0), do: 1
+    def nand_gate(0, 1), do: 1
+    def nand_gate(1, 0), do: 1
+    def nand_gate(1, 1), do: 0
+
+    @doc """
+    |  in   |  out  |
+    |   0   |   1   |
+    |   1   |   0   |
+    """
+    def not_gate(a) do
+      nand_gate(a, a)
+    end
+
+    @doc """
+    |   a   |   b   |  and  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   0   |
+    |   1   |   0   |   0   |
+    |   1   |   1   |   1   |
+    """
+    def and_gate(a, b) do
+      a
+      |> nand_gate(b)
+      |> not_gate()
+    end
+
+    @doc """
+    |   a   |   b   |  out  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   1   |
+    |   1   |   0   |   1   |
+    |   1   |   1   |   1   |
+    """
+    def or_gate(a, b) do
+      not_a = not_gate(a)
+      not_b = not_gate(b)
+      nand_gate(not_a, not_b)
+    end
+
+    @doc """
+    |   a   |   b   |  out  |
+    |   0   |   0   |   0   |
+    |   0   |   1   |   1   |
+    |   1   |   0   |   1   |
+    |   1   |   1   |   0   |
+    """
+    def xor_gate(a, b) do
+      nand_output = nand_gate(a, b)
+      or_output = or_gate(a, b)
+
+      nand_output
+      |> nand_gate(or_output)
+      |> not_gate()
+    end
+
+    @doc """
+    |   a   |   b   |  sel  |  out  |
+    |   0   |   0   |   0   |   0   |
+    |   0   |   0   |   1   |   0   |
+    |   0   |   1   |   0   |   0   |
+    |   0   |   1   |   1   |   1   |
+    |   1   |   0   |   0   |   1   |
+    |   1   |   0   |   1   |   0   |
+    |   1   |   1   |   0   |   1   |
+    |   1   |   1   |   1   |   1   |
+    """
+    def mux_gate(a, b, sel) do
+      first_and = and_gate(not_gate(sel), a)
+      second_and = and_gate(sel, b)
+
+      or_gate(first_and, second_and)
+    end
+
+    @doc """
+    |  in   |  sel  |   a   |   b   |
+    |   0   |   0   |   0   |   0   |
+    |   0   |   1   |   0   |   0   |
+    |   1   |   0   |   1   |   0   |
+    |   1   |   1   |   0   |   1   |
+    """
+    def dmux_gate(input, sel) do
+      output_1 = and_gate(input, sel)
+      output_2 = and_gate(input, not_gate(sel))
+
+      # Unsure why the order here is as it is. Maybe a convention of some sort.
+      {output_2, output_1}
+    end
+  end
+
+  # Making the tests so they look like the truth tables, easier to follow.
+
+  test "Nand gate works as expected" do
+    assert Gates.nand_gate(0, 0) == 1
+    assert Gates.nand_gate(0, 1) == 1
+    assert Gates.nand_gate(1, 0) == 1
+    assert Gates.nand_gate(1, 1) == 0
+  end
+
+  test "Not gate works as expected" do
+    assert Gates.not_gate(0) == 1
+    assert Gates.not_gate(1) == 0
+  end
+
+  test "And gate works as expected" do
+    assert Gates.and_gate(0, 0) == 0
+    assert Gates.and_gate(0, 1) == 0
+    assert Gates.and_gate(1, 0) == 0
+    assert Gates.and_gate(1, 1) == 1
+  end
+
+  test "Or gate works as expected" do
+    assert Gates.or_gate(0, 0) == 0
+    assert Gates.or_gate(0, 1) == 1
+    assert Gates.or_gate(1, 0) == 1
+    assert Gates.or_gate(1, 1) == 1
+  end
+
+  test "Xor gate works as expected" do
+    assert Gates.xor_gate(0, 0) == 0
+    assert Gates.xor_gate(0, 1) == 1
+    assert Gates.xor_gate(1, 0) == 1
+    assert Gates.xor_gate(1, 1) == 0
+  end
+
+  test "Mux gate works as expected" do
+    assert Gates.mux_gate(0, 0, 0) == 0
+    assert Gates.mux_gate(0, 0, 1) == 0
+    assert Gates.mux_gate(0, 1, 0) == 0
+    assert Gates.mux_gate(0, 1, 1) == 1
+    assert Gates.mux_gate(1, 0, 0) == 1
+    assert Gates.mux_gate(1, 0, 1) == 0
+    assert Gates.mux_gate(1, 1, 0) == 1
+    assert Gates.mux_gate(1, 1, 1) == 1
+  end
+
+  test "DMux gate works as expected" do
+    assert Gates.dmux_gate(0, 0) == {0, 0}
+    assert Gates.dmux_gate(0, 1) == {0, 0}
+    assert Gates.dmux_gate(1, 0) == {1, 0}
+    assert Gates.dmux_gate(1, 1) == {0, 1}
+  end
+end
+</code></pre>
+
+<h2>
+  Conclusion
+</h2>
+
+<p class="my-4">
+I'm so happy this book and course exist. I've had this book for a couple of
+years now and it doesn't seem like I can ever fully grasp its content. It feels
+like a bible, a reference book that I will continue to always refer back to and
+dig a little deeper.
+</p>
+
+<p class="my-4">
+The videos (coursera course, can be found on youtube) are very important. They
+help close gaps. The book is concise, each sentence in the book is heavy and
+means a lot.
+</p>
+
+<p class="my-4">
+As an example, I worked on a concept mentioned in the book. It was a side
+passage, just a paragraph noting that calculations could be done using stacks.
+  It took me a couple of days (stack based calculator) to implement something
+  that the book mentioned as trivial. The <a
+                                              href="https://pdgonzalez872.github.io/stack-arithmetic-calculator.html"
+                                              class="text-blue-400"
+                                              target="_blank"</a>result was
+                                          pretty neat</a> in my opinion.
+</p>
+
+<p class="my-4">
+For the sake of time, I will continue to treat this book as a reference and
+something I will continue to come back to (as I've done multiple times already)
+in my career.
+</p>
+
+<p class="my-4">
+The main technical idea (the crux) in the book is the concept of abstractions.
+There comes a point in pretty much everything in life where one must choose a
+layer of abstraction that works for their use cases. The book does a great job
+a giving abstractions to the student when they deem necessary. We don't
+implement Nand gates. We don't implement Flip Flop gates. Jack is a small
+language. The OS doesn't do everything that all OSes do. Implementations of the
+projects are not optimized. The authors of course are the first ones to let the
+students know. Choosing abstractions that add value is an art.
+</p>
+
+<p class="my-4">
+This blissful ignorance of choosing an abstraction layer can be seen as both a
+feature or a bug. I think it is important to know the layers exist and even
+more important that they are non-trivial. A critical error here would be to
+think that a single individual (an arrogant, naive one) deems the layers as
+"simple" or "easy". They are not. So much work, so many geniuses worked on
+every single layer so we could get what we have today.
+</p>
+
+<p class="my-4">
+The computer is my favorite invention of all time. Hands down.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+Resources
+</div>
+
+<ul>
+  <li> - CrashCourse - How Computers Calculate - the ALU: Crash Course Computer Science #5:
+    <a href="https://www.youtube.com/watch?v=1I5ZMmrOfnA" class="text-blue-400"
+target="_blank"</a>https://www.youtube.com/watch?v=1I5ZMmrOfnA</a></li>
+  <li> - In One Lesson - See How Computers Add Numbers In One Lesson:
+    <a href="https://www.youtube.com/watch?v=VBDoT8o4q00" class="text-blue-400"
+target="_blank"</a>https://www.youtube.com/watch?v=VBDoT8o4q00</a></li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+"How do I run this?"
+</div>
+
+<p class="my-4">
+If you'd like to run the above on your machine, I suggest the below. This time
+the instructions are shorter, since I've shared specifics on the Arithmetic
+Calculator post. Check it out if you need any more help, or, feel free to
+contact me.
+</p>
+
+<ul>
+  <li class="mb-2"> - Install Elixir on your machine </li>
+  <li class="mb-2"> - Create a Mix project </li>
+  <li class="mb-2"> - Create a file called `nand2tetris_test.exs` inside the `test` directory and copy and paste the code above inside it  </li>
+  <li class="mb-2"> - Run `mix test nand2tetris_test.exs` from the root of the mix project </li>
+</ul>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
