@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">ChordPro parser</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2023-02-01 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ parsers
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ manual-parser
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ chordpro
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ eddi
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>chordpro-parser</div>
+<div hidden id=title>ChordPro parser</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, parsers, manual-parser, chordpro, eddi</div>
+
+<p class="my-4">
+  My brother asked me about a script that would convert chorded songs to the
+  <a href="https://www.chordpro.org" class="text-blue-400" target="_blank">ChordPro</a> format. This seems to work.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Standalone Elixir script (save it to a file and run it as `elixir file_name.exs`)
+</div>
+
+<pre class="text-xs"><code>
+ExUnit.start()
+
+defmodule ChordProTest do
+  use ExUnit.Case
+
+  defmodule ChordProParser do
+    @moduledoc """
+    Parses text from the normal chord format to the ChordPro format.
+
+    It takes an input like this:
+
+          Bm                 G
+    Some things in life are bad
+              C               Am
+    They can really make you mad
+          Dm                   G         C
+    Other things just make you swear and curse
+                  Dm                G
+    When you are chewing on life's gristle
+          C              Am
+    Don't grumble give a whistle
+        D7                                        G7
+    And this'll will make things turn out for the best
+
+
+    And converts it to:
+
+    Some [Bm]things in life are [G]bad
+    They can [C]really make you [Am]mad
+    Other [Dm]things just make you [G]swear and [C]curse
+    When you are [Dm]chewing on life's [G]gristle
+    Don't [C]grumble give a [Am]whistle
+    And [D7]this'll will make things turn out for the [G7]best
+
+    More info here: https://www.chordpro.org/
+    """
+
+    require Logger
+
+    @doc """
+    Entrypoint to the parser.
+    """
+    def call(input) when is_binary(input) do
+      input
+      |> String.split("\n", trim: true)
+      |> Enum.chunk_every(2)
+      |> Enum.map(fn [chords, lyrics] ->
+        clumped_chords = clump_words(chords)
+
+        lyrics
+        |> String.split("", trim: true)
+        |> Enum.with_index()
+        |> Enum.reduce(" ", fn {char, index}, acc ->
+          result = Map.get(clumped_chords, "#{index}")
+
+          if result do
+            acc <> "[#{result}]" <> char
+          else
+            acc <> char
+          end
+        end)
+      end)
+      |> Enum.map(fn el -> String.trim_leading(el) end)
+      |> Enum.join("\n")
+    end
+
+    @doc """
+    Helps with determining which column a chord should be inserted
+    """
+    def clump_words(chord_line) when is_binary(chord_line) do
+      with character_split <- String.split(chord_line, "", trim: true),
+            with_index <- Enum.with_index(character_split),
+            clumped <-
+              Enum.reduce(with_index, %{}, fn
+                {" ", _index}, acc ->
+                  acc
+
+                {char, 0 = index}, acc ->
+                  next_chars = get_next_char(Enum.drop(character_split, index + 1))
+                  Map.put(acc, "#{index}", char <> next_chars)
+
+                {char, index}, acc ->
+                  # don't process 6 if we have 5
+                  if Enum.at(character_split, index - 1) == " " do
+                    next_chars = get_next_char(Enum.drop(character_split, index + 1))
+                    Map.put(acc, "#{index}", char <> next_chars)
+                  else
+                    acc
+                  end
+              end) do
+        clumped
+      else
+        error ->
+          error |> IO.inspect(label: "Error\n\n")
+      end
+    end
+
+    defp get_next_char([]) do
+      ""
+    end
+
+    defp get_next_char([" " | _rest]) do
+      ""
+    end
+
+    defp get_next_char([char | rest]) do
+      char <> get_next_char(rest)
+    end
+  end
+
+  describe "call/1" do
+    test "works as expected - 2 lines, easy case" do
+      result =
+        """
+              Bm                 G
+        Some things in life are bad
+                  C               Am
+        They can really make you mad
+        """
+        |> ChordProParser.call()
+
+      expected = """
+      Some [Bm]things in life are [G]bad
+      They can [C]really make you [Am]mad
+      """
+      |> String.trim()
+
+      assert result == expected
+    end
+
+    test "works as expected - 2 lines, easy case - eddi 1" do
+      result =
+        """
+        C                 G       F           C
+        Más bonita que ninguna, ponía a la peña de pie
+        """
+        |> ChordProParser.call()
+
+      expected = "[C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+
+      assert result == expected
+    end
+
+    test "works as expected - 2 lines, easy case - eddi 2" do
+      result =
+        """
+        Cm                G       F           C
+        Más bonita que ninguna, ponía a la peña de pie
+        """
+        |> ChordProParser.call()
+
+      expected = "[Cm]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie"
+
+      assert result == expected
+    end
+
+    test "works as expected - example in https://www.chordpro.org/" do
+      input = """
+            Bm                 G
+      Some things in life are bad
+                C               Am
+      They can really make you mad
+            Dm                   G         C
+      Other things just make you swear and curse
+                    Dm                G
+      When you are chewing on life's gristle
+            C              Am
+      Don't grumble give a whistle
+          D7                                        G7
+      And this'll will make things turn out for the best
+      """
+
+      result = ChordProParser.call(input)
+
+      expected = """
+      Some [Bm]things in life are [G]bad
+      They can [C]really make you [Am]mad
+      Other [Dm]things just make you [G]swear and [C]curse
+      When you are [Dm]chewing on life's [G]gristle
+      Don't [C]grumble give a [Am]whistle
+      And [D7]this'll will make things turn out for the [G7]best
+      """
+      |> String.trim()
+
+      assert result == expected
+    end
+
+    test "works as expected - eddy example" do
+      input = """
+      C                 G       F           C
+      Más bonita que ninguna, ponía a la peña de pie
+      G                     Am    F          G
+      Con más noches que la luna, estaba todo bien
+      C           G       F C
+      Probaste fortuna en 1996
+      G                   Am     F                      G
+      De Málaga hasta La Coruña, durmiendo en la estación de tren
+      """
+
+      result = ChordProParser.call(input)
+
+      expected = """
+      [C]Más bonita que nin[G]guna, po[F]nía a la peñ[C]a de pie
+      [G]Con más noches que la [Am]luna, [F]estaba todo[G] bien
+      [C]Probaste for[G]tuna en [F]19[C]96
+      [G]De Málaga hasta La C[Am]oruña, [F]durmiendo en la estació[G]n de tren
+      """
+      |> String.trim()
+
+      assert result == expected
+    end
+  end
+
+  describe "clump_words/1" do
+    test "can clump chord lines" do
+      assert %{"24" => "G", "5" => "Bm"} = ChordProParser.clump_words("     Bm                 G")
+
+      assert %{"25" => "G", "5" => "Bm7"} =
+                ChordProParser.clump_words("     Bm7                 G")
+
+      assert %{"19" => "Am", "3" => "C"} = ChordProParser.clump_words("   C               Am")
+
+      assert %{"12" => "in", "15" => "life", "20" => "are", "24" => "bad", "5" => "things"} =
+                ChordProParser.clump_words("Some things in life are bad")
+    end
+  end
+end 
+</code></pre>
+
+<p class="my-4">
+  Fun exercise. I added the code to a gist -> <a href="https://gist.github.com/pdgonzalez872/fca8876a3a59bea78a30b173dbaaee95" class="text-blue-400" target="_blank">https://gist.github.com/pdgonzalez872/fca8876a3a59bea78a30b173dbaaee95</a>
+</p>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
