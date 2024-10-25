@@ -3,9 +3,11 @@
 <div hidden id="author">Paulo Gonzalez</div>
 <div hidden id="tags">elixir, phoenix, devops, linux, ubuntu, security, deployment</div>
 
-<div class="text-2xl font-bold mt-6 mb-6"> Update: Updated to Phoenix 1.7.7 (using esbuild and tailwind) </div>
+<div class="text-2xl font-bold mt-6 mb-6">
+  Update: Updated to Phoenix 1.7.7 (using esbuild and tailwind)
+</div>
 
-<div class="text-2xl font-bold mt-6 mb-6"> Goals for this article: </div>
+<div class="text-2xl font-bold mt-6 mb-6">Goals for this article:</div>
 
 <p class="my-4">
   The goal here is: deploy a an existing Phoenix application to a remote server
@@ -35,7 +37,7 @@
   me and I'll respond ASAP.
 </p>
 
-<div class="text-2xl font-bold mt-6 mb-6"> Why write this?: </div>
+<div class="text-2xl font-bold mt-6 mb-6">Why write this?:</div>
 
 <p class="my-4">
   I'm interested in improving my craft and learning things from first
@@ -43,7 +45,9 @@
   to learn more about something. That's why.
 </p>
 
-<div class="text-2xl font-bold mt-6 mb-6"> But... there are better options and solutions to this problem!</div>
+<div class="text-2xl font-bold mt-6 mb-6">
+  But... there are better options and solutions to this problem!
+</div>
 
 <p class="my-4">
   Yes, this can be cut down considerably by leveraging other technologies
@@ -53,7 +57,7 @@
 </p>
 
 <div class="text-2xl font-bold mt-6 mb-6">
-  ## So, let's get started! ###
+  So, let's get started!
 </div>
 
 <div class="text-2xl font-bold mt-6 mb-6">
@@ -61,7 +65,9 @@
 </div>
 
 <p class="my-4">
-  Head over to <a href="https://www.namecheap.com">Namecheap</a> (no
+  Head over to
+  <a href="https://www.namecheap.com" class="text-blue-400" target="_blank">Namecheap</a>
+  (no
   affiliation, just what I have used in the past) and buy a cheap domain.
 </p>
 
@@ -71,10 +77,19 @@
 </div>
 
 <p class="my-4">
-  Now that we have a domain name, go to
-  <a href="https://www.cloudflare.com">CloudFlare</a>,
-  and follow the instructions in this <a
-    href="https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account">article</a>
+  Now that we have a domain name, go to <a
+    href="https://www.cloudflare.com"
+    class="text-blue-400"
+    target="_blank"
+  >CloudFlare</a>,
+  and follow the instructions in this
+  <a
+    href="https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account"
+    class="text-blue-400"
+    target="_blank"
+  >
+    article
+  </a>
   on how to configure a new "site" on CloudFlare (written by Namecheap).
   Clicking through CloudFlare's setup will help you configure your DNS and a
   few other things that are useful and considered best practice. For example,
@@ -86,13 +101,20 @@
 </div>
 
 <p class="my-4">
-  Go to <a
-          href="https://www.digitalocean.com/docs/droplets/how-to/create/">Digital
-          Ocean (DO)</a> and create a Ubuntu 20.04 (Ubuntu works well)
-        droplet (machine from now on) and in the Authentication section, choose
-        SSH. If you don't have an SSH key set up with DO, you will have an
-        option to click and it will guide you through it. Select your the key
-        you added and continue clicking through the process.
+  Go to
+  <a
+    href="https://www.digitalocean.com/docs/droplets/how-to/create/"
+    class="text-blue-400"
+    target="_blank"
+  >
+    Digital
+    Ocean (DO)
+  </a>
+  and create a Ubuntu 20.04 (Ubuntu works well)
+  droplet (machine from now on) and in the Authentication section, choose
+  SSH. If you don't have an SSH key set up with DO, you will have an
+  option to click and it will guide you through it. Select your the key
+  you added and continue clicking through the process.
 </p>
 
 <p class="my-4">
@@ -130,7 +152,7 @@ $ ufw enable
 </pre>
 
 <p class="my-4">
-And you can verify things worked by running:
+  And you can verify things worked by running:
 </p>
 
 <pre>
@@ -282,7 +304,14 @@ $ service ssh restart
 </p>
 
 <p class="my-4">
-  I've put together this <a href="https://github.com/pdgonzalez872/dotfiles/blob/master/ubuntu_setup.sh">script</a>
+  I've put together this
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/ubuntu_setup.sh"
+    class="text-blue-400"
+    target="_blank"
+  >
+    script
+  </a>
   because I set up a few Ubuntu machines for development and it gets us
   everything we need to be able to write, build and deploy our app. Feel free
   to manually download the above, or you can copy some parts of the script as
@@ -301,8 +330,14 @@ $ service ssh restart
 </p>
 
 <p class="my-4">
-  Here is a <a
-              href="https://github.com/pdgonzalez872/dotfiles/blob/master/available-sites-example">config</a>
+  Here is a
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/available-sites-example"
+    class="text-blue-400"
+    target="_blank"
+  >
+    config
+  </a>
   file that fits the purpose of this exercise. We listen to port 80 on the
   machine and we redirect accordingly to the port the Phoenix application is
   will be listening (the default for Phoenix is 4000). We also handle socket
@@ -432,8 +467,10 @@ admin_deploy
 </div>
 
 <p class="my-4">
-  I came across a good <a
-                         href="https://linuxhandbook.com/fail2ban-basic">guide</a>
+  I came across a good
+  <a href="https://linuxhandbook.com/fail2ban-basic" class="text-blue-400" target="_blank">
+    guide
+  </a>
   on how to install and configure Fail2ban on the machine. I subscribed to
   their newsletter, let's hope it is good :). They give great details about
   fail2ban, but the main parts are:
@@ -473,8 +510,11 @@ $ sudo systemctl enable fail2ban
   At least, better than we were before. Fail2ban comes with a pre-set "jail"
   called `[nginx-http-auth]` to handle bad nginx login attempts. We will enable
   the existing one and add a couple more specific jails and filters for these
-  jails.  We will use the strategies detailed here:
-  <a href="https://www.digitalocean.com/community/tutorials/how-to-protect-an-nginx-server-with-fail2ban-on-ubuntu-14-04">here</a>,
+  jails.  We will use the strategies detailed here: <a
+    href="https://www.digitalocean.com/community/tutorials/how-to-protect-an-nginx-server-with-fail2ban-on-ubuntu-14-04"
+    class="text-blue-400"
+    target="_blank"
+  >here</a>,
   an excellent article by Digital Ocean. For brevity, I'm going to copy over
   (from the dotfiles repo) the filter files that fail2ban will use after we the
   directives below:
@@ -593,9 +633,11 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
 
 <p class="my-4">
   In this case, we use Github and the repo is private. A good solution is to
-  create an SSH key on the machine and configure a
-  <a
-     href="https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys">deploy
+  create an SSH key on the machine and configure a <a
+    href="https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys"
+    class="text-blue-400"
+    target="_blank"
+  >deploy
      token</a>.
   With it in place, we can clone the repo to the machine in a safe and secure
   way. Follow the steps the link to set that up, select "Read only" when adding
@@ -624,8 +666,11 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   Now that we have the source code, we can get ready to run the server in
   "production". Due to our security focus, we want to run the server as a user
   that does not have sudo access (the app user). Elixir helps us in that regard by
-  providing us an abstraction called
-  <a href="https://hexdocs.pm/phoenix/releases.html">releases</a>,
+  providing us an abstraction called <a
+    href="https://hexdocs.pm/phoenix/releases.html"
+    class="text-blue-400"
+    target="_blank"
+  >releases</a>,
   where we create a self-contained package with all of the code we need. So, we
   will create a release for the application and have the app user run it in the
   end.
@@ -657,9 +702,7 @@ $ mix phx.gen.secret
 <div class="text-2xl font-bold mt-6 mb-6">
   Preparing the deploy: Let's create some files to help with the process
 </div>
-
 Let's do the following:
-
 <ol>
   <li class="mb-2">
     Create a `.env` file
@@ -724,7 +767,10 @@ $ sudo chown app /home/app/logs/log.log
 <p class="my-4">
   If you don't have the code prepared for Phoenix releases, the only change you
   need to make is the following, documented <a
-  href="https://hexdocs.pm/phoenix/releases.html#releases-assemble">here</a>:
+    href="https://hexdocs.pm/phoenix/releases.html#releases-assemble"
+    class="text-blue-400"
+    target="_blank"
+  >here</a>:
   you need to add `server: true` to the Endpoint configuration in
   `config/prod.secret.exs`. Also, since we have a domain, plug it into
   `config/prod.exs` instead of `example.com`. Now that this is done, let's
@@ -834,13 +880,26 @@ sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/
 <p class="my-4">
   Let's attempt to make the app user even less capable. In this case, let's
   give it only what it needs to run the release, nothing else. Here is some
-  more info on how to  <a
-                    href="https://stackoverflow.com/questions/21498667/how-to-limit-user-commands-in-linux">restrict
-                    users</a> and attempt to restrict their experience.
+  more info on how to
+  <a
+    href="https://stackoverflow.com/questions/21498667/how-to-limit-user-commands-in-linux"
+    class="text-blue-400"
+    target="_blank"
+  >
+    restrict
+    users
+  </a>
+  and attempt to restrict their experience.
   The overall idea is to only list commands that you'd like the user to issue
   and restrict everything else. So, we create a ".bashrc" file for this
-  purpose. I have it <a
-    href="https://github.com/pdgonzalez872/dotfiles/blob/master/.deploy_user_bashrc">here</a>
+  purpose. I have it
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/.deploy_user_bashrc"
+    class="text-blue-400"
+    target="_blank"
+  >
+    here
+  </a>
   in case you'd like to copy it directly, or, you can create one with these
   contents however you'd like. I prefer to pull the dotfiles directory and do a
   `cp`. Here are the file contents for the `.bashrc`:
@@ -947,8 +1006,15 @@ $ sudo /usr/bin/passwd --lock www-data
   this type of work (such as Heroku) if I were to deliver a production ready
   project. There are a few others you can choose from after doing a little bit
   of searching online. There are guides to deploy to them on the
-   <a href="https://hexdocs.pm/phoenix/deployment.html#content">Phoenix
-      Guides</a> page.
+  <a
+    href="https://hexdocs.pm/phoenix/deployment.html#content"
+    class="text-blue-400"
+    target="_blank"
+  >
+    Phoenix
+    Guides
+  </a>
+  page.
 </p>
 
 <div class="text-2xl font-bold mt-6 mb-6">
@@ -965,7 +1031,8 @@ $ sudo /usr/bin/passwd --lock www-data
     instead of handling my own.
   </li>
   <li class="mb-2">
-    <span class="text-red-500">Logging =></span>  I'm a big fan of logging and just having it locally on the
+    <span class="text-red-500">Logging =></span>
+    I'm a big fan of logging and just having it locally on the
     machine makes me a little nervous. Maybe we run out of space on the box due
     to logs. You'd need to eventually manage different log files as they grow
     in size, move them around, etc. This is an interesting concept because it
@@ -993,30 +1060,51 @@ $ sudo /usr/bin/passwd --lock www-data
 
 <ul>
   <li class="mb-2">
-    <a href="https://twitter.com/atomkirk" class="text-blue-400" target="_blank">- Adam Kirk</a> - General discussions, listening ear
+    <a href="https://twitter.com/atomkirk" class="text-blue-400" target="_blank">- Adam Kirk</a>
+    - General discussions, listening ear
   </li>
   <li class="mb-2">
-    <a href="https://twitter.com/imjus1sayntho" class="text-blue-400" target="_blank">- Asa Matelau</a> - General discussions, listening ear
+    <a href="https://twitter.com/imjus1sayntho" class="text-blue-400" target="_blank">
+      - Asa Matelau
+    </a>
+    - General discussions, listening ear
   </li>
   <li class="mb-2">
-    <a href="https://luckywatcher.dev" class="text-blue-400" target="_blank">- Brian Petersen</a> - Helped me with the security section, general discussions and help
+    <a href="https://luckywatcher.dev" class="text-blue-400" target="_blank">- Brian Petersen</a>
+    - Helped me with the security section, general discussions and help
   </li>
   <li class="mb-2">
-    <a href="https://twitter.com/BrunnoMdeCampos" class="text-blue-400" target="_blank">- Brunno Campos</a> - General discussions, listening ear
+    <a href="https://twitter.com/BrunnoMdeCampos" class="text-blue-400" target="_blank">
+      - Brunno Campos
+    </a>
+    - General discussions, listening ear
   </li>
   <li class="mb-2">
-    <a href="https://doriankarter.com/" class="text-blue-400" target="_blank">- Dorian Karter</a> - Helped me with setting up nginx correctly, general discussions
+    <a href="https://doriankarter.com/" class="text-blue-400" target="_blank">- Dorian Karter</a>
+    - Helped me with setting up nginx correctly, general discussions
   </li>
   <li class="mb-2">
-    <a href="https://twitter.com/hiagomeels" class="text-blue-400" target="_blank">- Hiago Souza</a> - General discussions about nginx and security
+    <a href="https://twitter.com/hiagomeels" class="text-blue-400" target="_blank">
+      - Hiago Souza
+    </a>
+    - General discussions about nginx and security
   </li>
   <li class="mb-2">
-    <a href="https://twitter.com/mrjfernando" class="text-blue-400" target="_blank">- Jorge Motarueda</a> - General discussions about nginx and security
+    <a href="https://twitter.com/mrjfernando" class="text-blue-400" target="_blank">
+      - Jorge Motarueda
+    </a>
+    - General discussions about nginx and security
   </li>
   <li class="mb-2">
-    <a href="https://www.linkedin.com/in/petr-vecera" class="text-blue-400" target="_blank">- Petr Vecera</a> - General discussions about nginx and security
+    <a href="https://www.linkedin.com/in/petr-vecera" class="text-blue-400" target="_blank">
+      - Petr Vecera
+    </a>
+    - General discussions about nginx and security
   </li>
   <li class="mb-2">
-    <a href="https://twitter.com/raphael_vcosta" class="text-blue-400" target="_blank">- Raphael Vidal Costa</a> - General discussion, sounding board, rubber duck for multiple things
+    <a href="https://twitter.com/raphael_vcosta" class="text-blue-400" target="_blank">
+      - Raphael Vidal Costa
+    </a>
+    - General discussion, sounding board, rubber duck for multiple things
   </li>
 </ul>
