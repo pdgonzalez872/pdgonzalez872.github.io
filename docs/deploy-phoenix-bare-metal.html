@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="w-full p-3 h-16">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">On deploying a Phoenix application to a brand new remote server</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2021-03-11 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ phoenix
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ devops
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ linux
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ ubuntu
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ security
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ deployment
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id="id">deploy-phoenix-bare-metal</div>
+<div hidden id="title">On deploying a Phoenix application to a brand new remote server</div>
+<div hidden id="author">Paulo Gonzalez</div>
+<div hidden id="tags">elixir, phoenix, devops, linux, ubuntu, security, deployment</div>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Update: Updated to Phoenix 1.7.7 (using esbuild and tailwind)
+</div>
+
+<div class="text-2xl font-bold mt-6 mb-6">Goals for this article:</div>
+
+<p class="my-4">
+  The goal here is: deploy a an existing Phoenix application to a remote server
+  with some basic security considerations. We also expand on this initial goal
+  by:
+</p>
+
+<ul>
+  <li class="mb-2">
+    buying a domain name, setting up a domain name for our application
+  </li>
+
+  <li class="mb-2">
+    use Cloudflare to manage the domain as well as add some security that
+    browsers (and users) consider as best practice
+  </li>
+
+  <li class="mb-2">
+    configure and use nginx as a reverse proxy for our application (including
+    sockets - for Phoenix applications that use them)
+  </li>
+</ul>
+
+<p class="my-4">
+  *** If you find a security vulnerability in the approach I suggest below,
+  please let me know. I'm very interested in improving my craft. Please email
+  me and I'll respond ASAP.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">Why write this?:</div>
+
+<p class="my-4">
+  I'm interested in improving my craft and learning things from first
+  principles. A lot of times, writing a blog post like this is a fantastic way
+  to learn more about something. That's why.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  But... there are better options and solutions to this problem!
+</div>
+
+<p class="my-4">
+  Yes, this can be cut down considerably by leveraging other technologies
+  (containers, pre configured OS images) but I was interested in removing
+  abstractions in this exercise and start from the ground up. Maybe a future
+  part 2 could address these improvements.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  So, let's get started!
+</div>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Domain name and DNS config: Buy a domain name
+</div>
+
+<p class="my-4">
+  Head over to
+  <a href="https://www.namecheap.com" class="text-blue-400" target="_blank">Namecheap</a>
+  (no
+  affiliation, just what I have used in the past) and buy a cheap domain.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Domain name and DNS config: use Cloudflare to manage DNS records, SSL/TLS
+  protocols and more
+</div>
+
+<p class="my-4">
+  Now that we have a domain name, go to <a
+    href="https://www.cloudflare.com"
+    class="text-blue-400"
+    target="_blank"
+  >CloudFlare</a>,
+  and follow the instructions in this
+  <a
+    href="https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account"
+    class="text-blue-400"
+    target="_blank"
+  >
+    article
+  </a>
+  on how to configure a new "site" on CloudFlare (written by Namecheap).
+  Clicking through CloudFlare's setup will help you configure your DNS and a
+  few other things that are useful and considered best practice. For example,
+  the SSL/TLS config of always using https (great one).
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Creating the machine: Create an Ubuntu 20.04 machine on Digital Ocean
+</div>
+
+<p class="my-4">
+  Go to
+  <a
+    href="https://www.digitalocean.com/docs/droplets/how-to/create/"
+    class="text-blue-400"
+    target="_blank"
+  >
+    Digital
+    Ocean (DO)
+  </a>
+  and create a Ubuntu 20.04 (Ubuntu works well)
+  droplet (machine from now on) and in the Authentication section, choose
+  SSH. If you don't have an SSH key set up with DO, you will have an
+  option to click and it will guide you through it. Select your the key
+  you added and continue clicking through the process.
+</p>
+
+<p class="my-4">
+  Security checkpoint: DO will have made access available only through SSH from
+  you local machine. You will be able to login as root on that machine, with
+  `ssh root@ip_for_your_new_box`. Once you select SSH for authentication,
+  logging in with a password is disabled by DO (which is excellent). We also
+  don't know the password for the root user on the machine, by default. We can
+  verify that password logins are disabled by running:
+</p>
+
+<pre>
+$ cat /etc/ssh/sshd_config | grep "PasswordAuthentication"
+PasswordAuthentication no
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication, then enable this but set PasswordAuthentication
+</pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Securing the machine: Configure firewall: ufw
+</div>
+
+<p class="my-4">
+  The firewall is the first line of defense when it comes to networking. You
+  can configure how the machine communicates with other members of the network. The
+  approach here is to limit communication to only what we will need. Our setup
+  is a good enough one.
+</p>
+
+<pre>
+$ ufw allow ssh
+$ ufw allow http
+$ ufw allow https
+$ ufw enable
+</pre>
+
+<p class="my-4">
+  And you can verify things worked by running:
+</p>
+
+<pre>
+$ ufw status
+Status: active
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW       Anywhere
+80/tcp                     ALLOW       Anywhere
+443/tcp                    ALLOW       Anywhere
+22/tcp (v6)                ALLOW       Anywhere (v6)
+80/tcp (v6)                ALLOW       Anywhere (v6)
+443/tcp (v6)               ALLOW       Anywhere (v6)
+</pre>
+
+<p class="my-4">
+  Security checkpoint: The only ports accessible to the external world are 22,
+  80 and 443. If we didn't have this and had a program listening on a certain
+  port, an attacker could potentially interact with it. Now, the firewall will
+  take care of that.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Securing the machine: Create an admin user
+</div>
+
+<p class="my-4">
+  Let's create a user that is not root, add a password for it and add it to the
+  `sudo` permissions group. The password for that user will be prompted every
+  time this new user needs higher priviledge when executing a command they
+  would need to know the password. Let's also add SSH access to the machine through
+  that user by using the key we already have set up on our local machine. Let's
+  call this new user admin_deploy.
+</p>
+
+<pre>
+# Think of a password and use it when running the below:
+$ adduser admin_deploy
+$ usermod -aG sudo admin_deploy
+</pre>
+
+<p class="my-4">
+  Security checkpoint: you are able to log in as the admin_deploy and root
+  users by using ssh. The admin_deploy user requires a password to run
+  priviledged commands while root can do anything on the machine (see encrypted
+  passwords that can later be brute forced, install things on the machine,
+  monitor usage, etc).
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Securing the machine: Configure SSH for new admin user
+</div>
+
+<p class="my-4">
+  Now that we have the user, let's set up SSH for it so we can connect to
+  the machine without connecting as root.
+</p>
+
+<pre>
+# Change to the admin_deploy user:
+$ su admin_deploy
+
+# Go to the correct home directory and create a file:
+$ cd ~
+$ mkdir .ssh
+$ touch .ssh/authorized_keys
+
+# Copy your local public key to the remote machine. (** Do this on your local machine **).
+# Assumes you have one already since you used it for creating the droplet. You
+# can also use a different one, but for simplicity purposes we will use the
+# same one.
+$ cat ~/.ssh/id_rsa.pub | xclip -sel c
+
+# Then paste your public SSH key that you have copied on your clipboard to the
+# remote machine
+$ vim .ssh/authorized_keys
+
+# then, restart the ssh service:
+$ service ssh restart
+</pre>
+
+<p class="my-4">
+  You should be able to SSH from your local machine as the admin_deploy user.
+  Do so from now on, this is the user that will be used as our main user on the
+  machine.
+</p>
+
+<p class="my-4">
+  Security checkpoint: No change. We just created a new secure door to connect
+  to the system. Only your local machine can use that door.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Securing the machine: Disable SSH for root
+</div>
+
+<p class="my-4">
+  Now that we have a more secure door to go through (admin_deploy SSH), let's
+  kill the one that let's you do anything on the machine (root SSH).
+</p>
+
+<pre>
+$ sudo vim /etc/ssh/sshd_config
+# Find this line:
+# PermitRootLogin yes
+# change it to `no`, so it looks like this:
+# PermitRootLogin no
+
+# Then run
+$ service ssh restart
+</pre>
+
+<p class="my-4">
+  Security checkpoint: Big change. Now you can no longer log in as root (the
+  user that could do whatever it wanted in the machine) at all. You can still do
+  whatever you want when logged in as admin_deploy because you have sudo
+  priviledges, but you need to know the password you set for the user. We now
+  have a couple layers of security.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the machine: Prepare the machine to run our Phoenix application
+</div>
+
+<p class="my-4">
+  Now that we have basic security in place, let's prepare the machine so it has
+  everything we need to run our Phoenix application. The only abstraction we
+  are using here is the fact that we are using a runtime version manager for
+  the languages we need (Erlang and Elixir) instead of compiling and bulding
+  the code locally. We need the following on the machine to run the Phoenix
+  application I had built:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - Erlang
+  </li>
+  <li class="mb-2">
+    - Elixir
+  </li>
+  <li class="mb-2">
+    - PostgreSQL
+  </li>
+</ul>
+
+<p class="my-4">
+  And since we want to use nginx to reverse proxy our traffic, we need to install it as well.
+</p>
+
+<p class="my-4">
+  I've put together this
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/ubuntu_setup.sh"
+    class="text-blue-400"
+    target="_blank"
+  >
+    script
+  </a>
+  because I set up a few Ubuntu machines for development and it gets us
+  everything we need to be able to write, build and deploy our app. Feel free
+  to manually download the above, or you can copy some parts of the script as
+  you'd like.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the machine: Install and configure Nginx
+</div>
+
+<p class="my-4">
+  Now that we have the tools we need installed on the machine, let's configure
+  a great tool to handle the network traffic that comes to the machine: nginx.
+  We don't need this, we could have set up things differently, but, I wanted
+  this additional layer of control for this exercise.
+</p>
+
+<p class="my-4">
+  Here is a
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/available-sites-example"
+    class="text-blue-400"
+    target="_blank"
+  >
+    config
+  </a>
+  file that fits the purpose of this exercise. We listen to port 80 on the
+  machine and we redirect accordingly to the port the Phoenix application is
+  will be listening (the default for Phoenix is 4000). We also handle socket
+  connections (therefore liveview) correctly. For brevity, I will use the fact
+  that I cloned the repo where I have these utility scripts (dotfiles) and copy
+  the config file to the appropriate location.
+</p>
+
+<pre>
+$ sudo rm /etc/nginx/sites-available/default
+$ sudo cp dotfiles/available-sites-example /etc/nginx/sites-available/default
+$ sudo cat /etc/nginx/sites-available/default
+$ sudo nginx -s reload
+</pre>
+
+<p class="my-4">
+  You can also manually copy/edit the file (/etc/nginx/sites-available/default)
+  with the following:
+</p>
+
+<pre>
+server {
+  listen 80;
+  server_name phoenix 0.0.0.0;
+
+  location / {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+    proxy_pass http://localhost:4000;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+
+  location /live {
+    proxy_pass http://localhost:4000$request_uri;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "Upgrade";
+    proxy_set_header   Host $host;
+  }
+
+  location /socket {
+    proxy_pass http://localhost:4000$request_uri;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "Upgrade";
+    proxy_set_header   Host $host;
+  }
+}
+</pre>
+
+<p class="my-4">
+  The user that nginx creates and uses when creating OS processes for each of
+  the reverse proxy requests does not have sudo privileges. You can check which
+  user nginx will use when creating OS process by:
+</p>
+
+<pre>
+# Verify the default user, created by a default nginx install
+$ cat /etc/nginx/nginx.conf | ag "user " -Q
+user www-data;
+</pre>
+
+<p class="my-4">
+  And verify it does not have sudo privileges:
+</p>
+
+<pre>
+$ sudo -l -U www-data
+User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
+</pre>
+
+<p class="my-4">
+  Security checkpoint: Our nginx reverse proxy is configured and routes all
+  network traffic to port 4000 (where the Phoenix application will use). The OS
+  processes that handle the requests are created by the www-data user, who does
+  not have sudo privileges.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the machine: Configure PostgreSQL
+</div>
+
+<p class="my-4">
+  PostgreSQL configures a user (called postgres) during installation and all
+  PostgreSQL OS processes run under its ownership. This user doesn't have sudo
+  privileges. Since processes will be run under the postgres user, PostgreSQL
+  creates a user inside PostgreSQL itself, called postgres :) Let's set the
+  password for the postgres user inside PostgreSQL itself to something we know
+  and can refer to.
+</p>
+
+<p class="my-4">
+  After writing this section, I realized how similar the names are and how that
+  can cause confusion. Definitely annoying for folks starting out. Hope it is
+  clear enough.
+</p>
+
+<pre>
+# Let's change to the postgres user
+$ sudo su postgres
+
+# Let's change the password for the postgres user to... drumroll... postgres
+$ psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+
+# now you exited the psql shell and have a shell under the postgres user, which
+# we want to exit back to admin_deploy
+$ exit
+
+# we now have a shell under admin_deploy, you can verify with:
+$ whoami
+admin_deploy
+</pre>
+
+<p class="my-4">
+  Security checkpoint: We could have set up the password to be something else.
+  But, if an attacker had access to our machine under the admin_user they could
+  change the password for the database anyways since they could `sudo su
+  postgres` and change the password themselves. Maybe there is room for
+  improvement in this step, I will update the post as I learn more about it.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the machine: Install and configure Fail2ban
+</div>
+
+<p class="my-4">
+  I came across a good
+  <a href="https://linuxhandbook.com/fail2ban-basic" class="text-blue-400" target="_blank">
+    guide
+  </a>
+  on how to install and configure Fail2ban on the machine. I subscribed to
+  their newsletter, let's hope it is good :). They give great details about
+  fail2ban, but the main parts are:
+</p>
+
+<pre>
+# Install it on the machine:
+$ sudo apt install fail2ban
+
+# Copy the default files to avoid issues when there are updates.
+$ sudo cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
+$ sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+
+# Let's edit the /etc/fail2ban/jail.local file so we can make the "maxretry"
+# variable smaller, meaning we immediately go for the ban if we have a bad ssh
+# attempt
+$ sudo vim /etc/fail2ban/jail.local
+
+# and change maxretry in the Default section, from 5, to 1. Save and close the file.
+maxretry = 1
+
+# And finally, let's turn it on:
+$ sudo systemctl start fail2ban
+$ sudo systemctl enable fail2ban
+</pre>
+
+<p class="my-4">
+  Security checkpoint: Fail2ban will help deter bot activity that keep probing
+  the ssh port.
+</p>
+
+<p class="my-4">
+  After monitoring some of the incoming http requests, you see a pattern where
+  bots attempt known vulnerabilities in other technology (wordpress, php
+  websites) and keep issuing those bogus requests to our machine. Currently, we
+  are good ssh wise, but let's make it so we are good on the http side as well.
+  At least, better than we were before. Fail2ban comes with a pre-set "jail"
+  called `[nginx-http-auth]` to handle bad nginx login attempts. We will enable
+  the existing one and add a couple more specific jails and filters for these
+  jails.  We will use the strategies detailed here: <a
+    href="https://www.digitalocean.com/community/tutorials/how-to-protect-an-nginx-server-with-fail2ban-on-ubuntu-14-04"
+    class="text-blue-400"
+    target="_blank"
+  >here</a>,
+  an excellent article by Digital Ocean. For brevity, I'm going to copy over
+  (from the dotfiles repo) the filter files that fail2ban will use after we the
+  directives below:
+</p>
+
+<pre>
+# Open the file with an editor:
+$ sudo vim /etc/fail2ban/jail.local
+
+# Find the [nginx-http-auth] directive and set it to enabled, add the port and the logpath:
+[nginx-http-auth]
+
+enabled  = true
+filter   = nginx-http-auth
+port     = http,https
+logpath  = /var/log/nginx/error.log
+
+# Add these other 4 directives:
+[nginx-noscript]
+
+enabled  = true
+port     = http,https
+filter   = nginx-noscript
+logpath  = /var/log/nginx/access.log
+maxretry = 1
+
+[nginx-badbots]
+
+enabled  = true
+port     = http,https
+filter   = nginx-badbots
+logpath  = /var/log/nginx/access.log
+maxretry = 1
+
+[nginx-nohome]
+
+enabled  = true
+port     = http,https
+filter   = nginx-nohome
+logpath  = /var/log/nginx/access.log
+maxretry = 1
+
+[nginx-noproxy]
+
+enabled  = true
+port     = http,https
+filter   = nginx-noproxy
+logpath  = /var/log/nginx/access.log
+maxretry = 1
+</pre>
+
+<p class="my-4">
+  Now we add the filters for these jails. As I said before, I'm just moving
+  them from my dotfiles. Please inspect them before doing this.
+</p>
+
+<pre>
+# Copy an existing bot filter file:
+$ sudo cp /etc/fail2ban/filter.d/apache-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
+
+# Copy over the filters for each directive
+$ sudo cp dotfiles/fail2ban_nginx-http-auth.conf /etc/fail2ban/filter.d/nginx-http-auth.conf
+$ sudo cp dotfiles/fail2ban_nginx-noscript.conf /etc/fail2ban/filter.d/nginx-noscript.conf
+$ sudo cp dotfiles/fail2ban_nginx-nohome.conf /etc/fail2ban/filter.d/nginx-nohome.conf
+$ sudo cp dotfiles/fail2ban_nginx-noproxy.conf /etc/fail2ban/filter.d/nginx-noproxy.conf
+
+# And finally, restart the service:
+$ sudo systemctl restart fail2ban
+
+# you can confirm the fail2ban status with:
+$ sudo systemctl status fail2ban
+
+# and confirm a specific fail2ban client:
+$ sudo fail2ban-client status nginx-nohome
+</pre>
+
+<p class="my-4">
+  Security checkpoint: Fail2ban will also refuse requests from malicious users
+  trying sneaky things with http requests. Our fail2ban log will hopefully have
+  a lot of bans now.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the machine: Create a user that will be responsible for running the
+  Phoenix application, without sudo privileges
+</div>
+
+<p class="my-4">
+  We should create a user responsible for running the Phoenix application. This
+  user should not have sudo privileges. We will use this new user to run the
+  Phoenix application later on.
+</p>
+
+<pre>
+# Let's add the app user
+$ sudo adduser app
+# And set a password for the app user
+
+# We can confirm the app user doesn't have sudo privileges with:
+$ sudo -l -U app
+[sudo] password for admin_deploy: # enter password
+User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
+</pre>
+
+<p class="my-4">
+  Security checkpoint: We created a user so that even if a malicious attacker
+  somehow finds a way to execute remote commands through the Phoenix
+  application (who knows, maybe the application runs commands directly on the
+  OS) the user that would run those commands would not have sudo privileges.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the deploy: Create a deploy user SSH key for this machine to be
+  used with Github/Gitlab/etc
+</div>
+
+<p class="my-4">
+  In this case, we use Github and the repo is private. A good solution is to
+  create an SSH key on the machine and configure a <a
+    href="https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys"
+    class="text-blue-400"
+    target="_blank"
+  >deploy
+     token</a>.
+  With it in place, we can clone the repo to the machine in a safe and secure
+  way. Follow the steps the link to set that up, select "Read only" when adding
+  the key to the repo. Note that the SSH key should be created for the
+  admin_deploy user, the one that still has sudo privileges.
+</p>
+
+<p class="my-4">
+  Clone the repo to the remote machine. If the key was set up correctly, you
+  should have the source code now.
+</p>
+
+<p class="my-4">
+  Security checkpoint: If someone is able to get your private SSH key on your
+  local machine and they can log into this remote machine and would also be
+  able to access to the repo you just cloned. Honestly, if your private SSH key
+  is compromised, I'd bet this is the least of your worries, but I thought I
+  should mention it. Hardly no change to security in this step.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the deploy: Plumbing now that you have the source code
+</div>
+
+<p class="my-4">
+  Now that we have the source code, we can get ready to run the server in
+  "production". Due to our security focus, we want to run the server as a user
+  that does not have sudo access (the app user). Elixir helps us in that regard by
+  providing us an abstraction called <a
+    href="https://hexdocs.pm/phoenix/releases.html"
+    class="text-blue-400"
+    target="_blank"
+  >releases</a>,
+  where we create a self-contained package with all of the code we need. So, we
+  will create a release for the application and have the app user run it in the
+  end.
+</p>
+
+<p class="my-4">
+  Let's run the following to prepare the project for the release:
+</p>
+
+<pre>
+# Install Phoenix
+$ mix archive.install hex phx_new 1.5.8
+
+#
+# `cd` to the project's directory, and from there, continue below
+#
+
+# Fetch dependencies
+$ mix deps.get
+
+# Prepare the assets to be served and create the correct config files.
+$ mix assets.setup && mix assets.build
+
+# Create a secret that Phoenix will use to sign and encrypt data
+# Copy the output when you get it.
+$ mix phx.gen.secret
+</pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the deploy: Let's create some files to help with the process
+</div>
+Let's do the following:
+<ol>
+  <li class="mb-2">
+    Create a `.env` file
+  </li>
+  <li class="mb-2">
+    Create a `build_release.sh` file
+  </li>
+  <li class="mb-2">
+    Create an `entrypoint.sh` file
+  </li>
+  <li class="mb-2">
+    Create a log file to hold the Phoenix application's logs
+  </li>
+</ol>
+
+<pre>
+#
+# As admin_deploy, `cd` to the project's root directory
+#
+
+# 1) Create a `.env` file with the following:
+DATABASE_URL=ecto://postgres:postgres@localhost/database
+PHX_SERVER=true
+SECRET_KEY_BASE=the_secret_you_copied_above
+
+
+# 2) Create a `build_release.sh` file and add this to the file:
+
+#!/bin/bash
+echo "Building Phoenix release"
+git pull origin main
+export $(cat .env | xargs)
+mix deps.get --only prod
+MIX_ENV=prod mix ecto.migrate
+MIX_ENV=prod mix compile
+MIX_ENV=prod mix assets.build
+MIX_ENV=prod mix assets.deploy
+MIX_ENV=prod mix release
+
+
+# make it executable
+$ sudo chmod +x build_release.sh
+
+# 3) Create script to run the server as the app user, `entrypoint.sh and `add
+this to the file. Make sure to replace `your_app_name` with... your app name.
+
+#!/bin/bash
+echo "Starting the Phoenix server as $(whoami)"
+cd ~
+_build/prod/rel/your_app_name/bin/your_app_name start >> logs/log.log
+
+
+# make it executable
+$ sudo chmod +x entrypoint.sh
+
+# 4) Set up logs in the app user directory
+$ sudo mkdir /home/app/logs
+$ sudo touch /home/app/logs/log.log
+$ sudo chown app /home/app/logs/log.log
+</pre>
+
+<p class="my-4">
+  If you don't have the code prepared for Phoenix releases, the only change you
+  need to make is the following, documented <a
+    href="https://hexdocs.pm/phoenix/releases.html#releases-assemble"
+    class="text-blue-400"
+    target="_blank"
+  >here</a>:
+  you need to add `server: true` to the Endpoint configuration in
+  `config/prod.secret.exs`. Also, since we have a domain, plug it into
+  `config/prod.exs` instead of `example.com`. Now that this is done, let's
+  continue:
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Preparing the deploy: Let's deploy!
+</div>
+
+<pre>
+#
+# As admin_deploy, `cd` to the project's root directory
+#
+
+# Export env vars
+$ export $(cat .env | xargs)
+
+# Create the database. We will only do this one time, so we are doing it here:
+$ MIX_ENV=prod mix ecto.create
+
+# Set up tailwind and esbuild
+$ mix assets.setup
+
+# Build the release
+$ ./build_release.sh
+
+# Copy release to /home/app/_build so we can run it as the app user
+$ sudo cp -r _build/ /home/app/_build/
+
+# And give access to app:
+$ sudo chown app /home/app/_build/
+
+#
+# And finally:
+#
+
+# Run the entrypoint file, which runs the server as the app user, outputting to
+# the log file. From the root of the project, as admin_deploy, run:
+$ sudo -u app "./entrypoint.sh"
+</pre>
+
+<p class="my-4">
+  Security checkpoint: Note how we run the Phoenix server as the app user, a
+  user without sudo privileges.  You can verify that the Phoenix application is
+  run as the app user by doing `ps aux | ag beam.smp` and you will see the BEAM
+  process under the app user's ownership.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Post deploy: Basic monitoring
+</div>
+
+<p class="my-4">
+  Now that the Phoenix application is deployed, we can monitor some interesting
+  things.
+</p>
+
+<pre>
+# Monitor nginx traffic logs
+$ sudo tail -f /var/log/nginx/access.log
+
+# Monitor the Phoenix application's logs
+$ sudo tail -f /home/app/logs/log.log
+
+# Monitor authentication attempts on the machine
+$ sudo tail -f /var/log/auth.log
+
+# Monitor Fail2ban logs
+$ sudo tail -f /var/log/fail2ban.log
+
+# IEx shell on the release, from the project's root:
+_build/prod/rel/your_app_name/bin/your_app_name remote
+
+# Run htop to see how the machine is doing
+$ htop
+</pre>
+
+<p class="my-4">
+  I use tmux and have the above running on different windows. There is a lot, a
+  lot of bot activity probing the machine. This likely is a blog post in
+  itself, where I show some of the most common attacks that one receives after
+  putting a machine online. The types of attacks the bots attempt make me
+  wonder if folks even try to secure a machine. My new hobby is tailing the
+  fail2ban logs and watching bots get banned.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Post deploy: Future deployments
+</div>
+
+<p class="my-4">
+  We would use the `build_release.sh` script and copy over the release to the
+  app user directory. Should be good enough for now.
+</p>
+
+<pre>
+$ A one liner would look something like this, from the project's root::
+sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/app/_build/
+</pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  More security: Restrict the app user so all it knows is how to run the
+  release
+</div>
+
+<p class="my-4">
+  Let's attempt to make the app user even less capable. In this case, let's
+  give it only what it needs to run the release, nothing else. Here is some
+  more info on how to
+  <a
+    href="https://stackoverflow.com/questions/21498667/how-to-limit-user-commands-in-linux"
+    class="text-blue-400"
+    target="_blank"
+  >
+    restrict
+    users
+  </a>
+  and attempt to restrict their experience.
+  The overall idea is to only list commands that you'd like the user to issue
+  and restrict everything else. So, we create a ".bashrc" file for this
+  purpose. I have it
+  <a
+    href="https://github.com/pdgonzalez872/dotfiles/blob/master/.deploy_user_bashrc"
+    class="text-blue-400"
+    target="_blank"
+  >
+    here
+  </a>
+  in case you'd like to copy it directly, or, you can create one with these
+  contents however you'd like. I prefer to pull the dotfiles directory and do a
+  `cp`. Here are the file contents for the `.bashrc`:
+</p>
+
+<pre>
+alias cd="printf 'not today \n'"
+alias exit="printf 'not today \n'"
+
+PATH=$HOME/bin
+export PATH
+</pre>
+
+<p class="my-4">
+  If you cloned the dotfiles repository, do this:
+</p>
+
+<pre>
+$ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
+
+# make it so `app` can't edit the file
+$ sudo chattr +i /home/app/.bashrc
+</pre>
+
+<p class="my-4">
+  With the file created, all new shells for the app user will use the special
+  `.bashrc` file and therefore do very little.
+</p>
+
+<pre>
+# Make user use restricted bash
+$ sudo chsh -s /bin/rbash app
+
+# Create a bin directory for the app user
+$ sudo mkdir /home/app/bin
+$ sudo chmod 755 /home/app/bin
+
+# We need to symlink only the tools the user needs to run the release I
+# listed them here:
+# https://github.com/pdgonzalez872/dotfiles/blob/master/ln_for_app_user.sh
+# If you have the dotfiles repo locally, you can run `./ln_for_app_user.sh`.
+# If not, do the below:
+
+# We allow this to print the current user when running the release. Not needed
+# to run the release per say.
+$ sudo ln -s /usr/bin/whoami /home/app/bin/
+
+# These are needed to run the release:
+$ sudo ln -s /usr/bin/readlink /home/app/bin
+$ sudo ln -s /usr/bin/dirname /home/app/bin
+$ sudo ln -s /usr/bin/cut /home/app/bin
+$ sudo ln -s /usr/bin/sed /home/app/bin
+$ sudo ln -s /usr/bin/cat /home/app/bin
+$ sudo ln -s /usr/bin/grep /home/app/bin
+$ sudo ln -s /usr/bin/basename /home/app/bin
+</pre>
+
+<p class="my-4">
+  Security checkpoint: The app user shell is very limited, only has enough to
+  run the release.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  More security: let's lock some known users
+</div>
+
+<p class="my-4">
+  If an attacker gets shell access in our system, they could potentially
+  attempt to brute force other accounts  using `su postgres` for example. For
+  that reason, let's lock some of the users we dealt with in this article, so
+  there is no possible way of using password logins within the machine.
+</p>
+
+<p class="my-4">
+  I chose to keep the admin_deploy user unlocked meaning you still need a
+  password to get in and if you know the password, it would let you in. Unlike
+  the locked option, where even with the correct passwod, it would not let you
+  in. Tradeoffs. I preferred to not have a passwordless sudo user in the
+  system.
+</p>
+
+<pre>
+$ sudo /usr/bin/passwd --lock app
+$ sudo /usr/bin/passwd --lock root
+$ sudo /usr/bin/passwd --lock postgres
+$ sudo /usr/bin/passwd --lock www-data
+</pre>
+
+<p class="my-4">
+  Security checkpoint: One can't log into the accounts above. An attacker could
+  still attempt to brute force the admin_deploy user password if they get
+  access to a shell that is not restricted like the app user is. I don't know
+  how one would do this, but I'm not a hacker and there are pros out there.
+  Everything is possible. :)
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Conclusion
+</div>
+
+<p class="my-4">
+  After all of this, your application should be up, with all that it needs to
+  work in a fairly safe environment. With that said, I'd choose a provider for
+  this type of work (such as Heroku) if I were to deliver a production ready
+  project. There are a few others you can choose from after doing a little bit
+  of searching online. There are guides to deploy to them on the
+  <a
+    href="https://hexdocs.pm/phoenix/deployment.html#content"
+    class="text-blue-400"
+    target="_blank"
+  >
+    Phoenix
+    Guides
+  </a>
+  page.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  General Drawbacks
+</div>
+
+<ul>
+  <li class="mb-2">
+    <span class="text-red-500">Security =></span> The machine is safe, but it is exposed to
+    the internet. Folks will continue to attempt exploits. We have CloudFlare
+    to deter DDoS attacks, but I'm usually paranoid about these things. My
+    customers' data is too important to chance it, regardless of how decent of
+    a job I did security wise. So, I prefer platforms that offer this service
+    instead of handling my own.
+  </li>
+  <li class="mb-2">
+    <span class="text-red-500">Logging =></span>
+    I'm a big fan of logging and just having it locally on the
+    machine makes me a little nervous. Maybe we run out of space on the box due
+    to logs. You'd need to eventually manage different log files as they grow
+    in size, move them around, etc. This is an interesting concept because it
+    becomes expensive VERY quickly. Services like Splunk can be very pricey.
+  </li>
+</ul>
+
+<p class="my-4">
+  As I mentioned in the monitoring section, there is a lot of bot activity when
+  you are creating a machine that can be accessible to the whole internet. I'll
+  write a blog post sometime analyzing the type of activity we get just by
+  putting up a machine online. It's a lot. Folks will try to access the machine
+  directly with different usernames/passwords (our machine is not accessible
+  through passwords, so this doesn't work), send malicious http requests to the
+  machine attempting to gain useful info, among other interesting things.
+  Fail2ban helps with this issue. I still think it would be interesting to go
+  through this article again, skip Fail2ban protection, stand a hello world
+  Phoenix app, wait for a few days to collect data and then analyze that data.
+  Maybe for a future blog post.
+</p>
+
+<p class="my-4">
+  Special thanks to my friends that have helped with this post in some fashion:
+</p>
+
+<ul>
+  <li class="mb-2">
+    <a href="https://twitter.com/atomkirk" class="text-blue-400" target="_blank">- Adam Kirk</a>
+    - General discussions, listening ear
+  </li>
+  <li class="mb-2">
+    <a href="https://twitter.com/imjus1sayntho" class="text-blue-400" target="_blank">
+      - Asa Matelau
+    </a>
+    - General discussions, listening ear
+  </li>
+  <li class="mb-2">
+    <a href="https://luckywatcher.dev" class="text-blue-400" target="_blank">- Brian Petersen</a>
+    - Helped me with the security section, general discussions and help
+  </li>
+  <li class="mb-2">
+    <a href="https://twitter.com/BrunnoMdeCampos" class="text-blue-400" target="_blank">
+      - Brunno Campos
+    </a>
+    - General discussions, listening ear
+  </li>
+  <li class="mb-2">
+    <a href="https://doriankarter.com/" class="text-blue-400" target="_blank">- Dorian Karter</a>
+    - Helped me with setting up nginx correctly, general discussions
+  </li>
+  <li class="mb-2">
+    <a href="https://twitter.com/hiagomeels" class="text-blue-400" target="_blank">
+      - Hiago Souza
+    </a>
+    - General discussions about nginx and security
+  </li>
+  <li class="mb-2">
+    <a href="https://twitter.com/mrjfernando" class="text-blue-400" target="_blank">
+      - Jorge Motarueda
+    </a>
+    - General discussions about nginx and security
+  </li>
+  <li class="mb-2">
+    <a href="https://www.linkedin.com/in/petr-vecera" class="text-blue-400" target="_blank">
+      - Petr Vecera
+    </a>
+    - General discussions about nginx and security
+  </li>
+  <li class="mb-2">
+    <a href="https://twitter.com/raphael_vcosta" class="text-blue-400" target="_blank">
+      - Raphael Vidal Costa
+    </a>
+    - General discussion, sounding board, rubber duck for multiple things
+  </li>
+</ul>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
