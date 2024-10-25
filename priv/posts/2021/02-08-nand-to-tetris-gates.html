@@ -3,22 +3,22 @@
 <div hidden id="author">Paulo Gonzalez</div>
 <div hidden id="tags">elixir, nand-to-tetris, book, programming</div>
 
-<p>
+<p class="my-4">
 For this blog post I build on the introspection theme I've written about
 before. The intent here is to understand the abstrations that make computing
 possible.
 </p>
 
-<p>
+<p class="my-4">
  We return to NandToTetris[0] once again, This is Project 1 in the course[1],
  but in Elixir.
 </p>
 
-<h3>
+<div class="text-2xl font-bold mt-6 mb-6">
   Project 1 - Boolean Logic - Create logic gates used in a typical 16-bit machine
-</h3>
+</div>
 
-<p>
+<p class="my-4">
 The Nand gate is the starting abstraction of the whole NandToTetris[0] project.
 We are supposed to create all the remaining gates (and abstractions that use
 gates) based on it. Below are all of the gates required for Project 1 [1] and
@@ -26,16 +26,16 @@ their suggested order. I skipped the 16 bit examples for simplicity sake.
 </p>
 
 <ul>
-  <li> Nand </li>
-  <li> Not </li>
-  <li> And </li>
-  <li> Or </li>
-  <li> Xor </li>
-  <li> Mux </li>
-  <li> DMux </li>
+  <li>- Nand </li>
+  <li>- Not </li>
+  <li>- And </li>
+  <li>- Or </li>
+  <li>- Xor </li>
+  <li>- Mux </li>
+  <li>- DMux </li>
 </ul>
 
-<p>
+<p class="my-4">
 I used nandgame.com[3] to help visualize the problems. Honestly, without
 the visual feedback I would not have been able to solve any of the problems
 above.
@@ -45,7 +45,7 @@ what DMux meant, the solution was straight forward. But to understand it, I
 read material that basically said what the implementation would look like.
 </p>
 
-<pre></code>
+<pre class="text-xs"><code>
 defmodule Nand2TetrisProject1Test do
   use ExUnit.Case
 
@@ -211,20 +211,20 @@ end
   Conclusion
 </h2>
 
-<p>
+<p class="my-4">
 I'm so happy this book and course exist. I've had this book for a couple of
 years now and it doesn't seem like I can ever fully grasp its content. It feels
 like a bible, a reference book that I will continue to always refer back to and
 dig a little deeper.
 </p>
 
-<p>
+<p class="my-4">
 The videos (coursera course, can be found on youtube) are very important. They
 help close gaps. The book is concise, each sentence in the book is heavy and
 means a lot.
 </p>
 
-<p>
+<p class="my-4">
 As an example, I worked on a concept mentioned in the book. It was a side
 passage, just a paragraph noting that calculations could be done using stacks.
 It lieterally took me a couple of days (stack based calculator) to implement
@@ -232,13 +232,13 @@ something that the book mentioned as trivial. The result was pretty neat[5] in
 my opinion.
 </p>
 
-<p>
+<p class="my-4">
 For the sake of time, I will continue to treat this book as a reference and
 something I will continue to come back to (as I've done multiple times already)
 in my career.
 </p>
 
-<p>
+<p class="my-4">
 The main technical idea (the crux) in the book is the concept of abstractions.
 There comes a point in pretty much everything in life where one must choose a
 layer of abstraction that works for their use cases. The book does a great job
@@ -249,7 +249,7 @@ projects are not optimized. The authors of course are the first ones to let the
 students know. Choosing abstractions that add value is an art.
 </p>
 
-<p>
+<p class="my-4">
 This blissful ignorance of choosing an abstraction layer can be seen as both a
 feature or a bug. I think it is important to know the layers exist and even
 more important that they are non-trivial. A critical error here would be to
@@ -258,13 +258,13 @@ think that a single individual (an arrogant, naive one) deems the layers as
 every single layer so we could get what we have today.
 </p>
 
-<p>
+<p class="my-4">
 The computer is my favorite invention of all time. Hands down.
 </p>
 
-<h3>
+<div class="text-2xl font-bold mt-6 mb-6">
 Resources
-</h3>
+</div>
 
 <ul>
   <li> [0] Elements of Computing Systems website:
@@ -283,11 +283,11 @@ Resources
     <a href="https://www.youtube.com/watch?v=VBDoT8o4q00"</a>https://www.youtube.com/watch?v=VBDoT8o4q00</a></li>
 </ul>
 
-<h3>
+<div class="text-2xl font-bold mt-6 mb-6">
 "How do I run this?"
-</h3>
+</div>
 
-<p>
+<p class="my-4">
 If you'd like to run the above on your machine, I suggest the below. This time
 the instructions are shorter, since I've shared specifics on the Arithmetic
 Calculator post. Check it out if you need any more help, or, feel free to
@@ -295,16 +295,8 @@ contact me.
 </p>
 
 <ul>
-  <li> Install Elixir on your machine </li>
-  <li> Create a Mix project </li>
-  <li> Create a file called `nand2tetris_test.exs` inside the `test` directory and copy and paste the code above inside it  </li>
-  <li> Run `mix test nand2tetris_test.exs` from the root of the mix project </li>
+  <li class="mb-2"> - Install Elixir on your machine </li>
+  <li class="mb-2"> - Create a Mix project </li>
+  <li class="mb-2"> - Create a file called `nand2tetris_test.exs` inside the `test` directory and copy and paste the code above inside it  </li>
+  <li class="mb-2"> - Run `mix test nand2tetris_test.exs` from the root of the mix project </li>
 </ul>
-
---------------
-
-<p>
-Thanks for reading, PDG
-</p>
-
-<a href="https://pdgonzalez872.github.io">Home</a>
