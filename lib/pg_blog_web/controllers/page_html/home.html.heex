@@ -37,7 +37,7 @@
   <%= for post <- @posts do %>
     <li class="mb-2">
       <small class="text-gray-500"><%= post.date %></small>
-      <a href={post.link}>
+      <a href={post.link} class="text-blue-400">
         <%= post.title %>
       </a>
     </li>
