@@ -104,12 +104,16 @@ Semifinals
 |-----------------------|
 </code></pre>
 
-<ul> You get the following results:
-  <li>
-    Paulo beats Rafa Nadal 6/7 7/6 7/6
+<p class="my-4">
+  You get the following results:
+</p>
+
+<ul>
+  <li class="mb-2">
+    - Paulo beats Rafa Nadal 6/7 7/6 7/6
   </li>
-  <li>
-    Silvia beats Roger Federer 6/2 6/0
+  <li class="mb-2">
+    - Silvia beats Roger Federer 6/2 6/0
   </li>
 </ul>
 
@@ -277,27 +281,32 @@ Legend:
   </table>
 </div>
 
-<img src="/images/hamburg.png">
-
 <p class="mb-4">
+  Here is a screenshot of the draw:
+</p>
+
+<img src="/images/hamburg.png" alt="hamburg-draw"
+  class="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto my-4 rounded-lg shadow-md object-cover"/>
+
+<p class="my-4">
   It was a lot easier to reason about things when I had the table above to look
   at. To me, it was clear that the algorithm to advance a player to the correct
   position is as follows:
 </p>
 
 <ul>
-  <li>
-    In order to get the next round's match number: If the match number
+  <li class="mb-2">
+    - In order to get the next round's match number: If the match number
     is even, divide by 2. If odd, add 1 and divide by 2. The result
     is the match number in the next round.
   </li>
-  <li>
-    In order to get the next round's position: this will be the same as the
+  <li class="mb-2">
+    - In order to get the next round's position: this will be the same as the
     match number where the player came from.
   </li>
 </ul>
 
-<p class="mb-4">
+<p class="my-4">
   If we look at Silvia's example above, she had position #3 and was playing
   match #2 in the round. So, (match #2 is even) -> 2 / 2 -> 1. So she is playing
   in next round's match #1. Since she came from match #2, her position in the
@@ -307,15 +316,6 @@ Legend:
 <p class="mb-4">
   Thanks for Kels and Kristen who helped me solve this after dinner!
 </p>
-
-<h3>
-  Resources
-  </h3>
-
-  <ul>
-    <li> [0] Hamburg ATP draw: 
-    </li>
-  </ul>
 
 </div>
 
