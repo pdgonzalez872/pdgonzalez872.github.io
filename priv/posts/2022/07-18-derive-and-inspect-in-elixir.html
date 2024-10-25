@@ -1,0 +1,72 @@
+<div hidden id=id>derive-and-inspect-in-elixir</div>
+<div hidden id=title>Derive and Inspect in Elixir</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, syntax, programming</div>
+<a href="https://pdgonzalez872.github.io">Home</a>
+
+<p class="my-4">
+Sometimes you want to have some control over what you log in production. A
+common issue is redacting PII and other sensitive information from prod logs.
+Elixir allows us to choose what the output for a struct looks like. Take the
+following example:
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+Derive and Inspect in Elixir - using <span class="bg-gray-200">`@derive` [0]</span>
+</div>
+
+<pre class="text-xs"><code>Erlang/OTP 24 [erts-12.2] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit]
+
+Interactive Elixir (1.13.4) - press Ctrl+C to exit (type h() ENTER for help)
+iex(1)&lt; defmodule User do
+...(1)&lt;   @derive {Inspect, except: [:ssn, :passport, :internal_id]}
+...(1)&lt;   defstruct name: nil, ssn: nil, passport: nil, internal_id: nil
+...(1)&lt; end
+{:module, User,
+ &lt;&lt;70, 79, 82, 49, 0, 0, 7, 8, 66, 69, 65, 77, 65, 116, 85, 56, 0, 0, 0, 194, 0,
+   0, 0, 19, 12, 69, 108, 105, 120, 105, 114, 46, 84, 121, 108, 101, 114, 8, 95,
+   95, 105, 110, 102, 111, 95, 95, 10, ...&gt;&gt;, #User&lt;name: nil, ...&gt;}
+iex(2)&lt; tyler = %User{name: "tyler", ssn: 123455768, internal_id: 1}
+#User&lt;name: "tyler", ...>
+iex(3)&lt; IO.inspect(tyler)
+#User&lt;name: "tyler", ...>
+iex(4)&lt; inspect tyler
+"#User&lt;name: \"tyler\", ...>"
+iex(5)&lt; tyler.ssn
+123455768
+</code></pre>
+
+<p class="my-4">
+Note how I went with the `except` approach rather than the `only`. If possible
+and I have a say I prefer this approach for this particular issue (logging).
+This is because I've approved a lot of code that tried to hide fields AFTER a
+bug had happened. It takes time to get that code to prod (many hotfixes too)
+and that was critical time that our customers were experiencing errors and our
+app was malfunctioning. It's also very error prone to expect that folks will
+remember to add their newly added field to the `only` key when they create one.
+`except` reduces surprises and that's a great thing!
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Conclusion
+</div>
+
+<p class="my-4">
+Elixir is ❤️ ... and, gives you control over IO output so you can investigate
+prod (when that time comes... and it will come) while respecting PII and other
+sensitive info you may not want leaking anywhere.
+</p>
+
+<p class="my-4">
+Ecto does it as well, you should check out the `redact: true` option when
+declaring schemas! [1]
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Links
+</div>
+
+<ul>
+  <li class="mb-2"><a href="https://hexdocs.pm/elixir/1.17/Inspect.html#module-deriving" class="text-blue-400" target="_blank">- [0] Deriving in Elixir</a></li>
+  <li class="mb-2"><a href="https://hexdocs.pm/ecto/Ecto.Schema.html#module-redacting-fields" class="text-blue-400" target="_blank">- [1] Redacting using Ecto</a></li>
+</ul>
