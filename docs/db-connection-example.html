@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">DBConnectionListener example</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2023-01-01 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ db-connection
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ open-source
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>db-connection-example</div>
+<div hidden id=title>DBConnectionListener example</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, db-connection, open-source</div>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  DBConnectionListener example:
+</div>
+
+<div class="text-2xl font-bold mt-6 mb-6"> Update, <a
+    href="https://github.com/elixir-ecto/db_connection/pull/266"
+    class="text-blue-400" target="_blank">this got merged to the library:</a>
+</div>
+
+<pre class="text-xs"><code>
+# Source
+# https://github.com/elixir-ecto/db_connection/commit/eae538ec06b4603f69b28bf00f3603a3e4ecd1a5.patch
+
+From eae538ec06b4603f69b28bf00f3603a3e4ecd1a5 Mon Sep 17 00:00:00 2001
+From: Paulo Daniel Gonzalez <paulo.gonzalez@someemail.com>
+Date: Fri, 2 Sep 2022 14:14:11 -0500
+Subject: [PATCH] Add example implementation for a connection_listener
+
+---
+  lib/db_connection.ex | 32 ++++++++++++++++++++++++++++++++
+  1 file changed, 32 insertions(+)
+
+diff --git a/lib/db_connection.ex b/lib/db_connection.ex
+index 2356017..a2c79d5 100644
+--- a/lib/db_connection.ex
++++ b/lib/db_connection.ex
+@@ -433,6 +433,38 @@ defmodule DBConnection do
+    `pid` for connection crashes. So it is recommended to monitor the connected
+    `pid` if you want to track all disconnections.
+
++  Here is an example of a `connection_listener` implementation:
++
++    defmodule DBConnectionListener do
++      use GenServer
++
++      def start_link() do
++        GenServer.start_link(__MODULE__, [], name: {:global, "db_connection_listener"})
++      end
++
++      @impl true
++      def init(stack) when is_list(stack) do
++        {:ok, stack}
++      end
++
++      @impl true
++      def handle_call(:read_state, _from, state) do
++        {:reply, state, state}
++      end
++
++      @impl true
++      def handle_info(msg, state) do
++        {:noreply, [msg | state]}
++      end
++    end
++
++  You can then start it, pass it into a `DBConnection.start_link/1` and when needed
++  can query the notifications:
++
++    {:ok, connection_listener} = DBConnectionListener.start_link([])
++    {:ok, _conn} = DBConnection.start_link(SomeModule, [connection_listeners: [connection_listener]])
++    notifications = GenServer.call({:global, "db_connection_listener"}, :read_state)
++
+</code></pre>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
