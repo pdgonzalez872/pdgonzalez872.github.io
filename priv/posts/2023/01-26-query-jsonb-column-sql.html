@@ -1,0 +1,19 @@
+<div hidden id=id>query-jsonb-column-sql</div>
+<div hidden id=title>Query JSONB column in Postgres</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>postgres, sql, jsonb</div>
+
+<p class="my-4">
+This was a Today I Learned (TIL) for me. Here is the syntax to query a JSONB column in Postgres:
+</p>
+
+<pre class="text-xs"><code>
+select id, worker, errors
+from oban_jobs
+where args ->> 'an_id' = 'c2d70b80-b4b2-4e96-b0ed-ca746a0fc631'
+order by inserted_at desc
+</code></pre>
+
+<p class="my-4">
+So cool!
+</p>
