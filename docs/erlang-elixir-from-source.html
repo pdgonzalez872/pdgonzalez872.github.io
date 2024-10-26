@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">How do I... build Erlang and Elixir from source and use it in a project?</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2024-05-30 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ erlang
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ local
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ development
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ open-source
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>erlang-elixir-from-source</div>
+<div hidden id=title>How do I... build Erlang and Elixir from source and use it in a project?</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, erlang, local, development, open-source</div>
+
+<p class="my-4">
+  Sometimes we want to build things from source and use it in a project we
+  already have. `asdf` is excellent, but building from source has its merits as
+  well. It's good to verify release candidates, new features and potentially
+  identify issues if needed. I've asked myself the question above, so here is
+  the answer!
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Clone projects locally and get OS dependencies for build process
+</div>
+
+<p class="my-4">
+  What has worked for me in this case is to have both projects under a folder.
+  I usually call this folder `oss` (short for open source software).
+</p>
+
+<pre class="text-xs"><code># on Mac:
+$ brew install autoconf wxmac wxwidgets libtool automake fop
+
+# on ubuntu:
+$ sudo apt-get install build-essential autoconf libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Build projects locally
+</div>
+
+<pre class="text-xs"><code># Erlang
+# Per https://github.com/erlang/otp/blob/master/HOWTO/DEVELOPMENT.md:
+# from /otp recently cloned
+# inside your_path/oss
+$ git clone git@github.com:erlang/otp.git
+$ cd otp
+$ ./otp_build configure && make
+
+# Elixir
+# Per https://github.com/elixir-lang/elixir?tab=readme-ov-file#compiling-from-source
+# inside your_path/oss
+$ git clone git@github.com:elixir-lang/elixir.git
+$ cd elixir
+$ make clean && make
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Update `PATH`
+</div>
+
+<p class="my-4">
+  Now, we configure paths so we choose which Erlang and Elixir to pick up. We
+  will set that up for a specific shell, you may update your dotfiles
+  accordingly so it's picked up in every new shell.
+</p>
+
+<pre class="text-xs"><code># from a folder that has both otp and elixir repos under them, in my case, `oss`
+# set vars up
+oss $ export ERL_TOP=`pwd`/otp
+oss $ echo $ERL_TOP
+/Users/pg/dev/oss/otp
+oss $ export LOCAL_ELIXIR_PATH=`pwd`/elixir
+oss $ echo $LOCAL_ELIXIR_PATH
+/Users/pg/dev/oss/elixir
+
+# update PATH
+oss $ export PATH=$ERL_TOP/bin:$PATH
+oss $ export PATH=$LOCAL_ELIXIR_PATH/bin:$PATH
+
+# and verify!
+$ iex
+Erlang/OTP 28 [DEVELOPMENT] [erts-15.0] [source-cf8c426765] [64-bit] [smp:12:12] [ds:12:12:10] [async-threads:1]
+
+Interactive Elixir (1.18.0-dev) - press Ctrl+C to exit (type h() ENTER for help)
+iex(1)>
+</pre></code>
+
+<p class="my-4">
+  Now you can use whatever Erlang and Elixir versions you like!
+</p>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
