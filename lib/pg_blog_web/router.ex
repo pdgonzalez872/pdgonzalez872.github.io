@@ -19,6 +19,7 @@ defmodule PgBlogWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/resume_technical", PageController, :resume_technical
     get "/posts/show_to_format", PostController, :show_to_format
     get "/posts/:id", PostController, :show
   end
