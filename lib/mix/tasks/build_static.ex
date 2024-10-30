@@ -12,6 +12,7 @@ defmodule Mix.Tasks.BuildStatic do
     File.mkdir_p!(build_dir)
 
     generate_page("/", "index.html", build_dir)
+    generate_page("/resume_technical", "resume_technical.html", build_dir)
     generate_posts(build_dir)
     copy_assets(build_dir)
 
