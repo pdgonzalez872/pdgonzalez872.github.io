@@ -16,4 +16,10 @@ defmodule PgBlogWeb.PageController do
       |> render(:home, posts: all)
     end
   end
+
+  def resume_technical(conn, _) do
+    conn
+    |> put_root_layout(html: {PgBlogWeb.Layouts, :root_bare})
+    |> render(:resume_technical, layout: false)
+  end
 end

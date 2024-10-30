@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= assigns[:page_title] || "PG's Blog" %></title>
+    <link rel="stylesheet" href={assigns[:app_css_link]} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body>
+    <main role="main">
+      <div>
+        <%= @inner_content %>
+      </div>
+    </main>
+  </body>
+</html>
