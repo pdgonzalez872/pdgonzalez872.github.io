@@ -1,5 +1,5 @@
 # elixir server.exs
-# and then visit: http://localhost:4000/index.html
+# and then visit: http://localhost:4001/index.html
 
 Mix.install([
   {:plug, "~> 1.14"},

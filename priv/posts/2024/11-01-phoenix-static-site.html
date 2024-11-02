@@ -4,134 +4,133 @@
 <div hidden id=tags>elixir, phoenix, tailwind, github-pages, gambiarra</div>
 
 <div class="text-2xl font-bold mt-6 mb-6">
-  Oct/25/2024 update: I made the Team USA (35+) that will compete at the PanAms
-  in Argentina in December. Let's GO!
+  Using Phoenix and Tailwind to create static websites (my blog) on Github Pages
 </div>
+
+First off, there are many tools out there that give you a good experience to create static blogs leveraging Github Pages.
+
+There are existing tools to do this, but I thought it would be a cool exercise to go from bottom up with this problem.
+
+Half of my family is from Brazil and I am proud of my heritage. "Gambiarra" is a word in Portuguese (I would love for the language to be called Brazilian, but that's a different discussion altogether :) ) that comes up a lot in Brazilian culture. "Alternative Engineering" is my favorite synonym for it, but "McGyverism" is another good one. This Phoenix to static exercise qualifies as gambiarra in my books :)
+
+First, we need to check Github Pages and learn how it works. Turns out that if you configure a public repository, Github publishes html to a domain (your handle, in my case @pdgonzalez872
+
+
+More details here:
+https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
+
+Then, this is the important piece:
+
+> Create the entry file for your site. GitHub Pages will look for an index.html, index.md, or README.md file as the entry file for your site.
+
+> If your publishing source is a branch and folder, the entry file must be at the top level of the source folder on the source branch. For example, if your publishing source is the /docs folder on the main branch, your entry file must be located in the /docs folder on a branch called main.
+
+Here is the link to the above: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#creating-your-site
+
+I did configure the repo to use the `/docs` option.
+
+My previous setup used the root level index.html page, this time I went with `/docs` as I didn't want to have a bunch of files in the root dir, but other than that, no preference.
+
+So the idea was "populate" a "/docs" folder with html files and files that are used by the html files (styling, images, js). That was the
+
+I also wanted to use NimblePublisher, in fact, that was the original rabbit hole that got me here. I liked the idea of writing static content, then realized markdown was the default. But, adjusting the parser to use Floki was not too difficult.
+
+In fact, that was my original starting point.
 
 To dev locally and see differences in the html, I run `mix phx.server`
 
-I created a couple of convenience scripts to help deploy and build (generate) the files
+I created a couple of convenience scripts to help deploy and build (generate) the files as well as one to check on the "generated" files.
 
-I had to adjust the .gitignore quite a bit
 
-Moving the old posts to the new format was a bit annoying, but 
+# build.sh
+#!/bin/bash
+
+echo "Start building"
+MIX_ENV=prod PHX_HOST=localhost mix assets.deploy && MIX_ENV=prod PHX_HOST=localhost SECRET_KEY_BASE=hi mix build_static
+
+echo "Kill docs dir"
+rm -rf docs
+
+echo "Move new dir to docs"
+mv build docs
+
+echo "Finish building"
+
+# server.exs
+# Usage:
+# $ elixir server.exs
+# and then visit: http://localhost:4001/index.html
+
+Mix.install([
+  {:plug, "~> 1.14"},
+  {:bandit, "~> 1.5.7"}
+])
+
+defmodule SimpleServer do
+  use Plug.Router
+
+  plug Plug.Static,
+    at: "/",
+    from: "docs",
+    gzip: true,
+    cache_control_for_etags: "public, max-age=86400"
+
+  plug :match
+  plug :dispatch
+
+  match _ do
+    send_resp(conn, 404, "File not found")
+  end
+end
+
+# Start the Bandit server
+{:ok, _} = Bandit.start_link(plug: SimpleServer, port: 4001)
+IO.puts("Server running")
+Process.sleep(:infinity)
+
+I had to adjust the .gitignore quite a bit, there is likely stuff committed to "/docs" that didn't need to be, but that's for a different sprint.
+
+Moving the old posts to the new format was a bit annoying, but by the end of it I had a `translate.sh` script that helped get much closer.
+
+When editing the html files, I quickly realized that the paths for using
+Phoenix and the static html were different. It took a bit of time to figure out
+why my Tailwind wouldn't work in the `/docs` folder (and in production), but in
+the end, I wrote this Plug that helped set things as expected. Best of both
+worlds.
+
+Here is the Plug:
+
+```elixir
+defmodule PgBlogWeb.LinksPlug do
+  @behaviour Plug
+
+  import Plug.Conn
+
+  def init(opts) do
+    opts
+  end
+
+  def call(conn, _opts) do
+    links =
+      if System.get_env("MIX_ENV") == "prod" do
+        %{
+          app_css_link: "assets/app.css",
+          home_link: "/index.html"
+        }
+      else
+        %{
+          app_css_link: "/assets/app.css",
+          home_link: "/"
+        }
+      end
+
+    conn
+    |> assign(:app_css_link, links[:app_css_link])
+    |> assign(:home_link, links[:home_link])
+  end
+end
+```
 
 Here is the mix task that does the magic:
 
-Half of my family is from Brazil and I am proud of my heritage. "Gambiarra" is a word in Portuguese (I would love for the language to be called Brazilian, but that's a different discussion altogether :) ) that comes up a lot in Brazilian culture.
-
-<div class="text-2xl font-bold mt-6 mb-6">
-  On not stopping, better yet, continuing
-</div>
-
-<p class="my-4">
-  Folks that know me know that I've been playing and enjoying padel (a lot)
-  lately. At first, for many months, I struggled with getting back in shape,
-  with doing motions that at one time were seamless, with the discrepancy of
-  what I KNEW my body could do (at some point at least) and what it was doing.
-</p>
-
-<p class="my-4">
-  If you didn't know me from before, it was probably a weird experience to see
-  someone try things and fail, SO often and yet, continue to fail and continue
-  to try. In short, that's how I go about life, so far at least. There are no
-  plans on changing this either. It's what made me have the amazing things I've
-  gotten so far in my life.
-</p>
-
-<p class="my-4">
-  I was fortunate, VERY fortunate to have folks that knew me from before that
-  would celebrate the small wins (better failures) with me. Whether it was
-  celebrating losing some weight I had put on (heaviest ever in my life) or
-  talking about how things were starting to fall into place, or just asking me
-  to try something to see how it felt.
-</p>
-
-<p class="my-4">
-  Honestly, it was a tough time. Mentally. On top of everything else that was
-  going on in life, one of the things that I just knew how to do just wasn't
-  there anymore. There is getting old, indeed. But there is also not being
-  where you CAN do (even with your old body) at all. Just so distant from being
-  able to execute things. If you just can't because you are old, that's one
-  thing. Sometimes, life puts you all the way down in the hierarchy of needs
-  and skipping any level is just not prudent, not something I'd do. The amazing
-  thing now is that I'm back at getting to focus on cool things like Padel.
-  Let's GOOOOO!
-</p>
-
-<p class="my-4">
-  It's not perfect though. There is still a lot to do physically to feel at
-  ease and comfortable but I got somewhere where I'm at least happy and
-  enjoying racket sports again. I'm at a point now where I can look forward and
-  not just backwards. There is no reason to learn how to run in different ways
-  if you can't even walk anymore. I'm back walking, even better, jogging. I'm
-  very happy to be here.
-</p>
-
-<div class="text-2xl font-bold mt-6 mb-6">
-  On Padel balls - how often are they changed?
-</div>
-
-<p class="my-4">
-  Now that we know I'm interested in Padel, let's dive deeper into a VERY
-  important attribute of the game: the balls and how often they are changed. It
-  turns out this matters quite a bit in the sport as some shots are much harder
-  if to hit with older (more used) balls in certain conditions and moments in a
-  match. It's fascinating, honestly.
-</p>
-
-<p class="my-4">
-  I went directly to one of the most active (and best) players here in the US,
-  Luis Estrada, and asked him about his experiences with ball changes in
-  tournaments. <a href="https://www.instagram.com/luisitoestrada"
-  target="_blank">If you haven't followed him on his Instagram, do it now
-:)</a>. Per Luis:
-</p>
-
-<div class="w-full">
-  <table class="w-full border border-gray-300">
-    <thead class="bg-gray-200">
-      <tr>
-        <th class="p-1 text-xs font-medium border border-gray-300 text-left">Tour</th>
-        <th class="p-1 text-xs font-medium border border-gray-300 text-left">How often are balls changed</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="p-1 text-xs border border-gray-300">Premier Padel</td>
-        <td class="p-1 text-xs border border-gray-300">Every 9 and 11 games. Warm up counts as 2 games</td>
-      </tr>
-      <tr>
-        <td class="p-1 text-xs border border-gray-300">FIP (with lots of sponsors)</td>
-        <td class="p-1 text-xs border border-gray-300">Every 9 and 11 games. Warm up counts as 2 games</td>
-      </tr>
-      <tr>
-        <td class="p-1 text-xs border border-gray-300">FIP (with fewer sponsors)</td>
-        <td class="p-1 text-xs border border-gray-300">1 can of balls per match until second round (including quali), then, every 9 games</td>
-      </tr>
-      <tr>
-        <td class="p-1 text-xs border border-gray-300">RedPadel</td>
-        <td class="p-1 text-xs border border-gray-300">1 can of balls for first 2 sets, new balls for 3rd set</td>
-      </tr>
-      <tr>
-        <td class="p-1 text-xs border border-gray-300">USPA</td>
-        <td class="p-1 text-xs border border-gray-300">1 can of balls per match</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<p class="my-4">
-  <a href="https://www.padelfip.com/wp-content/uploads/2023/02/6-TECHNICAL-RULES-BOOK-INTERNATIONAL-TOURNAMENTS-FIP-TOUR-2023-1.pdf" class="text-blue-400" target="_blank">Here is what FIP had to say about it in their regulations (section 5.1.3):</a>
-</p>
-
-<img src="../images/padel_balls.png" alt="regulations" class="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto my-4 rounded-lg shadow-md object-cover">
-
-<p class="my-4">
-  Remember to use <a href="https://pista.cloud" class="text-blue-400"
-    target="_blank">Pista</a> to follow all the professional tours!
-</p>
-
-<p class="my-4">
-  Here are some highlights from the Padel tournament final I played this weekend:
-</p>
+There are likely 10 better ways to do this with Phoenix, but this is a valid one :)
