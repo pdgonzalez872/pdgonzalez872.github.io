@@ -19,6 +19,7 @@ defmodule Mix.Tasks.BuildStatic do
     generate_page("/resume_technical", "resume_technical.html", build_dir)
 
     IO.puts("Create posts - add them in priv/posts/")
+
     PgBlog.Blog.all_posts()
     |> Enum.each(fn post ->
       path = "/posts/#{post.id}"
