@@ -43,6 +43,7 @@ docs/favicon-*
 docs/assets/app-*
 docs/images/logo-*
 docs/assets/app.*.gz
+docs/assets/makeup-.*.gz
 # any files that get digested
 priv/static/images/*-*.*
 docs/images/*-*.*
