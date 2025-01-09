@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script defer data-domain="pdgonzalez872.github.io" src="https://plausible.io/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js">
+    </script>
+    <script>
+      window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }
+    </script>
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Fly series: Custom utility scripts in Fly projects</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2025-01-09 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ bash
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ productivity
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ ci
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ automation
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>fly-custom-scripts</div>
+<div hidden id=title>Fly series: Custom utility scripts in Fly projects</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>elixir, bash, productivity, ci, automation</div>
+
+
+<p class="my-4">
+  <a href="https://fly.io" class="text-blue-400" target="_blank">Fly.io</a> has
+  become the go-to platform for apps I build due to their involvement with open
+  source and support of the Elixir ecossystem. In this series, I will be
+  sharing a couple of lessons learned when working with Fly. The experience has
+  been positive and I'll continue to use and suggest Fly until further notice.
+</p>
+
+<p class="my-4">
+  For this post, I'll focus on utility scripts that have saved me some mental
+  load when moving across projects. Yes, they could be made shorter. Yes, lots
+    of different solutions, but, this is where we are at the moment, and that's
+    alright! All scripts are from <a href="https://www.pista.cloud"
+                                     class="text-blue-400"
+                                     target="_blank">Pista</a>'s point of view
+                                   in the examples below, direct copies from
+                                   the repo.
+</p>
+
+<p class="my-4">
+  <span class="text-red-600">detect_os.sh</span> - For all Fly related scripts,
+  I have a script that derives the OS that is running it and chooses which
+  command to run. Rather than going through the rabbithole as to WHY the alias
+  doesn't get set, I use the script and call it a day:
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+detect_os() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # MacOS
+    echo "fly"
+  else
+    # Linux or other Unix-like OS
+    echo "$HOME/.fly/bin/flyctl"
+  fi
+}
+</code></pre>
+
+<p class="my-4">
+  <span class="text-red-600">prod_deploy.sh</span> - Let's deploy to prod:
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+source "$(dirname "$0")/detect_os.sh"
+
+FLY_COMMAND=$(detect_os)
+
+$FLY_COMMAND deploy
+</code></pre>
+
+<p class="my-4">
+ <span class="text-red-600">prod_logs.sh</span> - Let's tail logs for Pista:
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+source "$(dirname "$0")/detect_os.sh"
+
+FLY_COMMAND=$(detect_os)
+
+$FLY_COMMAND logs -a pista
+</code></pre>
+
+<p class="my-4">
+ <span class="text-red-600">prod_console.sh</span> - Let's get console access to a running Pista vm:
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+source "$(dirname "$0")/detect_os.sh"
+
+FLY_COMMAND=$(detect_os)
+
+$FLY_COMMAND ssh console --pty -C "/app/bin/pista remote"
+</code></pre>
+
+<p class="my-4">
+ <span class="text-red-600">prod_psql.sh</span> - Let's get access to Pista's database (Postgres):
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+source "$(dirname "$0")/detect_os.sh"
+
+FLY_COMMAND=$(detect_os)
+
+$FLY_COMMAND postgres connect -a pistadb -d pista
+
+</code></pre>
+
+<p class="my-4">
+  <span class="text-red-600">ci.sh</span> - Here is a non-Fly related one, but
+  helpful nonetheless. Here is an example of a small Continuous Integration
+  (CI) script:
+</p>
+
+<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+
+set -e
+
+mix format --force --check-formatted && mix compile --force --warnings-as-errors && mix test
+</code></pre>
+
+<p class="my-4">
+Remember to make the scripts executable <span class="bg-gray-200">chmod +x script_name.sh</span> and have fun!
+</p>
+
+</div>
+
+<p class="mt-6 mb-6">
+  Thanks for reading!
+</p>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
