@@ -30,7 +30,16 @@
   doesn't get set, I use the script and call it a day:
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>#!/bin/bash
 
 detect_os() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -47,7 +56,15 @@ detect_os() {
   <span class="text-red-600">prod_deploy.sh</span> - Let's deploy to prod:
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "><code>#!/bin/bash
 
 source "$(dirname "$0")/detect_os.sh"
 
@@ -60,7 +77,15 @@ $FLY_COMMAND deploy
  <span class="text-red-600">prod_logs.sh</span> - Let's tail logs for Pista:
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "><code>#!/bin/bash
 
 source "$(dirname "$0")/detect_os.sh"
 
@@ -73,7 +98,15 @@ $FLY_COMMAND logs -a pista
  <span class="text-red-600">prod_console.sh</span> - Let's get console access to a running Pista vm:
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "><code>#!/bin/bash
 
 source "$(dirname "$0")/detect_os.sh"
 
@@ -86,14 +119,21 @@ $FLY_COMMAND ssh console --pty -C "/app/bin/pista remote"
  <span class="text-red-600">prod_psql.sh</span> - Let's get access to Pista's database (Postgres):
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "><code>#!/bin/bash
 
 source "$(dirname "$0")/detect_os.sh"
 
 FLY_COMMAND=$(detect_os)
 
 $FLY_COMMAND postgres connect -a pistadb -d pista
-
 </code></pre>
 
 <p class="my-4">
@@ -102,11 +142,21 @@ $FLY_COMMAND postgres connect -a pistadb -d pista
   (CI) script:
 </p>
 
-<pre class="bg-gray-200 border rounded text-xs"><code>#!/bin/bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "><code>#!/bin/bash
 
 set -e
 
-mix format --force --check-formatted && mix compile --force --warnings-as-errors && mix test
+mix format --force --check-formatted \
+  && mix compile --force --warnings-as-errors \
+  && mix test
 </code></pre>
 
 <p class="my-4">
