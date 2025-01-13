@@ -126,12 +126,20 @@
   verify that password logins are disabled by running:
 </p>
 
-<pre class="text-xs">
-$ cat /etc/ssh/sshd_config | grep "PasswordAuthentication"
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ cat /etc/ssh/sshd_config | grep "PasswordAuthentication"
 PasswordAuthentication no
 # PasswordAuthentication.  Depending on your PAM configuration,
 # PAM authentication, then enable this but set PasswordAuthentication
-</pre>
+</code></pre>
 
 <div class="text-2xl font-bold mt-6 mb-6">
   Securing the machine: Configure firewall: ufw
@@ -144,19 +152,35 @@ PasswordAuthentication no
   is a good enough one.
 </p>
 
-<pre class="text-xs">
-$ ufw allow ssh
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ ufw allow ssh
 $ ufw allow http
 $ ufw allow https
 $ ufw enable
-</pre>
+</code></pre>
 
 <p class="my-4">
   And you can verify things worked by running:
 </p>
 
-<pre class="text-xs">
-$ ufw status
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ ufw status
 Status: active
 
 To                         Action      From
@@ -167,7 +191,7 @@ To                         Action      From
 22/tcp (v6)                ALLOW       Anywhere (v6)
 80/tcp (v6)                ALLOW       Anywhere (v6)
 443/tcp (v6)               ALLOW       Anywhere (v6)
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: The only ports accessible to the external world are 22,
@@ -189,11 +213,19 @@ To                         Action      From
   call this new user admin_deploy.
 </p>
 
-<pre class="text-xs">
-# Think of a password and use it when running the below:
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Think of a password and use it when running the below:
 $ adduser admin_deploy
 $ usermod -aG sudo admin_deploy
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: you are able to log in as the admin_deploy and root
@@ -212,8 +244,16 @@ $ usermod -aG sudo admin_deploy
   the machine without connecting as root.
 </p>
 
-<pre class="text-xs">
-# Change to the admin_deploy user:
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Change to the admin_deploy user:
 $ su admin_deploy
 
 # Go to the correct home directory and create a file:
@@ -233,7 +273,7 @@ $ vim .ssh/authorized_keys
 
 # then, restart the ssh service:
 $ service ssh restart
-</pre>
+</code></pre>
 
 <p class="my-4">
   You should be able to SSH from your local machine as the admin_deploy user.
@@ -255,8 +295,16 @@ $ service ssh restart
   kill the one that let's you do anything on the machine (root SSH).
 </p>
 
-<pre class="text-xs">
-$ sudo vim /etc/ssh/sshd_config
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ sudo vim /etc/ssh/sshd_config
 # Find this line:
 # PermitRootLogin yes
 # change it to `no`, so it looks like this:
@@ -264,7 +312,7 @@ $ sudo vim /etc/ssh/sshd_config
 
 # Then run
 $ service ssh restart
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: Big change. Now you can no longer log in as root (the
@@ -346,20 +394,36 @@ $ service ssh restart
   the config file to the appropriate location.
 </p>
 
-<pre class="text-xs">
-$ sudo rm /etc/nginx/sites-available/default
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ sudo rm /etc/nginx/sites-available/default
 $ sudo cp dotfiles/available-sites-example /etc/nginx/sites-available/default
 $ sudo cat /etc/nginx/sites-available/default
 $ sudo nginx -s reload
-</pre>
+</code></pre>
 
 <p class="my-4">
   You can also manually copy/edit the file (/etc/nginx/sites-available/default)
   with the following:
 </p>
 
-<pre class="text-xs">
-server {
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>server {
   listen 80;
   server_name phoenix 0.0.0.0;
 
@@ -389,7 +453,7 @@ server {
     proxy_set_header   Host $host;
   }
 }
-</pre>
+</code></pre>
 
 <p class="my-4">
   The user that nginx creates and uses when creating OS processes for each of
@@ -397,20 +461,36 @@ server {
   user nginx will use when creating OS process by:
 </p>
 
-<pre class="text-xs">
-# Verify the default user, created by a default nginx install
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Verify the default user, created by a default nginx install
 $ cat /etc/nginx/nginx.conf | ag "user " -Q
 user www-data;
-</pre>
+</code></pre>
 
 <p class="my-4">
   And verify it does not have sudo privileges:
 </p>
 
-<pre class="text-xs">
-$ sudo -l -U www-data
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ sudo -l -U www-data
 User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: Our nginx reverse proxy is configured and routes all
@@ -438,8 +518,16 @@ User www-data is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   clear enough.
 </p>
 
-<pre class="text-xs">
-# Let's change to the postgres user
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Let's change to the postgres user
 $ sudo su postgres
 
 # Let's change the password for the postgres user to... drumroll... postgres
@@ -452,7 +540,7 @@ $ exit
 # we now have a shell under admin_deploy, you can verify with:
 $ whoami
 admin_deploy
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: We could have set up the password to be something else.
@@ -476,8 +564,16 @@ admin_deploy
   fail2ban, but the main parts are:
 </p>
 
-<pre class="text-xs">
-# Install it on the machine:
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Install it on the machine:
 $ sudo apt install fail2ban
 
 # Copy the default files to avoid issues when there are updates.
@@ -495,7 +591,7 @@ maxretry = 1
 # And finally, let's turn it on:
 $ sudo systemctl start fail2ban
 $ sudo systemctl enable fail2ban
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: Fail2ban will help deter bot activity that keep probing
@@ -520,8 +616,16 @@ $ sudo systemctl enable fail2ban
   directives below:
 </p>
 
-<pre class="text-xs">
-# Open the file with an editor:
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Open the file with an editor:
 $ sudo vim /etc/fail2ban/jail.local
 
 # Find the [nginx-http-auth] directive and set it to enabled, add the port and the logpath:
@@ -564,15 +668,23 @@ port     = http,https
 filter   = nginx-noproxy
 logpath  = /var/log/nginx/access.log
 maxretry = 1
-</pre>
+</code></pre>
 
 <p class="my-4">
   Now we add the filters for these jails. As I said before, I'm just moving
   them from my dotfiles. Please inspect them before doing this.
 </p>
 
-<pre class="text-xs">
-# Copy an existing bot filter file:
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Copy an existing bot filter file:
 $ sudo cp /etc/fail2ban/filter.d/apache-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
 
 # Copy over the filters for each directive
@@ -589,7 +701,7 @@ $ sudo systemctl status fail2ban
 
 # and confirm a specific fail2ban client:
 $ sudo fail2ban-client status nginx-nohome
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: Fail2ban will also refuse requests from malicious users
@@ -608,8 +720,16 @@ $ sudo fail2ban-client status nginx-nohome
   Phoenix application later on.
 </p>
 
-<pre class="text-xs">
-# Let's add the app user
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Let's add the app user
 $ sudo adduser app
 # And set a password for the app user
 
@@ -617,7 +737,7 @@ $ sudo adduser app
 $ sudo -l -U app
 [sudo] password for admin_deploy: # enter password
 User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: We created a user so that even if a malicious attacker
@@ -680,8 +800,16 @@ User app is not allowed to run sudo on ubuntu-s-1vcpu-2gb-amd-nyc3-01.
   Let's run the following to prepare the project for the release:
 </p>
 
-<pre class="text-xs">
-# Install Phoenix
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Install Phoenix
 $ mix archive.install hex phx_new 1.5.8
 
 #
@@ -697,7 +825,7 @@ $ mix assets.setup && mix assets.build
 # Create a secret that Phoenix will use to sign and encrypt data
 # Copy the output when you get it.
 $ mix phx.gen.secret
-</pre>
+</code></pre>
 
 <div class="text-2xl font-bold mt-6 mb-6">
   Preparing the deploy: Let's create some files to help with the process
@@ -718,8 +846,16 @@ Let's do the following:
   </li>
 </ol>
 
-<pre class="text-xs">
-#
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>#
 # As admin_deploy, `cd` to the project's root directory
 #
 
@@ -762,7 +898,7 @@ $ sudo chmod +x entrypoint.sh
 $ sudo mkdir /home/app/logs
 $ sudo touch /home/app/logs/log.log
 $ sudo chown app /home/app/logs/log.log
-</pre>
+</code></pre>
 
 <p class="my-4">
   If you don't have the code prepared for Phoenix releases, the only change you
@@ -781,8 +917,16 @@ $ sudo chown app /home/app/logs/log.log
   Preparing the deploy: Let's deploy!
 </div>
 
-<pre class="text-xs">
-#
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>#
 # As admin_deploy, `cd` to the project's root directory
 #
 
@@ -811,7 +955,7 @@ $ sudo chown app /home/app/_build/
 # Run the entrypoint file, which runs the server as the app user, outputting to
 # the log file. From the root of the project, as admin_deploy, run:
 $ sudo -u app "./entrypoint.sh"
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: Note how we run the Phoenix server as the app user, a
@@ -829,8 +973,16 @@ $ sudo -u app "./entrypoint.sh"
   things.
 </p>
 
-<pre class="text-xs">
-# Monitor nginx traffic logs
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Monitor nginx traffic logs
 $ sudo tail -f /var/log/nginx/access.log
 
 # Monitor the Phoenix application's logs
@@ -847,7 +999,7 @@ _build/prod/rel/your_app_name/bin/your_app_name remote
 
 # Run htop to see how the machine is doing
 $ htop
-</pre>
+</code></pre>
 
 <p class="my-4">
   I use tmux and have the above running on different windows. There is a lot, a
@@ -867,10 +1019,18 @@ $ htop
   app user directory. Should be good enough for now.
 </p>
 
-<pre class="text-xs">
-$ A one liner would look something like this, from the project's root::
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ A one liner would look something like this, from the project's root::
 sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/app/_build/
-</pre>
+</code></pre>
 
 <div class="text-2xl font-bold mt-6 mb-6">
   More security: Restrict the app user so all it knows is how to run the
@@ -905,32 +1065,56 @@ sudo rm -rf /home/app/_build/ && ./build_release.sh && sudo cp -r _build/ /home/
   `cp`. Here are the file contents for the `.bashrc`:
 </p>
 
-<pre class="text-xs">
-alias cd="printf 'not today \n'"
-alias exit="printf 'not today \n'"
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ alias cd="printf 'not today \n'"
+$ alias exit="printf 'not today \n'"
 
-PATH=$HOME/bin
-export PATH
-</pre>
+$ PATH=$HOME/bin
+$ export PATH
+</code></pre>
 
 <p class="my-4">
   If you cloned the dotfiles repository, do this:
 </p>
 
-<pre class="text-xs">
-$ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ sudo cp dotfiles/.deploy_user_bashrc /home/app/.bashrc
 
 # make it so `app` can't edit the file
 $ sudo chattr +i /home/app/.bashrc
-</pre>
+</code></pre>
 
 <p class="my-4">
   With the file created, all new shells for the app user will use the special
   `.bashrc` file and therefore do very little.
 </p>
 
-<pre class="text-xs">
-# Make user use restricted bash
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Make user use restricted bash
 $ sudo chsh -s /bin/rbash app
 
 # Create a bin directory for the app user
@@ -955,7 +1139,7 @@ $ sudo ln -s /usr/bin/sed /home/app/bin
 $ sudo ln -s /usr/bin/cat /home/app/bin
 $ sudo ln -s /usr/bin/grep /home/app/bin
 $ sudo ln -s /usr/bin/basename /home/app/bin
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: The app user shell is very limited, only has enough to
@@ -981,12 +1165,20 @@ $ sudo ln -s /usr/bin/basename /home/app/bin
   system.
 </p>
 
-<pre class="text-xs">
-$ sudo /usr/bin/passwd --lock app
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code>$ sudo /usr/bin/passwd --lock app
 $ sudo /usr/bin/passwd --lock root
 $ sudo /usr/bin/passwd --lock postgres
 $ sudo /usr/bin/passwd --lock www-data
-</pre>
+</code></pre>
 
 <p class="my-4">
   Security checkpoint: One can't log into the accounts above. An attacker could
