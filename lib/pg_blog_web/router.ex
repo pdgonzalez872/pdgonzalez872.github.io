@@ -20,6 +20,7 @@ defmodule PgBlogWeb.Router do
 
     get "/", PageController, :home
     get "/resume_technical", PageController, :resume_technical
+    get "/recommendations", PageController, :recommendations
     get "/posts/show_to_format", PostController, :show_to_format
     get "/posts/:id", PostController, :show
   end

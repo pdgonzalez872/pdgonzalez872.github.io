@@ -22,4 +22,9 @@ defmodule PgBlogWeb.PageController do
     |> put_root_layout(html: {PgBlogWeb.Layouts, :root_bare})
     |> render(:resume_technical, layout: false)
   end
+
+  def recommendations(conn, _) do
+    conn
+    |> render(:recommendations)
+  end
 end
