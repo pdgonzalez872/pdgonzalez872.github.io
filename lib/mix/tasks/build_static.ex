@@ -17,6 +17,7 @@ defmodule Mix.Tasks.BuildStatic do
     IO.puts("Create static pages")
     generate_page("/", "index.html", build_dir)
     generate_page("/resume_technical", "resume_technical.html", build_dir)
+    generate_page("/recommendations", "recommendations.html", build_dir)
 
     IO.puts("Create posts - add them in priv/posts/")
 
