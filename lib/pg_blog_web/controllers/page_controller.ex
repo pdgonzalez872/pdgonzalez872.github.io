@@ -25,7 +25,6 @@ defmodule PgBlogWeb.PageController do
 
   def recommendations(conn, _) do
     conn
-    |> put_root_layout(html: {PgBlogWeb.Layouts, :root_bare})
-    |> render(:recommendations, layout: false)
+    |> render(:recommendations)
   end
 end
