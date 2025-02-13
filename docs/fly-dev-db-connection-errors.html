@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script defer data-domain="pdgonzalez872.github.io" src="https://plausible.io/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js">
+    </script>
+    <script>
+      window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }
+    </script>
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Fly series: Dealing with DbConnection errors</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2025-02-13 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+sql
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ postgres
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ dbeaver
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>fly-dev-db-connection-errors</div>
+<div hidden id=title>Fly series: Dealing with DbConnection errors</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>sql, postgres, dbeaver</div>
+
+<p class="my-4">
+  Sometimes, things break. That's just how things are. One time, I realized I
+  was getting DbConnection errors in an app hosted on Fly (using Fly Posgres),
+  even with low usage in an app. It was odd, came out of nowhere. You could see
+  the connections dropping and then going back up.
+</p>
+
+<p class="my-4">
+  The confusing thing was that there was no trigger for this. It just started
+  happening. After some research, I decided to contact Fly's support, which
+  have always been super helpful. They showed me that one of the three machines
+  I had for my database was stuck in a boot loop and would never reach
+  available state. It seemed like it was just long enough to take some
+  connections from the pool, but would crash soon later. It was there on the
+  dashboard if you looked at all the machines. It was tucked a click away
+  though, I was not able to see it from the main dashboard, the db (overall
+  health) was green. Now I know to look there and in hindsight, I should have.
+</p>
+
+<p class="my-4">
+  Support gave me direction on how to fix the problem. In short, you had to
+  destroy the bad machine and clone a good one. That's why we have more than 1
+  machine (like Fly suggests). As usual, I write a lot when working and had
+  some notes. When this happened again a couple weeks back, I was prepared.
+  Here are the notes that have helped me:
+</p>
+
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Steps to destroy a bad machine (and volume) and clone a good one - fly postgres
+# list the machines, get the id for the bad one
+$ fly machine list --app <your_db_app>
+
+# list the volumes, get the volume attached to the bad one
+$ fly volumes list --app <your_db_app>
+
+# had to use --force, cli suggested, worked
+$ fly machine destroy <bad_machine_id> --force --app <your_db_app>
+
+$ fly volumes destroy <bad_volume_id> --app <your_db_app>
+
+$ fly volumes list --app <your_db_app>
+$ fly machine clone <good_machine_id> --region <target_region> --app <your_db_app>
+
+# confirm
+$ fly volumes list --app <your_db_app>
+$ fly machine list --app <your_db_app>
+</code></pre>
+
+<p class="my-4">
+  Hope this helps! It has helped me a couple of times already. I also want to
+  give props to Fly's email support. It's always been helpful.
+</p>
+
+</div>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>

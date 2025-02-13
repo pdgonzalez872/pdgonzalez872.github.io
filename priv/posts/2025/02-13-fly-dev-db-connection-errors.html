@@ -1,0 +1,65 @@
+<div hidden id=id>fly-dev-db-connection-errors</div>
+<div hidden id=title>Fly series: Dealing with DbConnection errors</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>sql, postgres, dbeaver</div>
+
+<p class="my-4">
+  Sometimes, things break. That's just how things are. One time, I realized I
+  was getting DbConnection errors in an app hosted on Fly (using Fly Posgres),
+  even with low usage in an app. It was odd, came out of nowhere. You could see
+  the connections dropping and then going back up.
+</p>
+
+<p class="my-4">
+  The confusing thing was that there was no trigger for this. It just started
+  happening. After some research, I decided to contact Fly's support, which
+  have always been super helpful. They showed me that one of the three machines
+  I had for my database was stuck in a boot loop and would never reach
+  available state. It seemed like it was just long enough to take some
+  connections from the pool, but would crash soon later. It was there on the
+  dashboard if you looked at all the machines. It was tucked a click away
+  though, I was not able to see it from the main dashboard, the db (overall
+  health) was green. Now I know to look there and in hindsight, I should have.
+</p>
+
+<p class="my-4">
+  Support gave me direction on how to fix the problem. In short, you had to
+  destroy the bad machine and clone a good one. That's why we have more than 1
+  machine (like Fly suggests). As usual, I write a lot when working and had
+  some notes. When this happened again a couple weeks back, I was prepared.
+  Here are the notes that have helped me:
+</p>
+
+<pre class="
+    inline-block
+    p-3
+    border
+    border-gray-300
+    rounded
+    bg-gray-200
+    text-xs
+  "
+><code># Steps to destroy a bad machine (and volume) and clone a good one - fly postgres
+# list the machines, get the id for the bad one
+$ fly machine list --app <your_db_app>
+
+# list the volumes, get the volume attached to the bad one
+$ fly volumes list --app <your_db_app>
+
+# had to use --force, cli suggested, worked
+$ fly machine destroy <bad_machine_id> --force --app <your_db_app>
+
+$ fly volumes destroy <bad_volume_id> --app <your_db_app>
+
+$ fly volumes list --app <your_db_app>
+$ fly machine clone <good_machine_id> --region <target_region> --app <your_db_app>
+
+# confirm
+$ fly volumes list --app <your_db_app>
+$ fly machine list --app <your_db_app>
+</code></pre>
+
+<p class="my-4">
+  Hope this helps! It has helped me a couple of times already. I also want to
+  give props to Fly's email support. It's always been helpful.
+</p>
