@@ -94,22 +94,22 @@ sql
   "
 ><code># Steps to destroy a bad machine (and volume) and clone a good one - fly postgres
 # list the machines, get the id for the bad one
-$ fly machine list --app <your_db_app>
+$ fly machine list --app YOUR_DB_APP
 
 # list the volumes, get the volume attached to the bad one
-$ fly volumes list --app <your_db_app>
+$ fly volumes list --app YOUR_DB_APP
 
 # had to use --force, cli suggested, worked
-$ fly machine destroy <bad_machine_id> --force --app <your_db_app>
+$ fly machine destroy BAD_MACHINE_ID --force --app YOUR_DB_APP
 
-$ fly volumes destroy <bad_volume_id> --app <your_db_app>
+$ fly volumes destroy BAD_VOLUME_ID --app YOUR_DB_APP
 
-$ fly volumes list --app <your_db_app>
-$ fly machine clone <good_machine_id> --region <target_region> --app <your_db_app>
+$ fly volumes list --app YOUR_DB_APP
+$ fly machine clone GOOD_MACHINE_ID --region TARGET_REGION --app YOUR_DB_APP
 
 # confirm
-$ fly volumes list --app <your_db_app>
-$ fly machine list --app <your_db_app>
+$ fly machine list --app YOUR_DB_APP
+$ fly volumes list --app YOUR_DB_APP
 </code></pre>
 
 <p class="my-4">
