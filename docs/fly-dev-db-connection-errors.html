@@ -55,6 +55,17 @@ sql
 <div hidden id=tags>sql, postgres, dbeaver</div>
 
 <div>
+
+<p class="text-xl text-red-500">
+EDIT: I recently had to do this again and the `destroy` command applied on a
+primary didn't automatically promote one of the replicas. I'm unsure of why at
+the moment (maybe I haven't done the below on this physical machine, maybe the
+cli had a bad update? - unsure), but the solution was to `ssh` into the db app
+and manually promote a replica to primary using `repmgr`. I have notes and will
+write them down when I have a little bit of time later today. For now, I think
+you need to do a `failover` manually for the below to work as you'd expect.
+</p>
+
 <p class="my-4">
   Sometimes, things break. That's just how things are. One time, I realized I
   was getting DbConnection errors in an app hosted on Fly (using Fly Posgres),
