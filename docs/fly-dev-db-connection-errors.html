@@ -59,10 +59,12 @@ sql
 <p class="text-xl text-red-500">
 EDIT: I recently had to do this again and the `destroy` command applied on a
 primary didn't automatically promote one of the replicas. I'm unsure of why at
-the moment (maybe I haven't done the below on this physical machine, maybe the
-cli had a bad update? - unsure), but the solution was to `ssh` into the db app
-and manually promote a replica to primary using `repmgr`. I have notes and will
-write them down when I have a little bit of time later today. For now, I think
+the moment (current hypothesis is that I have always run one of the commands
+below WITHOUT `--force` first, getting an "error" and then using `--force`
+after - unsure, either that or there was a cli update that doesn't promote a
+replica when the primary is deleted), but the solution was to `ssh` into the db
+app and manually promote a replica to primary using `repmgr`. I have notes and
+will write them down when I have a little bit of time later. For now, I think
 you need to do a `failover` manually for the below to work as you'd expect.
 </p>
 
@@ -109,6 +111,8 @@ $ fly machine list --app YOUR_DB_APP
 
 # list the volumes, get the volume attached to the bad one
 $ fly volumes list --app YOUR_DB_APP
+
+$ fly machine destroy BAD_MACHINE_ID --app YOUR_DB_APP
 
 # had to use --force, cli suggested, worked
 $ fly machine destroy BAD_MACHINE_ID --force --app YOUR_DB_APP
