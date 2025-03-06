@@ -5,16 +5,35 @@
 
 <div>
 
-<p class="text-xl text-red-500">
-EDIT: I recently had to do this again and the `destroy` command applied on a
-primary didn't automatically promote one of the replicas. I'm unsure of why at
-the moment (current hypothesis is that I have always run one of the commands
-below WITHOUT `--force` first, getting an "error" and then using `--force`
-after - unsure, either that or there was a cli update that doesn't promote a
-replica when the primary is deleted), but the solution was to `ssh` into the db
-app and manually promote a replica to primary using `repmgr`. I have notes and
-will write them down when I have a little bit of time later. For now, I think
-you need to do a `failover` manually for the below to work as you'd expect.
+  <div>
+    <p class="text-xl text-red-500">
+      EDIT: I recently had to do this again and the `destroy` command applied
+      on a primary didn't automatically promote one of the replicas. The
+      solution was to `ssh` into the one of the db apps (all replicas, no
+      primary) and manually promote a replica to primary using `repmgr`. I have
+      notes and will write them down when I have a little bit of time later.
+      I'm unsure of why this failed at the moment, but the current hypotheses
+      are:
+    </p>
+  </div>
+
+<ul class="mt-2 list-disc text-red-500">
+  <li>
+    Successful failure -> I have always run one of the commands below WITHOUT
+    `--force` first, getting an "error" and then using `--force` after. The
+    first "error" triggers the failover and by the time I run the second
+    command, things work, helping me fail successfully.
+  </li>
+  <li>
+    Regression -> A regression in the cli brought back this bug. Someone else
+    experienced this error a couple years ago and the solution was to update
+    their cli to a version that didn't have that bug.
+  </li>
+</ul>
+
+<p class="text-red-500">
+  For now, I suggest doing a failover manually for the below to work as
+  you'd expect, before destroying the machine.
 </p>
 
 <p class="my-4">
