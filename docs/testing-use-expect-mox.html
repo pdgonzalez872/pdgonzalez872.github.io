@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script defer data-domain="pdgonzalez872.github.io" src="https://plausible.io/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js">
+    </script>
+    <script>
+      window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }
+    </script>
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Testing in Elixirland (use expect rather than stub)</h1>
+<h1 class="text font-bold mb-2">by Paulo Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2025-11-15 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+testing
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ mox
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ expect
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ stub
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>testing-use-expect-mox</div>
+<div hidden id=title>Testing in Elixirland (use expect rather than stub)</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>testing, elixir, mox, expect, stub</div>
+
+<div>
+
+<p class="my-4">
+  I've finally been able to put together a few thoughts I've had into something
+  that may help some folks in the future. At least it will help myself, since I
+  can link to this post when this comes up again.
+</p>
+
+<p class="my-4">
+  After working in a few large Elixir codebases, I've noticed a recurring
+  pattern: lingering <span class="bg-gray-200 px-1 rounded font-mono text-sm">stub/3</span> calls that can safely be removed from tests without
+  changing behavior. When removed, nothing fails. More importantly, there's a
+  missed opportunity to use <span class="bg-gray-200 px-1 rounded font-mono text-sm">expect/3</span>, which in most cases would have been the
+  right tool.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  The Problem: Dead Code in Your Tests
+</div>
+
+<p class="my-4">
+  The stub is a mute button. A test that used to tell you that a contract was
+  to be respected (an implementation would be called at some point) no longer
+  tells you anything. In fact, it tricks you into thinking that it does, but it
+  doesn't.
+</p>
+
+<p class="my-4">
+  Even by using setup <span class="bg-gray-200 px-1 rounded font-mono text-sm">:verify_on_exit!</span>, nothing happens. We still get the
+  misdirection and dead code in the codebase because <span class="bg-gray-200 px-1 rounded font-mono text-sm">stub/3</span> allows things to be
+  called zero times. The best thing about Mox is verifying that the contract is
+  exercised. The moment it is no longer exercised, I'd want tests to warn me
+  about it.
+</p>
+
+<p class="my-4">
+  The false negative here is what bothers me the most: I don't know that
+  something STOPPED being called. These are annoying and usually cause
+  surprises.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Why This Happens
+</div>
+
+<p class="my-4">
+  From what I've seen, folks reach for <span class="bg-gray-200 px-1 rounded font-mono text-sm">stub/3</span> because it's an overloaded term
+  in testing, much like "mock" (as shown in <a
+  href="https://dashbit.co/blog/mocks-and-explicit-contracts" class="text-blue-400"
+  target="_blank">this excellent Dashbit article</a>). Folks are well-meaning,
+  but the end result seems to always be the same:
+</p>
+
+<p class="my-4">
+  The reasons for this happening are mostly:
+</p>
+
+<p class="my-4">
+  - The term "stub" feels familiar from other libraries and languages. Many users
+  don't immediately notice or understand <span class="bg-gray-200 px-1 rounded font-mono text-sm">expect/3</span> as the verification-based
+  alternative and how powerful it is.
+</p>
+
+<p class="my-4">
+  - People often come from other ecosystems where the word "stub" has a different
+  meaning than in ours. Once I show how a certain stub call can be removed and
+  mention <span class="bg-gray-200 px-1 rounded font-mono text-sm">expect/3</span>, it tends to click for them.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Why expect/3 is Better
+</div>
+
+<p class="my-4">
+  The best thing about <span class="bg-gray-200 px-1 rounded font-mono text-sm">expect/3</span> is that it verifies the contract is exercised.
+  When a contract stops being exercised, your tests will immediately fail and
+  warn you. This is exactly what you want: early feedback when something
+  changes.
+</p>
+
+<p class="my-4">
+  With <span class="bg-gray-200 px-1 rounded font-mono text-sm">stub/3</span>, you lose this verification. The test might pass, but you've lost
+  valuable information about whether your code is actually using the dependency
+  you thought it was.
+</p>
+
+<p class="my-4">
+  I added some docs to Mox to try to communicate this. Here is the <a href="https://github.com/dashbitco/mox/issues/168"
+    class="text-blue-400" target="_blank">Mox Github issue</a> discussing these
+  symptoms and here is the <a href="https://github.com/dashbitco/mox/pull/169"
+    class="text-blue-400" target="_blank">PR that addresses it</a>.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Conclusion
+</div>
+
+<p class="my-4">
+  Reach for <span class="bg-gray-200 px-1 rounded font-mono text-sm">expect/3</span> by default. It verifies your contracts are
+  actually being exercised and will warn you immediately when they stop being
+  used. Save <span class="bg-gray-200 px-1 rounded font-mono text-sm">stub/3</span> for the rare cases where you truly need zero-or-more-times
+  semantics.
+</p>
+
+<p class="my-4">
+  Your tests should be a safety net that catches when things change, not a
+  mute button that hides what's happening.
+</p>
+
+
+
+
+</div>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
