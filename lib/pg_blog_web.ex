@@ -43,7 +43,7 @@ defmodule PgBlogWeb do
         layouts: [html: PgBlogWeb.Layouts]
 
       import Plug.Conn
-      import PgBlogWeb.Gettext
+      use Gettext, backend: PgBlog.Gettext
 
       unquote(verified_routes())
     end
