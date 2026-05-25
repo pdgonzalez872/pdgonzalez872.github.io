@@ -1,0 +1,13 @@
+[tools]
+argocd = "3.1.8"
+elixir = "1.19.5-otp-28"
+erlang = "28.3"
+pnpm = "10.15.1"
+slsa-verifier = "2.7.1"
+terraform = "1.13.0"
+
+[hooks]
+postinstall = [
+  "helm plugin install https://github.com/helm-unittest/helm-unittest.git &> /dev/null || true"
+]
+
