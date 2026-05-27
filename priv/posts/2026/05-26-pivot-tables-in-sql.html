@@ -1,0 +1,215 @@
+<div hidden id=id>pivot-tables-in-sql</div>
+<div hidden id=title>Pivot tables in SQL</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>sql, postgres, reporting</div>
+
+<p class="my-4">
+  Someone asked me a reporting question the other day. In Excel I'd answer it
+  with a pivot table without thinking. I didn't know how to do it in SQL, so I
+  researched how.
+</p>
+
+<p class="my-4">
+  Say the data lives in two tables: a
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">products</span> table,
+  and a <span class="bg-gray-200 px-1 rounded font-mono text-sm">sales</span>
+  table that points at it by
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">product_id</span>.
+</p>
+
+<pre class="text-xs"><code>\d products
+              Table "public.products"
+ Column |  Type   | Collation | Nullable | Default
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null |
+ name   | text    |           | not null |
+Indexes:
+    "products_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "sales" CONSTRAINT "sales_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)
+
+\d sales
+                 Table "public.sales"
+   Column   |  Type   | Collation | Nullable | Default
+------------+---------+-----------+----------+---------
+ sale_date  | date    |           |          |
+ product_id | integer |           |          |
+ amount     | numeric |           |          |
+Foreign-key constraints:
+    "sales_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)</code></pre>
+
+<p class="my-4">
+  Pivoting is turning row values into columns. Joined, that's the long shape we
+  pivot:
+</p>
+
+<pre class="text-xs"><code>-- query:
+SELECT s.sale_date, p.name AS product, s.amount
+FROM sales s
+JOIN products p ON p.id = s.product_id
+ORDER BY s.sale_date, p.name;
+
+-- result:
+ sale_date  | product | amount
+------------+---------+--------
+ 2026-01-01 | Apples  |    100
+ 2026-01-01 | Bananas |     30
+ 2026-01-01 | Oranges |     50
+ 2026-02-01 | Apples  |    200
+ 2026-02-01 | Bananas |     60
+ 2026-02-01 | Oranges |     75</code></pre>
+
+<p class="my-4">
+  Into this, one row per date, one column per product:
+</p>
+
+<pre class="text-xs"><code> sale_date  | apples | oranges | bananas
+------------+--------+---------+---------
+ 2026-01-01 |    100 |      50 |      30
+ 2026-02-01 |    200 |      75 |      60</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">CASE WHEN</div>
+
+<pre class="text-xs"><code>-- query:
+SELECT s.sale_date,
+  SUM(CASE WHEN p.name = 'Apples'  THEN s.amount ELSE 0 END) AS apples,
+  SUM(CASE WHEN p.name = 'Oranges' THEN s.amount ELSE 0 END) AS oranges,
+  SUM(CASE WHEN p.name = 'Bananas' THEN s.amount ELSE 0 END) AS bananas
+FROM sales s
+JOIN products p ON p.id = s.product_id
+GROUP BY s.sale_date
+ORDER BY s.sale_date;
+
+-- result:
+ sale_date  | apples | oranges | bananas
+------------+--------+---------+---------
+ 2026-01-01 |    100 |      50 |      30
+ 2026-02-01 |    200 |      75 |      60</code></pre>
+
+<p class="my-4">
+  The explicit version, and the one I grok best: one
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">SUM(CASE WHEN ...)</span>
+  per column,
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">GROUP BY</span> the date.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">FILTER</div>
+
+<pre class="text-xs"><code>-- query:
+SELECT s.sale_date,
+  SUM(s.amount) FILTER (WHERE p.name = 'Apples')  AS apples,
+  SUM(s.amount) FILTER (WHERE p.name = 'Oranges') AS oranges,
+  SUM(s.amount) FILTER (WHERE p.name = 'Bananas') AS bananas
+FROM sales s
+JOIN products p ON p.id = s.product_id
+GROUP BY s.sale_date
+ORDER BY s.sale_date;
+
+-- result:
+ sale_date  | apples | oranges | bananas
+------------+--------+---------+---------
+ 2026-01-01 |    100 |      50 |      30
+ 2026-02-01 |    200 |      75 |      60</code></pre>
+
+<p class="my-4">
+  Same result, shorter. Postgres's
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">FILTER</span> clause.
+  Less to read. I still reach for CASE WHEN.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">crosstab</div>
+
+<pre class="text-xs"><code>-- query:
+CREATE EXTENSION IF NOT EXISTS tablefunc;
+
+SELECT * FROM crosstab(
+  $$ SELECT s.sale_date, p.name, SUM(s.amount)
+     FROM sales s JOIN products p ON p.id = s.product_id
+     GROUP BY s.sale_date, p.name ORDER BY 1, 2 $$
+) AS ct(sale_date date, apples numeric, oranges numeric, bananas numeric);
+
+-- result:
+ sale_date  | apples | oranges | bananas
+------------+--------+---------+---------
+ 2026-01-01 |    100 |      30 |      50
+ 2026-02-01 |    200 |      60 |      75</code></pre>
+
+<p class="my-4">
+  Runs without an error. Also wrong:
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">oranges</span> is
+  showing Bananas,
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">bananas</span> is
+  showing Oranges.
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">crosstab</span> fills
+  columns in the order the categories sort in the inner query (alphabetical by
+  product name: Apples, Bananas, Oranges), not by the names in
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">AS ct(...)</span>.
+</p>
+
+<pre class="text-xs"><code>-- query:
+SELECT * FROM crosstab(
+  $$ SELECT s.sale_date, p.name, SUM(s.amount)
+     FROM sales s JOIN products p ON p.id = s.product_id
+     GROUP BY s.sale_date, p.name ORDER BY 1, 2 $$,
+  $$ VALUES ('Apples'), ('Oranges'), ('Bananas') $$
+) AS ct(sale_date date, apples numeric, oranges numeric, bananas numeric);
+
+-- result:
+ sale_date  | apples | oranges | bananas
+------------+--------+---------+---------
+ 2026-01-01 |    100 |      50 |      30
+ 2026-02-01 |    200 |      75 |      60</code></pre>
+
+<p class="my-4">
+  Two-arg form. The second query pins the category order. Now it's right. If you
+  use <span class="bg-gray-200 px-1 rounded font-mono text-sm">crosstab</span>,
+  use this form.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">The catch</div>
+
+<p class="my-4">
+  All of these need the columns hard-coded up front
+  (<span class="bg-gray-200 px-1 rounded font-mono text-sm">'Apples'</span>,
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">'Oranges'</span>...).
+  Postgres won't grow columns from the data the way Excel does.
+</p>
+
+<p class="my-4">
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">CASE WHEN</span> covers
+  almost everything and reads clearest to me.
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">FILTER</span> when you
+  want it shorter (arguably cleaner to read).
+  I found <span class="bg-gray-200 px-1 rounded font-mono text-sm">crosstab</span>
+  to be hard to follow.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">Follow along</div>
+
+<p class="my-4">
+  Want to run these yourself? Seed the two tables:
+</p>
+
+<pre class="text-xs"><code>CREATE TABLE IF NOT EXISTS products (
+  id   int PRIMARY KEY,
+  name text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sales (
+  sale_date  date,
+  product_id int REFERENCES products(id),
+  amount     numeric
+);
+
+INSERT INTO products (id, name) VALUES
+  (1, 'Apples'),
+  (2, 'Oranges'),
+  (3, 'Bananas');
+
+INSERT INTO sales (sale_date, product_id, amount) VALUES
+  ('2026-01-01', 1, 100),
+  ('2026-01-01', 3,  30),
+  ('2026-01-01', 2,  50),
+  ('2026-02-01', 1, 200),
+  ('2026-02-01', 3,  60),
+  ('2026-02-01', 2,  75);</code></pre>
