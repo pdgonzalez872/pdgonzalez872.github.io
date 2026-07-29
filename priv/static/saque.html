@@ -76,6 +76,26 @@
   .tag{color:var(--clay); font-weight:700}
   .tag-court{color:var(--court); font-weight:700}
 
+  .idea{margin:0 0 48px; max-width:70ch}
+  .idea h2{margin:0 0 16px; font-size:1.5rem; letter-spacing:-.015em; line-height:1.12; text-wrap:balance}
+  .idea p{margin:0 0 14px; font-size:1.02rem}
+  .idea em{font-style:italic}
+  .ex-label{font-weight:700; color:var(--ink); margin:22px 0 10px}
+  .plan{
+    margin:0 0 18px; padding:16px 18px; list-style:none;
+    display:flex; flex-direction:column; gap:10px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    border-left:4px solid var(--court); box-shadow:var(--shadow);
+  }
+  .plan li{font-size:.97rem; line-height:1.45}
+  .side{
+    display:inline-block; min-width:98px; text-align:center; margin-right:8px;
+    font-weight:700; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+    padding:2px 9px; border-radius:999px;
+  }
+  .side-d{color:var(--clay); background:color-mix(in srgb,var(--clay) 13%, transparent)}
+  .side-e{color:var(--court); background:color-mix(in srgb,var(--court) 15%, transparent)}
+
   .grid{
     display:grid; gap:26px 22px;
     grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -110,7 +130,7 @@
 <body>
 <header>
   <div class="wrap head-inner">
-    <div class="eyebrow">Treino de hoje, 15h</div>
+    <div class="eyebrow">Treino de saque</div>
     <h1>Sessão de saque</h1>
     <p class="meta">Com o Leandro. A ideia não é técnica pesada. O foco é o <strong>flow</strong>: sacar com ritmo e leveza, e sair bem posicionado para a jogada. Abaixo, o plano e os vídeos que valem a pena assistir com atenção. É só dar play, cada um toca aqui na página.</p>
   </div>
@@ -119,7 +139,7 @@
 <main class="wrap">
   <section aria-label="Foco de hoje">
     <div class="focus">
-      <h2>Foco de hoje</h2>
+      <h2>Foco do treino</h2>
       <ul>
         <li>Não é uma sessão focada em técnica. O foco é o <span class="tag">FLOW</span>: ritmo e leveza, mais do que a mecânica.</li>
         <li><span class="tag">Incorporar jogadas ao saque</span>: saque mais o padrão de jogada que vem depois, não só a bola.
@@ -139,6 +159,26 @@
       </ul>
     </div>
 
+    <div class="idea">
+      <p class="section-label">A ideia</p>
+      <h2>Ganhar mais pontos sacando</h2>
+      <p>Tem que ganhar mais pontos sacando, não é força, é usar melhor a ferramenta.</p>
+      <p>Às vezes é treinar as jogadas 1+2 bastante, outras vezes é realmente melhorar a técnica para tirar um pouco mais de quadra do adversário.</p>
+      <p>Às vezes é aprender a variar o saque, ter <em>"listinhas"</em> de jogada para o game inteiro, antes de começar o game até.</p>
+      <p class="ex-label">Um exemplo numa quadra de saibro</p>
+      <ul class="plan">
+        <li><span class="side side-d">lado direito</span> → sacar um aberto 60%, bastante slice, forçar a quadra aberta</li>
+        <li><span class="side side-e">lado esquerdo</span> → primeiro saque plano (90%) no T, tentar pressão + rede</li>
+        <li><span class="side side-d">lado direito</span> → primeiro saque no corpo (100%), 1+2</li>
+        <li><span class="side side-e">lado esquerdo</span> → kick aberto curto de primeiro saque, forçar quadra aberta</li>
+        <li><span class="side side-d">lado direito</span> → primeiro saque aberto 90% slice, talvez 1+2, talvez quadra aberta</li>
+        <li><span class="side side-e">lado esquerdo</span> → primeiro saque aberto plano, 90%, tentar ace</li>
+      </ul>
+      <p>Isso tudo depende do que você pode fazer tecnicamente.</p>
+      <p>Essa é a diferença maior que vejo entre os melhores jogadores e os outros que não conseguem colocar tudo junto: os caras nem pensam em tudo junto, pensam em coisas separadas. Direita, esquerda. Como você gosta de música, acordes separados, não juntos. Tem que fluir, tudo ser junto.</p>
+      <p>Sacar como o Rafter, tudo bem, talvez você não consiga. Mas não ter nem uma listinha de jogada pronta quando for sacar, isso é um erro não forçado, amador :)</p>
+    </div>
+
     <p class="section-label">Vídeos, repare no flow e em como ele se movimenta depois do saque</p>
     <div class="grid">
 
@@ -153,7 +193,7 @@
         <div class="frame" style="padding-bottom:56.25%">
           <iframe src="https://www.youtube.com/embed/exMyrbRWw_I?rel=0" title="Jogada 1+2" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
         </div>
-        <div class="cap"><div class="n">02</div><p>Jogada 1+2: saque mais a primeira bola.</p><span class="pill">foco de hoje</span></div>
+        <div class="cap"><div class="n">02</div><p>Jogada 1+2: saque mais a primeira bola.</p><span class="pill">foco do treino</span></div>
       </article>
 
       <article class="card">
