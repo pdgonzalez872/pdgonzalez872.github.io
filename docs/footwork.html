@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Footwork: moving well on court</title>
+<style>
+  :root{
+    --bg:#f7f4ef; --panel:#fffdfa; --ink:#211c17; --muted:#6f665c;
+    --line:#e4ddd2; --clay:#c1552f; --clay-soft:#e8c7b6; --court:#3f7d5a;
+    --shadow:0 1px 2px rgba(33,28,23,.05),0 6px 20px rgba(33,28,23,.06);
+    --maxw:1120px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#161310; --panel:#211d19; --ink:#f2ece3; --muted:#a99e91;
+      --line:#332d27; --clay:#e0764c; --clay-soft:#5a3626; --court:#6bbd8c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f4ef; --panel:#fffdfa; --ink:#211c17; --muted:#6f665c;
+    --line:#e4ddd2; --clay:#c1552f; --clay-soft:#e8c7b6; --court:#3f7d5a;
+    --shadow:0 1px 2px rgba(33,28,23,.05),0 6px 20px rgba(33,28,23,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#161310; --panel:#211d19; --ink:#f2ece3; --muted:#a99e91;
+    --line:#332d27; --clay:#e0764c; --clay-soft:#5a3626; --court:#6bbd8c;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html:focus-within{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+
+  header{
+    border-bottom:1px solid var(--line);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 46px, color-mix(in srgb,var(--clay) 8%, transparent) 46px 47px);
+  }
+  .head-inner{padding:44px 0 34px; display:flex; flex-direction:column; gap:14px}
+  .eyebrow{
+    font-size:.74rem; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--clay); font-weight:700;
+  }
+  h1{
+    margin:0; font-size:clamp(2rem,5vw,3.3rem); line-height:1.02;
+    letter-spacing:-.02em; font-weight:800; text-wrap:balance;
+  }
+  .meta{color:var(--muted); font-size:1rem; max-width:60ch}
+  .meta strong{color:var(--ink)}
+
+  main{padding:40px 0 72px}
+  .section-label{
+    font-size:.74rem; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:0 0 16px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .section-label::after{content:""; flex:1; height:1px; background:var(--line)}
+
+  .focus{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:26px 28px; box-shadow:var(--shadow); margin-bottom:48px;
+    border-left:4px solid var(--clay);
+  }
+  .focus h2{margin:0 0 14px; font-size:1.15rem; letter-spacing:-.01em}
+  .focus ul{margin:0; padding-left:1.15em; display:flex; flex-direction:column; gap:9px}
+  .focus li{padding-left:.15em}
+  .focus li::marker{color:var(--clay)}
+  .focus ul ul{margin-top:9px; padding-left:1.2em}
+  .focus ul ul li::marker{color:var(--court)}
+  .tag{color:var(--clay); font-weight:700}
+  .tag-court{color:var(--court); font-weight:700}
+
+  .idea{margin:0 0 48px; max-width:70ch}
+  .idea h2{margin:0 0 16px; font-size:1.5rem; letter-spacing:-.015em; line-height:1.12; text-wrap:balance}
+  .idea p{margin:0 0 14px; font-size:1.02rem}
+  .idea em{font-style:italic}
+  .ex-label{font-weight:700; color:var(--ink); margin:22px 0 10px}
+  .plan{
+    margin:0 0 18px; padding:16px 18px; list-style:none;
+    display:flex; flex-direction:column; gap:10px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    border-left:4px solid var(--court); box-shadow:var(--shadow);
+  }
+  .plan li{font-size:.97rem; line-height:1.45}
+  .side{
+    display:inline-block; min-width:98px; text-align:center; margin-right:8px;
+    font-weight:700; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+    padding:2px 9px; border-radius:999px;
+  }
+  .side-d{color:var(--clay); background:color-mix(in srgb,var(--clay) 13%, transparent)}
+  .side-e{color:var(--court); background:color-mix(in srgb,var(--court) 15%, transparent)}
+
+  /* drill blocks */
+  .drills{
+    display:grid; gap:20px; margin:0 0 44px;
+    grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+    align-items:start;
+  }
+  .block{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:22px 24px; box-shadow:var(--shadow); border-top:3px solid var(--court);
+  }
+  .block h3{
+    margin:0 0 4px; font-size:1.05rem; letter-spacing:-.01em;
+  }
+  .block .why{margin:0 0 16px; color:var(--muted); font-size:.9rem; line-height:1.4}
+  .block ol{margin:0; padding-left:1.15em; display:flex; flex-direction:column; gap:13px}
+  .block li::marker{color:var(--court); font-weight:700}
+  .dname{font-weight:700}
+  .count{
+    display:inline-block; margin-left:6px; font-variant-numeric:tabular-nums;
+    font-size:.72rem; font-weight:700; letter-spacing:.05em;
+    color:var(--clay); background:color-mix(in srgb,var(--clay) 12%, transparent);
+    border-radius:999px; padding:2px 9px; white-space:nowrap;
+  }
+  .block li p{margin:4px 0 0; font-size:.93rem; line-height:1.45; color:var(--muted)}
+  .block.kids{border-top-color:var(--clay)}
+  .block.kids li::marker{color:var(--clay)}
+
+  .grid{
+    display:grid; gap:26px 22px;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    align-items:start;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column;
+  }
+  .frame{position:relative; width:100%; background:#000}
+  .frame iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+  .cap{padding:15px 17px 17px}
+  .cap .n{
+    font-size:.72rem; letter-spacing:.12em; color:var(--clay);
+    font-weight:700; font-variant-numeric:tabular-nums;
+  }
+  .cap p{margin:5px 0 0; font-size:.98rem; line-height:1.4}
+  .pill{
+    display:inline-block; margin-top:10px; font-size:.7rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--court);
+    border:1px solid color-mix(in srgb,var(--court) 40%, transparent);
+    border-radius:999px; padding:2px 9px;
+  }
+  .pill-clay{color:var(--clay); border-color:color-mix(in srgb,var(--clay) 40%, transparent)}
+  footer{
+    border-top:1px solid var(--line); color:var(--muted);
+    font-size:.9rem; padding:26px 0 40px;
+  }
+  a{color:var(--clay)}
+  @media (max-width:520px){ .head-inner{padding:34px 0 26px} .grid{gap:22px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap head-inner">
+    <div class="eyebrow">Movement</div>
+    <h1>Footwork</h1>
+    <p class="meta">Drills for moving well on a tennis or padel court, all of them doable <strong>alone</strong>, most of them in a few minutes. There is a section at the end for running the same qualities as <strong>games with kids</strong>. Measure first, then drill. Videos play right here on the page.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-label="Focus">
+
+    <div class="focus">
+      <h2>The focus</h2>
+      <ul>
+        <li>This is not about running faster. It is about <span class="tag">arriving early and arriving balanced</span>. Almost every bad shot at club level is a good swing taken from a bad place.</li>
+        <li>Three qualities, in the order they actually matter:
+          <ul>
+            <li><span class="tag-court">Stopping.</span> Deceleration is where balance is lost. Nobody practices it and everybody needs it.</li>
+            <li><span class="tag-court">The split step.</span> Landing as the ball is struck, not before and not after.</li>
+            <li><span class="tag-court">Recovery.</span> The steps after the shot, which decide whether the next ball is playable at all.</li>
+          </ul>
+        </li>
+        <li><span class="tag">Measure before you drill.</span> Four tests at the bottom of this section. Without a number, six weeks from now you will have a feeling instead of an answer, and feelings about your own movement are unreliable in exactly one direction.</li>
+        <li><span class="tag">Fifteen minutes, twice a week</span>, attached to court time you already have. A separate session is a session that gets skipped.</li>
+      </ul>
+    </div>
+
+    <div class="idea">
+      <p class="section-label">The idea</p>
+      <h2>Good movement is mostly good stopping</h2>
+      <p>Watch someone who moves beautifully and the striking thing is not the acceleration. It is that they seem to arrive and settle in one motion, already turned, already balanced, with time to spare. They are not faster than you over five metres. They stop better, so they can afford to leave earlier.</p>
+      <p>That reframes the whole training problem. Sprint work makes you faster in a straight line, which is close to useless on a court that is ten metres wide. What you want is the ability to hit the brakes on one leg, hold that position without wobbling, and push off from it in a new direction. That is a strength and balance quality, and it responds fast, which is the good news at 38.</p>
+      <p>The second thing, and it is unglamorous: <em>the split step is a timing skill, not a fitness one</em>. Most people do it, just early. They land, stall, and then have to restart from a dead stop. Landing on the strike is the whole trick, and it can be practiced in a hallway with no ball.</p>
+      <p class="ex-label">The four tests, run once before any of this</p>
+      <ul class="plan">
+        <li><span class="side side-e">balance</span> Single-leg stance, eyes closed, each leg. Record seconds until you have to put a foot down.</li>
+        <li><span class="side side-d">agility</span> Hexagon test. Both directions, record seconds.</li>
+        <li><span class="side side-d">change of dir</span> 5-10-5 shuttle. Record both first-step directions separately; the asymmetry is often the finding.</li>
+        <li><span class="side side-e">on court</span> Spider run. Five balls placed around the court, one at a time back to the centre, timed.</li>
+      </ul>
+      <p>Twenty-five minutes, a phone timer, no equipment beyond what is in the bag. Repeat identically at the end. Identically matters more than precisely: same surface, same shoes, same time of day, same warm-up.</p>
+    </div>
+
+    <p class="section-label">The drills, all solo</p>
+    <div class="drills">
+
+      <div class="block">
+        <h3>Stopping and landing</h3>
+        <p class="why">The one that matters most and gets trained least. Every rep is judged on silence: if the landing makes noise, you absorbed it with the floor instead of with your leg.</p>
+        <ol>
+          <li>
+            <span class="dname">Snap down</span><span class="count">3 &times; 5</span>
+            <p>Small hop, land in an athletic stance, stick it dead. No second adjustment step.</p>
+          </li>
+          <li>
+            <span class="dname">Single-leg snap down</span><span class="count">3 &times; 5 each</span>
+            <p>Same thing on one leg. Knee tracks over the toe, hold two seconds before the next rep.</p>
+          </li>
+          <li>
+            <span class="dname">Skater bound and stick</span><span class="count">3 &times; 6 each</span>
+            <p>Bound sideways, land on the outside leg, hold. This is the exact shape of a wide ball recovery.</p>
+          </li>
+          <li>
+            <span class="dname">Drop step and brake</span><span class="count">3 &times; 6 each</span>
+            <p>Three hard steps to one side, then stop in two steps instead of four. Count the steps out loud.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block">
+        <h3>Balance and single-leg stability</h3>
+        <p class="why">Boring, invisible, and the thing that decides whether a stretched ball is a shot or a scramble. Do it barefoot when you can.</p>
+        <ol>
+          <li>
+            <span class="dname">Single-leg stance, eyes closed</span><span class="count">3 &times; 30s each</span>
+            <p>Eyes open is a different exercise and a much easier one. Closed is the point.</p>
+          </li>
+          <li>
+            <span class="dname">Single-leg RDL reach</span><span class="count">3 &times; 8 each</span>
+            <p>No weight. Hinge at the hip, back leg straight, reach the floor, return without touching down.</p>
+          </li>
+          <li>
+            <span class="dname">Clock reach</span><span class="count">2 &times; 5 each</span>
+            <p>Stand on one leg, reach the free foot to three points on an imaginary clock face without shifting the standing foot.</p>
+          </li>
+          <li>
+            <span class="dname">Single-leg calf raise</span><span class="count">2 &times; 15 each</span>
+            <p>Slow down, three seconds. The ankle is the first thing that gives out in the fifth set.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block">
+        <h3>First step and split step</h3>
+        <p class="why">Timing work. Needs no court, no ball, and no space. A hallway is enough.</p>
+        <ol>
+          <li>
+            <span class="dname">Split step on a cue</span><span class="count">3 &times; 10</span>
+            <p>Have something external trigger it: a metronome, a video of a rally, someone clapping. Land <em>on</em> the cue, not before it. Practicing it alone in silence teaches you to land early, which is the exact fault you are trying to fix.</p>
+          </li>
+          <li>
+            <span class="dname">Split and go</span><span class="count">3 &times; 8</span>
+            <p>Split, then explode two steps in a direction called at random. Randomness matters; a known direction is a different skill.</p>
+          </li>
+          <li>
+            <span class="dname">Lateral shuffle and crossover</span><span class="count">3 &times; 6 each</span>
+            <p>Three shuffle steps out, then crossover step to recover. The crossover is what covers ground; the shuffle is what keeps you square.</p>
+          </li>
+          <li>
+            <span class="dname">Hexagon</span><span class="count">3 &times; 2 circuits</span>
+            <p>Two-footed jumps in and out of a hexagon, both directions. Also one of the four tests, so it doubles as calibration.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block">
+        <h3>Tennis specific</h3>
+        <p class="why">Court needed, ball optional.</p>
+        <ol>
+          <li>
+            <span class="dname">Spider run</span><span class="count">3 reps</span>
+            <p>Five balls placed around the court, retrieved one at a time to the centre. Full recovery between reps, otherwise it becomes a conditioning drill and stops measuring movement.</p>
+          </li>
+          <li>
+            <span class="dname">Recovery to centre</span><span class="count">3 &times; 6 each</span>
+            <p>Start wide in a corner, shadow the shot, then recover with crossover steps and split at the centre. The split at the end is not optional; that is the rep.</p>
+          </li>
+          <li>
+            <span class="dname">Shadow swings with full footwork</span><span class="count">5 &times; 30s</span>
+            <p>No ball. Forces you to notice the steps, because there is nothing else to pay attention to.</p>
+          </li>
+          <li>
+            <span class="dname">Serve plus first step</span><span class="count">3 &times; 8</span>
+            <p>Serve, then the landing and the recovery step. Most of us practice the serve and stop the rep at contact, which is the half that never happens in a match.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block">
+        <h3>Padel specific</h3>
+        <p class="why">Different game, different feet. The walls change what good positioning even means.</p>
+        <ol>
+          <li>
+            <span class="dname">Step out from the glass</span><span class="count">3 &times; 8 each</span>
+            <p>From near the back wall, step diagonally back and away rather than sideways, so the ball comes off the glass into space you have already made. Getting stuck against the glass is a footwork error, not a reading error.</p>
+          </li>
+          <li>
+            <span class="dname">Bandeja footwork</span><span class="count">3 &times; 8 each</span>
+            <p>Side-steps back while keeping the chest toward the net. Never fully turn; turning is how you end up hitting it from behind you.</p>
+          </li>
+          <li>
+            <span class="dname">Net to back and return</span><span class="count">3 &times; 6</span>
+            <p>Three shuffles back from the net, split, three forward. Padel is won and lost on this transition more than on any shot.</p>
+          </li>
+          <li>
+            <span class="dname">Wall feed and reposition</span><span class="count">4 &times; 45s</span>
+            <p>Feed yourself off the back wall, and after each contact reset to a defined position before the next one. The reset is the drill; the hit is incidental.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block">
+        <h3>How to actually run it</h3>
+        <p class="why">Fifteen minutes, twice a week. Pick one from each of the first three blocks, then one sport-specific block. Rotate the sport block week to week.</p>
+        <ol>
+          <li>
+            <span class="dname">Warm up</span><span class="count">3 min</span>
+            <p>Ankles and hips. Cold single-leg work is how people get hurt doing an injury prevention drill.</p>
+          </li>
+          <li>
+            <span class="dname">Stopping</span><span class="count">4 min</span>
+            <p>Always first, while you are fresh. Quality collapses when tired and a sloppy landing rep is worse than no rep.</p>
+          </li>
+          <li>
+            <span class="dname">Split step or first step</span><span class="count">4 min</span>
+          </li>
+          <li>
+            <span class="dname">Sport specific</span><span class="count">4 min</span>
+          </li>
+          <li>
+            <span class="dname">Balance</span><span class="count">whenever</span>
+            <p>Single-leg stance costs nothing and needs no space. Brushing teeth, waiting for coffee. It does not need to live inside the session.</p>
+          </li>
+        </ol>
+      </div>
+
+    </div>
+
+    <div class="idea">
+      <p class="section-label">With kids</p>
+      <h2>Same qualities, wearing a costume</h2>
+      <p>Every drill above trains something a six year old also needs, and none of them survive contact with a six year old in the form written above. The fix is not to simplify them. It is to stop calling them drills, give each one a number, and make somebody win.</p>
+      <p>Two rules that matter more than the content. <strong>Every game has a count</strong>, even if the only opponent is your own last number. And <strong>stop while they still want more</strong>. Ten minutes that end early get asked for again; twenty minutes that end in boredom do not.</p>
+      <p>With a wide age gap, the younger one is often there to copy the older one rather than to do the thing properly, and that is not a failure mode, it is the mechanism. Copying an older sibling is the most efficient movement instruction available and it costs you nothing.</p>
+    </div>
+
+    <div class="drills">
+      <div class="block kids">
+        <h3>The circuit</h3>
+        <p class="why">Six games, ten to twelve minutes, no equipment beyond cones or anything cone shaped. Pick four.</p>
+        <ol>
+          <li>
+            <span class="dname">Statues</span><span class="count">balance</span>
+            <p>Run around, and on the clap freeze on one foot. Last one standing wins. This is the single-leg stance drill and nobody notices.</p>
+          </li>
+          <li>
+            <span class="dname">Red light with a jump</span><span class="count">stopping</span>
+            <p>Red light green light, but on red you have to land a two-footed jump and hold it still. The whole deceleration block, as a game.</p>
+          </li>
+          <li>
+            <span class="dname">Line jumps against the clock</span><span class="count">foot speed</span>
+            <p>Jump side to side over a line for twenty seconds, count them. Next round, beat your own number. They will beat it. That is the point.</p>
+          </li>
+          <li>
+            <span class="dname">Animal walks</span><span class="count">coordination</span>
+            <p>Crab walk out to a cone, bear crawl back. The one that works for a four year old with no instruction at all.</p>
+          </li>
+          <li>
+            <span class="dname">Treasure collection</span><span class="count">change of dir</span>
+            <p>Five balls in a fan, bring them back to the middle one at a time, timed. This is the spider run in a costume, and it works on anyone from four to forty.</p>
+          </li>
+          <li>
+            <span class="dname">Mirror</span><span class="count">reaction</span>
+            <p>Face each other, one leads side to side, the other copies. Swap who leads. Ends in laughing every time, which is the actual reason it is on the list.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="block kids">
+        <h3>What to watch for</h3>
+        <p class="why">You are not coaching technique. You are looking for four things, and only one of them is about them.</p>
+        <ol>
+          <li>
+            <span class="dname">Do they stop under control?</span>
+            <p>Not how fast they go. Whether they can stop where they meant to.</p>
+          </li>
+          <li>
+            <span class="dname">Both sides?</span>
+            <p>Kids build a strong side early and then hide the other one. Cheap to fix now, expensive later.</p>
+          </li>
+          <li>
+            <span class="dname">Are they still upright when tired?</span>
+            <p>The last thirty seconds tell you more than the first two minutes.</p>
+          </li>
+          <li>
+            <span class="dname">Did they ask to do it again?</span>
+            <p>The only metric that decides whether this exists in three months. If the answer is no three times running, the content is not the problem, the framing is. Change it or stop.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <p class="section-label">Videos: watch the feet, not the racket</p>
+    <div class="grid">
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/_BInFgItzmg?rel=0" title="At home split step drill" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">01</div><p>Split step drill you can do at home, no court and no ball.</p><span class="pill">start here</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/Q5Hrn8y-nJA?rel=0" title="Split step progression" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">02</div><p>Three step progression for the split step. Watch the timing of the landing against the strike.</p></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/cBLjBqN9v2Y?rel=0" title="Recovery footwork" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">03</div><p>How to move after you hit the ball. The half of the point most people never train.</p></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/1XSy4Buhk50?rel=0" title="Five at home tennis footwork drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">04</div><p>Five tennis footwork drills to do at home.</p></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/LPgv-ZLGDow?rel=0" title="Padel solo drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">05</div><p>Padel solo drills: training alone on a padel court.</p><span class="pill pill-clay">padel</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/lqKj2uAyVjA?rel=0" title="Padel footwork and movement drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">06</div><p>Five padel drills aimed specifically at footwork and movement.</p><span class="pill pill-clay">padel</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/c3FKfjUNOgI?rel=0" title="Bandeja footwork drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">07</div><p>Bandeja footwork. Note how the chest stays toward the net the whole way back.</p><span class="pill pill-clay">padel</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/YuOcs7miXPc?rel=0" title="Padel footwork movements and exercises" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">08</div><p>Five footwork movements with the exercises that build them.</p><span class="pill pill-clay">padel</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/kBLcQmg0M38?rel=0" title="Single leg snap down" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">09</div><p>Single leg snap down. The landing drill from the first block, demonstrated properly.</p><span class="pill">stopping</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/GqVqQK_j_zQ?rel=0" title="Deceleration training for athletes" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">10</div><p>Deceleration training. The argument for why stopping is the trainable thing.</p><span class="pill">stopping</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/82IhJWTAE2o?rel=0" title="Single leg balance and stability drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">11</div><p>Single leg balance and stability progressions, once the 30 second hold gets easy.</p></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/5BOTmSksMAk?rel=0" title="Fun kids tennis footwork drills" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">12</div><p>Five kids footwork drills, written for parents rather than for coaches.</p><span class="pill pill-clay">kids</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/varezOa4zNI?rel=0" title="Speed and agility drills for kids and juniors" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">13</div><p>Eleven speed and agility games for kids. Good source when the six above go stale.</p><span class="pill pill-clay">kids</span></div>
+      </article>
+
+      <article class="card">
+        <div class="frame" style="padding-bottom:56.25%">
+          <iframe src="https://www.youtube.com/embed/-KYq-iw4fck?rel=0" title="Agility ladder movements for kids" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="cap"><div class="n">14</div><p>Ladder movements for young kids. Works with chalk lines if there is no ladder.</p><span class="pill pill-clay">kids</span></div>
+      </article>
+
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Measure first. Stopping before speed. Fifteen minutes, twice a week, attached to court time you already have.
+</footer>
+</body>
+</html>
