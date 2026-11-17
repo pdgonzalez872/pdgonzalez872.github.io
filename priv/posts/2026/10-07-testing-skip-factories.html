@@ -1,0 +1,198 @@
+<div hidden id=id>testing-skip-factories</div>
+<div hidden id=title>Testing in Elixirland (skip the factories)</div>
+<div hidden id=author>Paulo Gonzalez</div>
+<div hidden id=tags>testing, elixir, ex_machina, llm</div>
+
+<div>
+
+<p class="my-4">
+  TL;DR: create test data through your contexts, not through factories. No
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">insert(:user)</span>. Use the same function prod uses.
+</p>
+
+<p class="my-4">
+  I've held this opinion for years. LLMs gave me a new reason to write it down.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  The new reason: LLMs
+</div>
+
+<p class="my-4">
+  The more the codebase shows an LLM that the context is the one place where
+  actions on a resource happen, the better the code it generates. Fewer
+  iterations, simpler code.
+</p>
+
+<pre class="text-xs"><code># two ways to make a user. which one is real?
+user = insert(:user, company: company)
+{:ok, user} = Users.create_user(company, %{email: "paulo@acme.com"})
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">The LLM has to guess. Sometimes it guesses wrong.</p>
+
+<ul>
+  <li class="mb-2">
+    - <span class="text-red-600">One path to create a thing.</span> If tests create a company with
+    <span class="bg-gray-200 px-1 rounded font-mono text-sm">Companies.create_company/1</span>, the LLM sees that path everywhere and reuses it.
+  </li>
+  <li class="mb-2">
+    - <span class="text-red-600">ExMachina's insert skips the changeset.</span> Test data can be in states
+    prod data can never be in. The LLM learns from that data and writes code
+    that assumes those states.
+  </li>
+  <li class="mb-2">
+    - <span class="text-red-600">The factory file is a second schema to keep in sync.</span> When a test
+    fails, the LLM "fixes" it by tweaking factory defaults instead of the code.
+    Green test, wrong fix, another iteration.
+  </li>
+  <li class="mb-2">
+    - <span class="text-red-600">Tests that go through the context exercise the prod path.</span> When
+    generated code breaks a validation or a side effect, the test catches it on
+    the first run, not in review.
+  </li>
+  <li class="mb-2">
+    - <span class="text-red-600">Less to load.</span> The LLM reads the context module and knows how to
+    make data. No factory file, no traits, no chained associations to trace.
+  </li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  The old reason: Factory Disease
+</div>
+
+<p class="my-4">
+  I've called this <span class="text-red-600">Factory Hell</span> before, but disease is a better
+  description. It's silent. It doesn't hurt you immediately, which is exactly
+  why people don't believe it's a problem. It bites 6 months later, and when it
+  does, you can't revert it in a straightforward way.
+</p>
+
+<p class="my-4">
+  It happens when factory creation gets chained. Someone adds an association to
+  a factory because it's convenient for their feature. The next person copies
+  that test. Now every test that builds one record builds ten.
+</p>
+
+<p class="my-4">
+  At a company I used to work for, creating a <span class="bg-gray-200 px-1 rounded font-mono text-sm">Loan</span> (the crux of the app)
+  created a TON of objects. Here's how they dealt with it:
+</p>
+
+<ul>
+  <li class="mb-2">- 60 workers running in parallel on CircleCI. The suite took 20 minutes.</li>
+  <li class="mb-2">- A <span class="bg-gray-200 px-1 rounded font-mono text-sm">SimpleLoan</span> factory, the least data necessary, not to be touched. Rolling it out took a big chunk of a senior engineer's time, mostly waiting on CI.</li>
+  <li class="mb-2">- A complex caching layer for tests. That was another senior engineer's full time job. It failed.</li>
+  <li class="mb-2">- Education. Usually forgotten when there was pressure to deliver.</li>
+</ul>
+
+<p class="my-4">
+  I checked in with a friend still there: 20 minutes, now on 80 machines.
+</p>
+
+<p class="my-4">
+  The cost isn't the machines. It's the engineer waiting 20 minutes, getting
+  coffee, jumping into something else. Then morale, friction, and people
+  leaving.
+</p>
+
+<p class="my-4">
+  Why it spreads:
+</p>
+
+<ul>
+  <li class="mb-2">- Dev churn. People with tribal knowledge leave, new people come in.</li>
+  <li class="mb-2">- New devs haven't suffered it, so they don't see it.</li>
+  <li class="mb-2">- New devs copy the pattern in the last feature. Code review doesn't catch everything.</li>
+  <li class="mb-2">- Pressure to deliver fast.</li>
+</ul>
+
+<p class="my-4">
+  It's not the stack. I've seen it in Ruby (factory_girl) and in Elixir
+  (ExMachina, which brought the idea over). It's us.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Two code paths
+</div>
+
+<p class="my-4">
+  With factories, the app has two code paths that you hope cross: application
+  code (what happens in prod) and test code (what happens in tests). I've seen
+  them not cross at both unicorns I've worked at. Neither had good test or demo
+  environment data either. Frankensteins.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  What to do instead
+</div>
+
+<p class="my-4">
+  Use <span class="bg-gray-200 px-1 rounded font-mono text-sm">setup</span> blocks and call the context. Only required fields (the
+  changeset tells you what's required). If a test needs an association, create
+  it in the test.
+</p>
+
+<pre class="text-xs"><code>setup do
+  {:ok, company} = Companies.create_company(%{name: "Acme"})
+  {:ok, user} = Users.create_user(company, %{email: "paulo@acme.com"})
+
+  %{company: company, user: user}
+end
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Everything the test needs, in the test file.</p>
+
+<p class="my-4">
+  When creating a thing touches more than one context, add a workflow layer
+  where the contexts come together. I've seen codebases without it, and they
+  coupled entity creation instead.
+</p>
+
+<pre class="text-xs"><code>defmodule MyApp.Workflows do
+  alias MyApp.{Companies, Emails, Users}
+
+  def register_company(company_name, user_email) do
+    with {:ok, company} &lt;- Companies.create_company(company_name),
+         {:ok, user} &lt;- Users.create_user(user_email),
+         {:ok, _email} &lt;- Emails.create_user_email(user) do
+      {:ok, %{company: company, user: user}}
+    else
+      error ->
+        # log, metrics
+        error
+    end
+  end
+end
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">One function for "register a company". Prod calls it. Tests call it. So does the LLM.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Tradeoffs
+</div>
+
+<p class="my-4">
+  It's not free:
+</p>
+
+<ul>
+  <li class="mb-2">- You type more. Longer test files, some boilerplate.</li>
+  <li class="mb-2">- The same setup block shows up in many files.</li>
+  <li class="mb-2">- Some people find the tests too verbose.</li>
+</ul>
+
+<p class="my-4">
+  What you get:
+</p>
+
+<ul>
+  <li class="mb-2">- Explicitness over convenience. Tests show intent.</li>
+  <li class="mb-2">- Failures are easier to diagnose, the data is right there.</li>
+  <li class="mb-2">- No "why is it so slow lately?" questions without answers.</li>
+  <li class="mb-2">- Flaky tests can be fixed without tribal knowledge.</li>
+  <li class="mb-2">- An LLM that gets it right on the first try more often.</li>
+</ul>
+
+<p class="my-4">
+  The alternative is to keep silently trading convenience for performance.
+</p>
+
+</div>
