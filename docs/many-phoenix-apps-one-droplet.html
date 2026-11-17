@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PG&#39;s Blog</title>
+    <link rel="stylesheet" href="assets/app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script defer data-domain="pdgonzalez872.github.io" src="https://plausible.io/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js">
+    </script>
+    <script>
+      window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }
+    </script>
+  </head>
+
+  <body>
+    <nav class="sticky top-0 w-full p-3 h-16 bg-white">
+      <div class="max-w-screen-lg mx-auto flex justify-center space-x-6">
+        <a href="/index.html" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Home
+        </a>
+        <a href="mailto:pdgonzalez872+blog@gmail.com?subject=Blog%20|%20Contact&body=Hi!" class="text-2xl underline underline-offset-8 decoration-1 font-semibold text-gray-800 hover:text-gray-300">
+          Contact
+        </a>
+      </div>
+    </nav>
+
+    <main role="main">
+      <div class="max-w-screen-lg mx-auto p-4 min-h-screen">
+<main>
+  <div class="max-w-screen mx-auto">
+<h1 class="text-3xl font-bold mb-2">Many Phoenix apps, one droplet</h1>
+<h1 class="text font-bold mb-2">by Paulo Daniel Gonzalez</h1>
+<p class="text-gray-500 mb-2">
+2026-11-11 |
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+elixir
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ phoenix
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ devops
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ postgres
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ security
+    </span>
+
+    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+ deployment
+    </span>
+
+</p>
+
+<div class="prose mt-4">
+<div hidden id=id>many-phoenix-apps-one-droplet</div>
+<div hidden id=title>Many Phoenix apps, one droplet</div>
+<div hidden id=author>Paulo Daniel Gonzalez</div>
+<div hidden id=tags>elixir, phoenix, devops, postgres, security, deployment</div>
+
+<div>
+
+<p class="my-4">
+  TL;DR: one DigitalOcean droplet runs every small Phoenix app I have. Each app
+  gets its own Linux user, Postgres database and port. Cloudflare serves the
+  public HTTPS. Laptops reach the box only over Tailscale.
+  <span class="text-red-600">No port is open to the internet.</span>
+</p>
+
+<p class="my-4">
+  This is part 2 of
+  <a href="https://pdgonzalez872.github.io/deploy-phoenix-bare-metal.html" class="text-blue-400" target="_blank">On deploying a Phoenix application to a brand new remote server</a>
+  (2021). Same idea: one Linux box, try to build it from scratch and first principles. These parts changed:
+</p>
+
+<div class="w-full">
+  <table class="w-full border border-gray-300">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="p-1 text-xs font-medium border border-gray-300 text-left">Mar/2021</th>
+        <th class="p-1 text-xs font-medium border border-gray-300 text-left">Nov/2026</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">one app</td>
+        <td class="p-1 text-xs border border-gray-300">N apps, one Linux user + one DB + one port each</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">ports 22/80/443 open, fail2ban</td>
+        <td class="p-1 text-xs border border-gray-300">zero public ports: Cloudflare Tunnel for HTTP, Tailscale for SSH</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">nginx reverse proxy</td>
+        <td class="p-1 text-xs border border-gray-300">cloudflared routes hostname -> 127.0.0.1:PORT</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">entrypoint.sh + rbash</td>
+        <td class="p-1 text-xs border border-gray-300">one systemd template unit, sandboxed</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">build by hand as admin_deploy</td>
+        <td class="p-1 text-xs border border-gray-300"><span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box deploy my_app</span> from any laptop</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">postgres/postgres password</td>
+        <td class="p-1 text-xs border border-gray-300">one role per app, random password, own DB only</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">logs in a file</td>
+        <td class="p-1 text-xs border border-gray-300">journald with a size cap</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">no backups</td>
+        <td class="p-1 text-xs border border-gray-300"><span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box dump my_app</span> on demand + DO weekly backups</td>
+      </tr>
+      <tr>
+        <td class="p-1 text-xs border border-gray-300">no AI</td>
+        <td class="p-1 text-xs border border-gray-300">yes AI</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="my-4">
+  *** Same as last time: if you find a security vulnerability in the approach
+  I suggest below, please let me know. I'm very interested in improving my
+  craft. Please email me and I'll respond ASAP.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Goals for this article:
+</div>
+
+<p class="my-4">
+  The goal here is: try that same problem again, a few years and a few tools
+  later.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Why write this?:
+</div>
+
+<p class="my-4">
+  Same reason as in 2021: I'm interested in improving my craft and learning
+  things from first principles, and writing a blog post like this is a
+  fantastic way to learn more about something. That post also said "Maybe a
+  future part 2 could address these improvements". This is that part 2.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  The shape
+</div>
+
+<p class="my-4">
+  Here is what we are going to build:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> browser ──https──> Cloudflare (DNS, TLS, WAF)
+                         │  tunnel, dialed out by the box
+                         ▼
+ ┌──────────────── droplet "box" (Ubuntu 26.04) ──────────────────┐
+ │ cloudflared ──> 127.0.0.1:4001  app@my_app     (user my_app)   │
+ │             ──> 127.0.0.1:4002  app@other_app  (user other_app)│
+ │                       │                                        │
+ │                 Postgres 127.0.0.1:5432                        │
+ │                 one database + one role per app                │
+ │                                                                │
+ │ sshd :22 ── reachable only on tailscale0 ──┐                   │
+ └────────────────────────────────────────────┼───────────────────┘
+                                              │ Tailscale (WireGuard)
+                    laptops: ssh deploy@box deploy my_app
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">The box only makes outbound connections (Cloudflare, Tailscale, apt, GitHub, Hex).</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  The tools
+</div>
+
+<p class="my-4">
+  These are the tools we use, and what each one does for us:
+</p>
+
+<ul>
+  <li class="mb-2">- <span class="text-red-600">DigitalOcean</span>: the machine, a firewall in front of it, a browser Recovery Console, weekly backups, alerts.</li>
+  <li class="mb-2">- <span class="text-red-600">Namecheap</span>: where I bought the domains. Its nameservers point to Cloudflare.</li>
+  <li class="mb-2">- <span class="text-red-600">Cloudflare</span>: handles traffic -> answers DNS, serves HTTPS and filters junk traffic. <span class="bg-gray-200 px-1 rounded font-mono text-sm">cloudflared</span> on the box dials out to Cloudflare and keeps the connection open, and requests come back down that connection, so the box doesn't need an open port.</li>
+  <li class="mb-2">- <span class="text-red-600">Tailscale</span>: a private network between the laptops and the box, on WireGuard. SSH is only reachable through it.</li>
+  <li class="mb-2">- <span class="text-red-600">GitHub</span>: stores code, nothing else (no Actions, no Releases).</li>
+  <li class="mb-2">- <span class="text-red-600">systemd</span>: starts every app, restarts it if it crashes, caps its memory and sandboxes it. One template unit runs all of them.</li>
+  <li class="mb-2">- <span class="text-red-600">mise</span>: installs the Erlang/Elixir versions each repo pins. Only the build users use it.</li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Decisions (and why)
+</div>
+
+<ul>
+  <li class="mb-2">- <span class="text-red-600">Cloudflare Tunnel instead of nginx and open 80/443.</span> Nothing listens on the public interface, so it doesn't matter if the origin IP leaks. LiveView works through it, and it's free.</li>
+  <li class="mb-2">- <span class="text-red-600">Tailscale for SSH instead of public 22 and fail2ban.</span> With no public ports, fail2ban has nothing to watch, so I dropped it.</li>
+  <li class="mb-2">- <span class="text-red-600">Build on the box.</span> Building on the box avoids "works on my laptop" problems, and a laptop only needs SSH. Deploys build whatever is pushed to GitHub.</li>
+</ul>
+
+<p class="my-4">
+  The droplet is a 2 vCPU / 4 GB AMD, $28/mo, about $34 with weekly backups. Cloudflare and Tailscale are free.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  So, let's get started!
+</div>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 1: Accounts (the biggest security hole)
+</div>
+
+<p class="my-4">
+  Whoever controls the DO account has root on the box. Whoever controls
+  Cloudflare or Namecheap controls where the domain points. Losing one of these
+  accounts is the most likely way to lose the box. So, before we create
+  anything, let's lock the accounts down:
+</p>
+
+<ul>
+  <li class="mb-2">- 2FA with a hardware key or a TOTP app (no SMS) on DigitalOcean, Cloudflare, Namecheap, GitHub, and whatever you log into Tailscale with.</li>
+  <li class="mb-2">- Buy the domain(s). The registrar lock turns on automatically if you buy them through Namecheap.</li>
+  <li class="mb-2">- The admin's sudo password in a password manager. It's also the Recovery Console login in DO.</li>
+</ul>
+
+<p class="my-4">
+  Security checkpoint: nobody gets to the box, the DNS or the code with a
+  password alone.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 2: Create the droplet (Digital Ocean - DO)
+</div>
+
+<p class="my-4">
+  Let's start on the laptop and create the SSH key we'll use for the box:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+# ssh-keygen -t: the key type
+# ssh-keygen -f: the key file
+# ssh-keygen -C: a comment naming the laptop
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_box -C "me-thinkpad-2026"     # passphrase
+cat ~/.ssh/id_ed25519_box.pub
+</code></pre>
+
+<p class="my-4">
+  Now go to DO -> Create Droplet and choose the following:
+</p>
+
+<ul>
+  <li class="mb-2">- Ubuntu 26.04 LTS, which gets security patches until 2031.</li>
+  <li class="mb-2">- Authentication: SSH key. Paste the <span class="bg-gray-200 px-1 rounded font-mono text-sm">.pub</span> from above. This also turns off password SSH, same as in 2021.</li>
+  <li class="mb-2">- Tick Monitoring and Backups.</li>
+  <li class="mb-2">- Networking -> Firewalls -> new firewall. Inbound: SSH 22 from your IP only. This gets removed in step 4.</li>
+</ul>
+
+<p class="my-4">
+  Security checkpoint: same as in 2021. DO only lets us in through SSH, as
+  root, with the key we just created. Logging in with a password is disabled.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 3: First login, admin user, start hardening
+</div>
+
+<p class="my-4">
+  Let's log in as root and create a user that is not root. We add it to the
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">sudo</span> group, so it needs its password every
+  time it runs a privileged command, and we give it the same SSH key. Let's
+  call this new user admin. We also update the machine and install a few
+  packages we'll need later.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+# ssh -i: use this private key
+ssh -i ~/.ssh/id_ed25519_box root@PUBLIC_IP
+
+#
+# we are in the box, as root
+#
+
+adduser admin                     # strong password, into the password manager
+# usermod -a: append to the groups instead of replacing them
+# usermod -G: the supplementary group to add (sudo)
+usermod -aG sudo admin
+# install -d: create directories instead of copying a file
+# install -m: set the permission mode
+# install -o: set the owner
+# install -g: set the group
+install -d -m 700 -o admin -g admin /home/admin/.ssh
+cp /root/.ssh/authorized_keys /home/admin/.ssh/ && chown admin:admin /home/admin/.ssh/authorized_keys
+
+# apt -y: answer yes to every prompt
+apt update && apt -y full-upgrade
+apt -y install ufw curl git jq build-essential autoconf m4 libncurses-dev libssl-dev vim
+# remove root services a server doesn't use. Any local user can talk to them,
+# so a bug in one of them is a way to root that skips our sandbox.
+apt -y purge snapd modemmanager udisks2 packagekit fwupd bolt multipath-tools open-iscsi && apt -y autoremove --purge
+timedatectl set-timezone UTC
+</code></pre>
+
+<p class="my-4">
+  Now let's configure SSH. Ubuntu reads <span class="bg-gray-200 px-1 rounded font-mono text-sm">sshd_config.d/*.conf</span>
+  in order and the <span class="text-red-600">first value wins</span>, so
+  our <span class="bg-gray-200 px-1 rounded font-mono text-sm">00-</span> file beats DO's
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">50-cloud-init.conf</span>:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as root
+#
+
+cat > /etc/ssh/sshd_config.d/00-box.conf <<'EOF'
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
+AllowGroups sudo deploy
+X11Forwarding no
+AllowAgentForwarding no
+MaxAuthTries 3
+LoginGraceTime 20
+EOF
+# sshd -t: test the config and exit; restart only if it passes
+sshd -t && systemctl restart ssh
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Keep the root session open and test <span class="font-mono">ssh -i ~/.ssh/id_ed25519_box admin@PUBLIC_IP</span> and <span class="font-mono">sudo -v</span> in a second terminal.</p>
+
+<p class="my-4">
+  After step 4, the public IP stops answering on 22, and we log in with
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh box</span>.
+</p>
+
+<p class="my-4">
+  From here on we work as admin. Let's add swap, hide each user's processes
+  from the others, leave cron to root only, cap the logs and set up automatic
+  updates:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin: ssh -i ~/.ssh/id_ed25519_box admin@PUBLIC_IP
+#
+
+# swap: headroom for builds
+# fallocate -l: the size of the file to allocate
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+# tee -a: append to the file instead of overwriting it
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# hide every user's processes from the others. /proc/*/cmdline is
+# world-readable by default, and a command line can carry secrets.
+echo 'proc /proc proc defaults,nosuid,nodev,noexec,hidepid=invisible 0 0' | sudo tee -a /etc/fstab
+# mount -o: mount options; remount applies them to the mounted /proc
+sudo mount -o remount,nosuid,nodev,noexec,hidepid=invisible /proc
+
+# only root gets a crontab, so app and build users can't schedule anything
+echo root | sudo tee /etc/cron.allow
+
+# cap the logs
+# mkdir -p: create parent directories, no error if it exists
+sudo mkdir -p /etc/systemd/journald.conf.d
+printf '[Journal]\nSystemMaxUse=1G\n' | sudo tee /etc/systemd/journald.conf.d/size.conf
+sudo systemctl restart systemd-journald
+
+# unattended-upgrades is on by default; let it reboot at 09:00 UTC
+sudo tee /etc/apt/apt.conf.d/52box <<'EOF'
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "09:00";
+
+// Third-party repos are skipped unless listed. Tailscale and cloudflared
+// (steps 4 and 12) get patched like the OS.
+// Names come from: apt-cache policy | grep -o 'o=[^,]*' | sort -u
+Unattended-Upgrade::Origins-Pattern {
+  "origin=Tailscale";
+  "origin=cloudflared";
+};
+
+// The tailscale package restarts tailscaled itself. cloudflared's does not,
+// so restart it when the running binary has been replaced:
+// /proc/PID/exe then ends in "(deleted)".
+DPkg::Post-Invoke { "readlink /proc/$(systemctl show -p MainPID --value cloudflared)/exe 2>/dev/null | grep -q deleted && systemctl restart cloudflared || true"; };
+EOF
+</code></pre>
+
+<p class="my-4">
+  Security checkpoint: Big change, same as last time. We can no longer log in
+  as root at all, and passwords don't work over SSH. We can still do whatever
+  we want as admin, but we need to know its password to use sudo. The box also
+  patches itself and reboots when it needs to.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 4: Tailscale, then close port 22
+</div>
+
+<p class="my-4">
+  Let's start in the Tailscale admin console, because the tag we give the box
+  has to exist before the box can use it. Turn on MagicDNS (so
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">box</span>
+  resolves) and replace the default allow-all ACL. The default lets the box
+  reach your laptops. This one only lets laptops reach the box on port 22:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>{
+  "tagOwners": { "tag:box": ["autogroup:admin"] },
+  "grants": [
+    { "src": ["autogroup:member"], "dst": ["tag:box"], "ip": ["tcp:22"] }
+  ]
+}
+</code></pre>
+
+<p class="my-4">
+  Now let's install Tailscale on the box and bring it up with that tag:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin, still over the public IP
+#
+
+# curl -f: fail on HTTP errors instead of saving the error page
+# curl -s: silent, no progress bar
+# curl -S: still show errors when silent
+# curl -L: follow redirects
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --advertise-tags=tag:box --hostname=box
+</code></pre>
+
+<p class="my-4">
+  Back in the admin console, disable key expiry on the box. Then install
+  Tailscale on the laptop and tell SSH which key and user to use for the box:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+# curl -f: fail on HTTP errors instead of saving the error page
+# curl -s: silent, no progress bar
+# curl -S: still show errors when silent
+# curl -L: follow redirects
+curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
+printf 'Host box\n  HostName box\n  User admin\n  IdentityFile ~/.ssh/id_ed25519_box\n  IdentitiesOnly yes\n  AddKeysToAgent yes\n' >> ~/.ssh/config
+ssh box     # logs in as admin, over Tailscale
+</code></pre>
+
+<p class="my-4">
+  Once that works, let's close the port:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin, now over Tailscale: ssh box
+#
+
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow in on tailscale0 to any port 22 proto tcp
+sudo ufw enable
+</code></pre>
+
+<p class="my-4">
+  Then delete the SSH rule from the DO firewall, which leaves it with no inbound rules.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> internet ──X──> DO Cloud Firewall    no inbound rules
+ internet ──X──> ufw on the box       deny incoming
+
+ laptop ──Tailscale──> tailscale0 ──> sshd :22     the only way in
+
+ box ──outbound──> Cloudflare, Tailscale, apt, GitHub, Hex
+</code></pre>
+
+<p class="my-4">
+  And you can verify things worked by running:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop, with Tailscale off
+#
+
+# nc -v: verbose, print whether the connection worked
+# nc -z: only check if the port is open, send no data
+# nc -w: give up after 5 seconds
+nc -vz -w 5 PUBLIC_IP 22
+
+-- result:
+timeout
+</code></pre>
+
+<p class="my-4">
+  If Tailscale ever breaks, the way back in is DO -> droplet -> Access
+  -> Recovery Console, a terminal in the browser that doesn't go over the
+  network.
+</p>
+
+<p class="my-4">
+  Security checkpoint: in 2021, the only ports accessible to the external
+  world were 22, 80 and 443. Now there are none, and two firewalls enforce it:
+  DO's outside the box and ufw inside.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 5: Postgres, local only
+</div>
+
+<p class="my-4">
+  Ubuntu 26.04 ships Postgres 18, so there's no extra repo, and it gets patched
+  with the rest of the OS. The defaults are already what I want: localhost only, scram-sha-256,
+  peer auth for <span class="bg-gray-200 px-1 rounded font-mono text-sm">postgres</span>.
+  Let's install it, add some tuning for a small box and close the default
+  database to everyone:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin: ssh box
+#
+
+# apt -y: answer yes to every prompt
+sudo apt -y install postgresql
+sudo tee /etc/postgresql/18/main/conf.d/box.conf <<'EOF'
+shared_buffers = 256MB
+effective_cache_size = 1GB
+work_mem = 8MB
+maintenance_work_mem = 64MB
+max_connections = 100
+EOF
+sudo systemctl restart postgresql
+# sudo -u: run the command as this user
+# psql -c: run this one SQL command and exit
+cd /tmp && sudo -u postgres psql -c "REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;"
+# ss -t: TCP sockets
+# ss -l: listening sockets only
+# ss -n: numeric addresses and ports, no name lookups
+# ss -p: show the process that owns each socket
+ss -tlnp | grep 5432          # 127.0.0.1 / ::1 only
+</code></pre>
+
+<p class="my-4">
+  Security checkpoint: the superuser has no password and only works through
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">sudo -u postgres</span>,
+  which fixes the postgres/postgres password from 2021.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 6: The deploy user
+</div>
+
+<p class="my-4">
+  Every laptop logs in as one user, <span class="text-red-600">deploy</span>,
+  with its own key. Every key gets a forced command, so the only program that
+  ever runs is <span class="bg-gray-200 px-1 rounded font-mono text-sm">deploy-gate</span>,
+  whatever the laptop asks for. Let's create that user, the directories the
+  scripts will use, and the only sudo rule it gets:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin: ssh box
+#
+
+# GitHub's host key, system-wide and root-owned, so no build can swap it
+# ssh-keyscan -t: the key type to fetch
+ssh-keyscan -t ed25519 github.com | sudo tee /etc/ssh/ssh_known_hosts
+# ssh-keygen -l: show the key's fingerprint
+# ssh-keygen -f: the key file
+ssh-keygen -lf /etc/ssh/ssh_known_hosts    # compare with GitHub's published fingerprint
+
+sudo useradd --create-home --shell /bin/bash --groups systemd-journal deploy
+# install -d: create directories instead of copying a file
+# install -m: set the permission mode
+# install -o: set the owner
+# install -g: set the group
+sudo install -d -m 750 -o root -g deploy /home/deploy/.ssh
+sudo install -m 640 -o root -g deploy /dev/null /home/deploy/.ssh/authorized_keys
+# root owns everything in deploy's home, so the deploy user can't swap .ssh or edit .bashrc
+# chown -R: apply to the directory and everything inside it
+# chmod -R: apply to the directory and everything inside it
+sudo chown -R root:deploy /home/deploy
+sudo chmod -R g-w,o-rwx /home/deploy
+
+sudo install -d -m 751 /etc/apps /srv/apps
+sudo install -d -m 755 -o root -g root /srv/build
+
+echo 'deploy ALL=(root) NOPASSWD: /usr/local/bin/deploy-app, /usr/local/bin/pgdump-app' | sudo tee /etc/sudoers.d/deploy
+# visudo -c: check the sudoers files for errors, change nothing
+sudo chmod 440 /etc/sudoers.d/deploy && sudo visudo -c
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Everything in deploy's home is owned by root, so even a shell as deploy couldn't add a key or change what runs at login.</p>
+
+<p class="my-4">
+  A line in authorized_keys looks like this:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>restrict,command="/usr/local/bin/deploy-gate" ssh-ed25519 AAAA... my-laptop-2026
+restrict,command="/usr/local/bin/deploy-gate 'my_app,game_*'" ssh-ed25519 AAAA... a-friends-laptop-2026
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">One line per laptop. <span class="font-mono">restrict</span> turns off forwarding and the PTY, and the argument to deploy-gate limits a key to those apps, and to deploying main.</p>
+
+<p class="my-4">
+  Security checkpoint: a laptop key can run exactly one program on the box,
+  deploy-gate, and the deploy user can use sudo for exactly two scripts.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 7: Toolchain
+</div>
+
+<p class="my-4">
+  I install mise from its apt repo so it gets updates. Each repo pins Erlang/Elixir in
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">mise.toml</span>, and
+  each app's build user installs its own copy. So the first build of each app
+  compiles Erlang, even if another app already has that version. In exchange,
+  one app's build can't tamper with another app's Erlang.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin: ssh box
+#
+
+# install -d: create directories instead of copying a file
+# install -m: set the permission mode
+sudo install -dm 755 /etc/apt/keyrings
+# curl -f: fail on HTTP errors instead of saving the error page
+# curl -S: still show errors when silent
+# curl -s: silent, no progress bar
+curl -fSs https://mise.jdx.dev/gpg-key.pub | sudo tee /etc/apt/keyrings/mise-archive-keyring.asc >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.asc] https://mise.jdx.dev/deb stable main" | sudo tee /etc/apt/sources.list.d/mise.list
+# apt -y: answer yes to every prompt
+sudo apt update && sudo apt -y install mise
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 8: The box repo
+</div>
+
+<p class="my-4">
+  Box config and app code get to the box in different ways:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>   box config + scripts                      app code
+   ~/dev/box on a laptop                     GitHub, one repo per app
+          │                                         │
+          │ rsync + sudo install.sh                 │ git fetch, read-only
+          │ (admin login, then sudo)                │ deploy key, one per repo
+          ▼                                         ▼
+   /usr/local/bin, /etc/... on the box      /srv/build/APP ──> mix release
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>box/
+  install.sh
+  root/usr/local/bin/        new-app build-app deploy-app pgdump-app deploy-gate app-console add-deploy-key reset-build
+  root/usr/local/lib/box/    sandbox.sh
+  root/etc/systemd/system/   app@.service, cloudflared.service
+  root/etc/ssh/              ssh_known_hosts, sshd_config.d/00-box.conf
+  root/etc/sudoers.d/deploy
+  root/etc/postgresql/18/main/conf.d/box.conf
+  root/etc/systemd/journald.conf.d/size.conf
+  root/etc/apt/apt.conf.d/52box
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Everything under root/ is copied to the same path on the box, so the droplet can be rebuilt from this repo.</p>
+
+<p class="my-4">
+  All of these files are in
+  <a href="https://gist.github.com/pdgonzalez872/5bc5a26ecc47428bafc85361abdbc222" class="text-blue-400" target="_blank">this gist</a>,
+  with a README that maps each one to its path in the repo and on the box.
+</p>
+
+<p class="my-4">
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">install.sh</span>
+  validates first (<span class="bg-gray-200 px-1 rounded font-mono text-sm">visudo -c</span>,
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">bash -n</span> on every
+  script), copies only what changed, reloads ssh and systemd, and prints any
+  disruptive restarts for me to run. If a new sshd config fails
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">sshd -t</span>, it puts the old one back,
+  since a broken sshd config would lock me out. (This was a mindblow here, thanks AI).
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/install.sh
+# runs on the box: boxsync copies it to ~/box/install.sh and runs it with sudo
+#
+
+# install.sh   run on the box: sudo ~/box/install.sh
+#
+# Everything under root/ mirrors its real path on the box and is copied there,
+# root-owned: root/etc/ssh/sshd_config.d/00-box.conf -> /etc/ssh/sshd_config.d/00-box.conf
+# Only files that differ are copied, and only the services they belong to are
+# touched. Files removed from the repo are NOT removed from the box; delete those by hand.
+set -euo pipefail
+[[ $EUID -eq 0 ]] || { echo "run with sudo" >&2; exit 1; }
+cd "$(dirname "$0")/root"
+
+# 1. validate before touching anything: a broken sudoers file or script must never land
+visudo -c -f etc/sudoers.d/deploy >/dev/null
+for f in usr/local/bin/* usr/local/lib/box/*; do bash -n "$f"; done
+
+# 2. copy what changed. Scripts 0755, sudoers 0440, everything else 0644.
+changed=()
+while read -r f; do
+  dest=/${f#./}
+  case $dest in
+    /usr/local/bin/*) mode=0755 ;;
+    /etc/sudoers.d/*) mode=0440 ;;
+    *)                mode=0644 ;;
+  esac
+  cmp -s "$f" "$dest" 2>/dev/null && continue
+  # keep the old sshd drop-in so a bad one can be put back (a broken sshd config is a lockout)
+  [[ $dest == /etc/ssh/* && -f $dest ]] && cp -p "$dest" "$dest.prev"
+  install -D -m "$mode" -o root -g root "$f" "$dest"
+  changed+=("$dest")
+  echo "updated $dest"
+done < <(find . -type f | sort)
+
+[[ ${#changed[@]} -eq 0 ]] && { echo "nothing changed"; exit 0; }
+changed_any() { local p; for p in "${changed[@]}"; do [[ $p == $1 ]] && return 0; done; return 1; }
+
+# 3. apply. Safe reloads happen now; disruptive restarts are only suggested.
+if changed_any '/etc/ssh/*'; then
+  if sshd -t; then
+    systemctl reload ssh && echo "ssh reloaded"
+  else
+    for p in "${changed[@]}"; do [[ $p == /etc/ssh/* && -f $p.prev ]] && mv "$p.prev" "$p"; done
+    echo "sshd config invalid: previous version restored, ssh NOT reloaded" >&2
+    exit 1
+  fi
+fi
+rm -f /etc/ssh/sshd_config.d/*.prev
+if changed_any '/etc/systemd/system/*'; then systemctl daemon-reload && echo "systemd reloaded"; fi
+if changed_any '/etc/systemd/journald.conf.d/*'; then systemctl restart systemd-journald && echo "journald restarted"; fi
+if changed_any '/etc/postgresql/*'; then echo "postgres config changed: sudo systemctl restart postgresql (brief app DB blip)"; fi
+if changed_any '/etc/systemd/system/app@.service'; then echo "app unit changed: restart apps to apply: sudo systemctl restart 'app@*'"; fi
+if changed_any '/etc/systemd/system/cloudflared.service'; then echo "tunnel unit changed: sudo systemctl enable --now cloudflared (or restart; a few seconds of downtime)"; fi
+echo "done"
+</code></pre>
+
+<p class="my-4">
+  And this is the function we use on an admin laptop to sync it:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# file on the laptop: ~/.bashrc (a laptop with admin)
+# runs on the laptop: type boxsync after every push to ~/dev/box
+#
+
+boxsync() {
+  # stop unless the clone is a clean copy of origin/main
+  git -C ~/dev/box fetch -q || return 1
+  if [[ -n $(git -C ~/dev/box status --porcelain) || $(git -C ~/dev/box rev-parse HEAD) != $(git -C ~/dev/box rev-parse origin/main) ]]; then
+    echo "~/dev/box is not a clean copy of origin/main: commit + push, or pull, first" >&2
+    return 1
+  fi
+  # rsync -a: archive: recursive, keeps permissions, times and symlinks
+  # ssh -t: give the session a terminal (sudo needs one to ask for the password)
+  rsync -a --delete ~/dev/box/ box:box/ && ssh -t box sudo box/install.sh
+}
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">--delete makes the box match your local copy, so a stale clone would put old scripts back. The check makes that impossible to do by accident.</p>
+
+<p class="my-4">
+  From here on, the config files from steps 3-6 come from this repo. Edit them here,
+  not on the box, or the next sync overwrites them. The scripts and units in
+  that tree are in the steps that follow (and app-console and add-deploy-key are
+  further down). Put them all in the repo and sync once before running
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">new-app</span>, which needs them on the box.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 9: new-app
+</div>
+
+<p class="my-4">
+  Now let's add an app. <span class="bg-gray-200 px-1 rounded font-mono text-sm">new-app</span> runs once per app.
+  Each app is named after its OTP app name, and that name is
+  the Linux user, the database, the role, the systemd instance and the release.
+  It runs on the box, not on the laptop:
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">boxsync</span> already put it in
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">/usr/local/bin</span> there.
+  Log in as admin over Tailscale, with the <span class="bg-gray-200 px-1 rounded font-mono text-sm">Host box</span>
+  entry from step 4:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+ssh box     # admin, over Tailscale (step 4)
+
+#
+# we are in the box, as admin
+#
+
+sudo new-app my_app 4001 myapp.example.com git@github.com:owner/my_app.git
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code> sudo new-app my_app 4001 myapp.example.com git@github.com:owner/my_app.git
+   │
+   ├─ user my_app           can't log in, owns none of its code
+   ├─ user b_my_app         builds this app only, home /srv/build/my_app
+   ├─ db + role my_app      random password, nobody else can connect
+   ├─ /etc/apps/my_app.env  secrets generated here, never on a laptop
+   ├─ GitHub deploy key     read-only, this repo only
+   └─ app@my_app            enabled
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/new-app
+# runs on the box: boxsync installs it as /usr/local/bin/new-app
+#
+
+# new-app APP PORT HOST GIT_SSH_URL
+#   sudo new-app my_app 4001 myapp.com git@github.com:OWNER/my_app.git
+# Creates the Linux user, build user, database, role, secrets, deploy key and systemd instance.
+set -euo pipefail
+app=$1 port=$2 host=$3 repo=$4
+# max 30 chars so the build user "b_APP" fits Linux's 32-char user names
+[[ $app =~ ^[a-z][a-z0-9_]{1,29}$ ]] || { echo "app must be the OTP app name, ^[a-z][a-z0-9_]+$, max 30 chars" >&2; exit 2; }
+[[ $port =~ ^4[0-9]{3}$ ]] || { echo "port must be 4000-4999" >&2; exit 2; }
+[[ $repo == git@github.com:* ]] || { echo "use the ssh url git@github.com:owner/repo.git" >&2; exit 2; }
+[[ -e /etc/apps/$app.env ]] && { echo "$app already exists" >&2; exit 1; }
+if grep -qx "PORT=$port" /etc/apps/*.env 2>/dev/null; then echo "port $port is taken" >&2; exit 1; fi
+cd /tmp
+
+# 1. a user that can't log in and owns none of its code
+useradd --system --user-group --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin "$app"
+install -d -o root -g "$app" -m 0750 "/srv/apps/$app" "/srv/apps/$app/releases"
+
+# 1b. a build user just for this app: its home holds its checkout, toolchain,
+#     caches and deploy key, and nothing of any other app's
+b=b_$app
+useradd --system --user-group --no-create-home --home-dir "/srv/build/$app" --shell /usr/sbin/nologin "$b"
+install -d -o "$b" -g "$b" -m 0700 "/srv/build/$app" "/srv/build/$app/.ssh"
+
+# 2. its own database; nobody else can connect to it
+dbpass=$(openssl rand -hex 24)
+runuser -u postgres -- psql -q -v ON_ERROR_STOP=1 << SQL
+CREATE ROLE "$app" LOGIN PASSWORD '$dbpass';
+CREATE DATABASE "$app" OWNER "$app";
+REVOKE ALL ON DATABASE "$app" FROM PUBLIC;
+SQL
+
+# 3. secrets are generated here and never exist on a laptop
+umask 077
+cat > "/etc/apps/$app.env" << EOF
+PHX_HOST=$host
+PORT=$port
+DATABASE_URL=ecto://$app:$dbpass@127.0.0.1/$app
+POOL_SIZE=5
+SECRET_KEY_BASE=$(openssl rand -base64 48 | tr -d '\n')
+RELEASE_DISTRIBUTION=none
+EOF
+chown root:"$app" "/etc/apps/$app.env" && chmod 0640 "/etc/apps/$app.env"
+
+# 4. a read-only GitHub deploy key just for this repo (GitHub requires one key per repo).
+#    GitHub's host key comes from the root-owned /etc/ssh/ssh_known_hosts.
+key=/srv/build/$app/.ssh/deploy_key
+runuser -u "$b" -- ssh-keygen -q -t ed25519 -N '' -C "box-$app" -f "$key"
+printf 'Host github-%s\n  HostName github.com\n  User git\n  IdentityFile %s\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' "$app" "$key" > "/srv/build/$app/.ssh/config"
+chown "$b:$b" "/srv/build/$app/.ssh/config" && chmod 0600 "/srv/build/$app/.ssh/config"
+echo "${repo/github.com/github-$app}" > "/etc/apps/$app.repo"
+chown root:"$b" "/etc/apps/$app.repo" && chmod 0640 "/etc/apps/$app.repo"
+
+systemctl enable "app@$app"
+
+cat << EOF
+
+Created $app.
+1. GitHub -> repo -> Settings -> Deploy keys -> add (read-only):
+   $(cat "$key.pub")
+2. Cloudflare tunnel -> add route: $host -> http://127.0.0.1:$port
+3. From a laptop: ssh deploy@box deploy $app
+Extra secrets (API keys etc.): SUDO_EDITOR=/usr/bin/vim sudoedit /etc/apps/$app.env
+EOF
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">It ends by printing the three steps left to do by hand.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 10: Deploys
+</div>
+
+<p class="my-4">
+  Who can do what, from a laptop key down to the running app:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> laptop key
+   │  ssh deploy@box deploy my_app
+   ▼
+ deploy ── forced command: deploy-gate. no shell, no forwarding
+   │  sudo, exactly two scripts
+   ▼
+ deploy-app (root)
+   ├──> build-app as b_my_app     throwaway sandboxed unit, sees no secrets
+   │    root validates what it built, installs it root-owned
+   ├──> bin/migrate as my_app     same sandbox as the app
+   ▼
+ app@my_app (user my_app)         reads its code, writes only /var/lib/my_app
+</code></pre>
+
+<p class="my-4">
+  <span class="text-red-600">deploy-gate</span> is the forced command, so these five verbs are all a laptop can run:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/deploy-gate
+# runs on the box: boxsync installs it as /usr/local/bin/deploy-gate
+#
+
+# deploy-gate [app1,app2,...]   the deploy user can do exactly these things and nothing else
+set -euo pipefail
+allowed=${1:-*}
+read -r verb app arg _ <<< "${SSH_ORIGINAL_COMMAND:-help}"
+logger -t deploy-gate "from=${SSH_CONNECTION%% *} allowed=$allowed cmd=${SSH_ORIGINAL_COMMAND:-}"
+known() {
+  [[ ${app:-} =~ ^[a-z][a-z0-9_]{1,30}$ && -f /etc/apps/$app.env ]] || { echo "unknown app: ${app:-}" >&2; exit 2; }
+  local p; IFS=, read -ra pats <<< "$allowed"
+  for p in "${pats[@]}"; do [[ $app == $p ]] && return 0; done   # unquoted $p: glob match
+  echo "this key can't touch $app" >&2; exit 2
+}
+case $verb in
+  # a build runs the repo's code as b_APP and can leave things behind for the
+  # next build, so only admin keys (no argument) may build something other than main
+  deploy)   known; [[ $# -eq 0 || ${arg:-main} == main ]] || { echo "this key can only deploy main" >&2; exit 2; }
+            exec sudo /usr/local/bin/deploy-app "$app" "${arg:-main}" ;;
+  rollback) known; exec sudo /usr/local/bin/deploy-app --rollback "$app" ;;
+  dump)     known; [[ $# -eq 0 ]] || { echo "this key can't dump databases" >&2; exit 2; }
+            exec sudo /usr/local/bin/pgdump-app "$app" ;;
+  logs)     known; n=${arg:-200}; [[ $n =~ ^[0-9]{1,5}$ ]] || exit 2
+            exec journalctl -u "app@$app" -n "$n" --no-pager ;;
+  status)   exec systemctl list-units 'app@*' --all --no-pager ;;
+  *)        echo "usage: deploy APP [ref] | rollback APP | dump APP | logs APP [n] | status" >&2; exit 2 ;;
+esac
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2"><span class="font-mono">from=</span> is the laptop's Tailscale IP, which is how I know who deployed.</p>
+
+<p class="my-4">
+  What a deploy does:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> ssh deploy@box deploy my_app main
+  │
+  ├─ 1. build      as b_my_app, in a throwaway sandboxed unit
+  ├─ 2. validate   root checks rel/LATEST and the release dir
+  ├─ 3. install    /srv/apps/my_app/releases/SHA, root-owned
+  ├─ 4. migrate    bin/migrate as my_app ── fails? old release keeps running
+  ├─ 5. switch     current -> SHA, previous -> old
+  ├─ 6. restart    systemctl restart app@my_app
+  └─ 7. GET /      ok:   "deployed my_app SHA"
+                   fail: switch back, restart the old one, exit 1
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/deploy-app
+# runs on the box: boxsync installs it as /usr/local/bin/deploy-app
+#
+
+# deploy-app APP [ref]          build, migrate, switch, restart, health check, auto-rollback
+# deploy-app --rollback APP     switch back to the previous release (does NOT undo migrations)
+set -euo pipefail
+source /usr/local/lib/box/sandbox.sh
+if [[ ${1:-} == --rollback ]]; then mode=rollback app=${2:-}; else mode=deploy app=${1:-} ref=${2:-main}; fi
+[[ $app =~ ^[a-z][a-z0-9_]{1,30}$ && -f /etc/apps/$app.env ]] || { echo "unknown app: $app" >&2; exit 2; }
+
+root=/srv/apps/$app
+port=$(sed -n 's/^PORT=//p' "/etc/apps/$app.env")
+exec 9>"/run/lock/deploy-$app.lock"
+flock -n 9 || { echo "a deploy of $app is already running" >&2; exit 1; }
+
+switch_to() { ln -sfn "$1" "$root/current.tmp" && mv -T "$root/current.tmp" "$root/current"; }
+healthy() { curl -fsS -o /dev/null --max-time 5 --retry 20 --retry-delay 2 --retry-all-errors "http://127.0.0.1:$port/"; }
+# migrations run the new, untested release: same sandbox as app@.service
+as_app() { app_sandbox "$app"; systemd-run --quiet --wait --pipe --collect "${SANDBOX[@]}" "$@"; }
+
+if [[ $mode == rollback ]]; then
+  prev=$(readlink -e "$root/previous") || { echo "no previous release" >&2; exit 1; }
+  cur=$(readlink -e "$root/current")
+  switch_to "$prev" && ln -sfn "$cur" "$root/previous"
+  systemctl restart "app@$app"
+  healthy && echo "rolled back $app to $(basename "$prev")"
+  exit
+fi
+
+[[ $ref =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$ ]] || { echo "bad ref: $ref" >&2; exit 2; }
+logger -t deploy "start $app ref=$ref by ${SUDO_USER:-root}"
+
+# 1. build as this app's own build user, in a throwaway sandboxed unit with a clean
+#    environment. When the unit ends, systemd kills everything in it, so no
+#    background process from the build is still running during the steps below.
+b=b_$app
+id "$b" >/dev/null 2>&1 || { echo "no build user $b" >&2; exit 1; }
+systemd-run --quiet --wait --pipe --collect --unit="build-$app-$$" \
+  --uid="$b" --gid="$b" \
+  -p NoNewPrivileges=yes -p ProtectSystem=strict -p ProtectHome=yes -p PrivateTmp=yes \
+  -p PrivateDevices=yes -p ProtectProc=invisible -p ReadWritePaths="/srv/build/$app" \
+  -p IPAddressDeny=169.254.169.254 -p MemoryMax=2G -p RuntimeMaxSec=3600 \
+  -E HOME="/srv/build/$app" -E PATH=/usr/local/bin:/usr/bin:/bin -E LANG=C.UTF-8 \
+  /usr/local/bin/build-app "$app" "$ref" >&2
+
+# 2. LATEST and rel/ were written by build code: validate before root touches them.
+#    Never echo LATEST's content (it could be a symlink to a root-only file).
+sha=$(head -c 64 "/srv/build/$app/rel/LATEST")
+[[ $sha =~ ^[0-9a-f]{12}$ ]] || { echo "bad sha in LATEST" >&2; exit 1; }
+built=/srv/build/$app/rel/$sha
+[[ -d $built && $(realpath -e "$built") == "$built" ]] || { echo "bad release dir" >&2; exit 1; }
+
+# 3. install: root owns the code, the app can only read it
+new=$root/releases/$sha
+rm -rf "$new"
+cp -a "$built" "$new"
+chown -R root:"$app" "$new"
+chmod -R u+rwX,g+rX,g-w,o-rwx "$new"
+
+# 4. migrate with the new code before switching; if this fails the old release keeps running
+as_app "$new/bin/migrate"
+
+# 5. switch, restart, verify
+old=$(readlink -e "$root/current" || true)
+switch_to "$new"
+if [[ -n $old && $old != "$new" ]]; then ln -sfn "$old" "$root/previous"; fi
+systemctl restart "app@$app"
+if ! healthy; then
+  echo "health check failed on :$port, rolling back" >&2
+  if [[ -n $old ]]; then switch_to "$old"; systemctl restart "app@$app"; fi
+  logger -t deploy "FAILED $app $sha"
+  exit 1
+fi
+logger -t deploy "ok $app $sha"
+echo "deployed $app $sha"
+
+# 6. keep the five newest releases
+ls -1dt "$root"/releases/*/ | tail -n +6 | xargs -r rm -rf
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Rollback doesn't undo migrations, so I back up the database with <span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box dump my_app</span> before risky ones.</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/build-app
+# runs on the box: boxsync installs it as /usr/local/bin/build-app
+#
+
+# build-app APP REF       checkout origin/REF, build a prod release into /srv/build/APP/rel/SHA
+set -euo pipefail
+app=$1 ref=$2
+dir=/srv/build/$app       # also $HOME of b_APP
+src=$dir/src
+export MIX_ENV=prod KERL_BUILD_DOCS=no
+export KERL_CONFIGURE_OPTIONS="--without-javac --without-wx --without-odbc --without-debugger --without-observer --without-et"
+
+[[ -d $src/.git ]] || git clone --quiet "$(cat "/etc/apps/$app.repo")" "$src"
+cd "$src"
+git fetch --quiet --prune --force origin
+git checkout --quiet --force --detach "origin/$ref" 2>/dev/null || git checkout --quiet --force --detach "$ref"
+# Drop compile caches when the ref changes. This is only tidiness: the rest of
+# this user's home (toolchain, ~/.mix, .git, .ssh) survives every build, so a
+# build that ran bad code taints later ones until `reset-build APP`.
+if [[ $(cat "$dir/.last_ref" 2>/dev/null) == "$ref" ]]; then
+  git clean -ffdxq -e /deps -e /_build
+else
+  git clean -ffdxq
+fi
+echo "$ref" > "$dir/.last_ref"
+sha=$(git rev-parse --short=12 HEAD)
+echo "building $app @ $sha ($(git log -1 --format=%s))"
+
+mise trust >/dev/null
+mise install                                  # first time per Erlang version: slow
+mix() { mise exec -- mix "$@"; }
+mix local.hex --force                         # always latest: Hex ships its own CA store
+mix local.rebar --force --if-missing
+mix deps.get --only prod
+mix compile
+if mix help assets.deploy >/dev/null 2>&1; then mix assets.deploy; fi
+rm -rf "$dir/rel/$sha"
+mix release --overwrite --path "$dir/rel/$sha"
+echo "$sha" > "$dir/rel/LATEST"
+ls -1dt "$dir"/rel/*/ | tail -n +3 | xargs -r rm -rf
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Any dependency, macro or mix alias runs here with the build user's rights, so deploy-app checks its output before root uses it.</p>
+
+<p class="my-4">
+  The build user owns its whole home, and that home is kept between builds
+  so Erlang isn't compiled on every deploy. The cost is that a build which
+  ran bad code can change the toolchain or a git hook and so taint every
+  later build of that app, and it can copy the GitHub deploy key. That is why
+  only admin keys can build a ref other than main, and why there is a script
+  to start over:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/reset-build
+# runs on the box: boxsync installs it as /usr/local/bin/reset-build
+#
+
+# reset-build APP   throw away everything a build could have tainted: the
+#   checkout, toolchain, caches and GitHub deploy key. The next deploy starts
+#   clean (and compiles Erlang again). The running app is not touched.
+set -euo pipefail
+app=${1:-}
+[[ $app =~ ^[a-z][a-z0-9_]{1,29}$ && -f /etc/apps/$app.env ]] || { echo "unknown app: $app" >&2; exit 2; }
+b=b_$app dir=/srv/build/$app key=/srv/build/$app/.ssh/deploy_key
+id "$b" >/dev/null 2>&1 || { echo "no build user $b" >&2; exit 1; }
+# the same lock deploy-app takes, so this never runs during a deploy
+exec 9>"/run/lock/deploy-$app.lock"
+flock -n 9 || { echo "a deploy of $app is running" >&2; exit 1; }
+cd /tmp
+
+rm -rf "$dir"
+install -d -o "$b" -g "$b" -m 0700 "$dir" "$dir/.ssh"
+# a build could have copied the old key off the box: make a new one
+runuser -u "$b" -- ssh-keygen -q -t ed25519 -N '' -C "box-$app" -f "$key"
+printf 'Host github-%s\n  HostName github.com\n  User git\n  IdentityFile %s\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' "$app" "$key" > "$dir/.ssh/config"
+chown "$b:$b" "$dir/.ssh/config" && chmod 0600 "$dir/.ssh/config"
+logger -t reset-build "$app by ${SUDO_USER:-root}"
+
+cat << MSG
+
+Reset the build home of $app.
+1. GitHub -> repo -> Settings -> Deploy keys: delete the old box-$app key, then add (read-only):
+   $(cat "$key.pub")
+2. From a laptop: ssh deploy@box deploy $app
+MSG
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">If that build was also deployed, it ran as the app, so rotate everything in /etc/apps/APP.env too.</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/pgdump-app
+# runs on the box: boxsync installs it as /usr/local/bin/pgdump-app
+#
+
+# pgdump-app APP     custom-format dump of the app's database to stdout
+set -euo pipefail
+app=${1:-}
+[[ $app =~ ^[a-z][a-z0-9_]{1,30}$ && -f /etc/apps/$app.env ]] || { echo "unknown app: $app" >&2; exit 2; }
+logger -t pgdump "dump of $app by ${SUDO_USER:-root}"
+cd /tmp
+exec runuser -u postgres -- pg_dump --format=custom "$app"
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">deploy-gate's dump verb runs this. The dump streams back to the laptop over SSH.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 11: One systemd unit for every app
+</div>
+
+<p class="my-4">
+  One template unit runs every app. <span class="bg-gray-200 px-1 rounded font-mono text-sm">%i</span> is the
+  app name, so <span class="bg-gray-200 px-1 rounded font-mono text-sm">app@my_app</span> and
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">app@other_app</span> are two instances of this
+  same file:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# file on the laptop: ~/dev/box/root/etc/systemd/system/app@.service
+# used on the box: boxsync installs it as /etc/systemd/system/app@.service
+#
+
+# /etc/systemd/system/app@.service   (%i = app name)
+[Unit]
+Description=Phoenix app %i
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+ConditionPathExists=/srv/apps/%i/current
+
+[Service]
+Type=exec
+User=%i
+Group=%i
+EnvironmentFile=/etc/apps/%i.env
+Environment=LANG=C.UTF-8 RELEASE_TMP=/run/%i HOME=/run/%i ERL_CRASH_DUMP=/var/lib/%i/erl_crash.dump
+RuntimeDirectory=%i
+StateDirectory=%i
+WorkingDirectory=/var/lib/%i
+ExecStart=/srv/apps/%i/current/bin/server
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+MemoryMax=512M
+
+# sandbox: read-only OS, no privilege gain, only /run/%i and /var/lib/%i writable
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# other users' processes, and their command lines, are invisible
+ProtectProc=invisible
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+# the droplet metadata service: nothing an app needs
+IPAddressDeny=169.254.169.254
+UMask=0077
+# NOT MemoryDenyWriteExecute: the BEAM JIT needs W+X memory
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">BEAM treats SIGTERM as a graceful stop, so no ExecStop. Migrations and consoles run in the same sandbox (sandbox.sh).</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# file on the laptop: ~/dev/box/root/usr/local/lib/box/sandbox.sh
+# sourced on the box: boxsync installs it as /usr/local/lib/box/sandbox.sh
+#
+
+# /usr/local/lib/box/sandbox.sh   (0644, sourced, not run)
+# app_sandbox APP     sets SANDBOX=(systemd-run args) for running APP's release as APP
+app_sandbox() {
+  local app=$1
+  SANDBOX=(
+    --uid="$app" --gid="$app"
+    -p EnvironmentFile="/etc/apps/$app.env"
+    -p StateDirectory="$app" -p WorkingDirectory="/var/lib/$app"
+    -p NoNewPrivileges=yes -p ProtectSystem=strict -p ProtectHome=yes
+    -p PrivateTmp=yes -p PrivateDevices=yes -p ProtectProc=invisible
+    -p ProtectKernelTunables=yes -p ProtectKernelModules=yes -p ProtectKernelLogs=yes
+    -p ProtectControlGroups=yes -p ProtectClock=yes -p ProtectHostname=yes
+    -p RestrictSUIDSGID=yes -p RestrictNamespaces=yes -p RestrictRealtime=yes -p LockPersonality=yes
+    -p "RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK"
+    -p SystemCallArchitectures=native -p IPAddressDeny=169.254.169.254
+    -p MemoryMax=512M -p UMask=0077
+    -E RELEASE_TMP=/tmp -E HOME=/tmp -E LANG=C.UTF-8
+  )
+}
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">deploy-app and app-console source this. Change it together with the unit.</p>
+
+<p class="my-4">
+  Security checkpoint: each app runs as its own user, can't write its own code
+  or any system path, can't read other apps' env files, can't gain privileges,
+  and can't take the whole box down by leaking memory.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 12: Cloudflare Tunnel
+</div>
+
+<p class="my-4">
+  <span class="text-red-600">Don't run <span class="font-mono">cloudflared service install TOKEN</span>.</span>
+  It puts the token in your shell history and in a unit file every local user
+  can read, apps included. With a stolen token, someone can run their own
+  connector and receive some of your traffic.
+</p>
+
+<ul>
+  <li class="mb-2">1. Zero Trust -> Networks -> Tunnels -> Create tunnel, name it <span class="bg-gray-200 px-1 rounded font-mono text-sm">box</span>. Copy the token and skip the install command it shows.</li>
+  <li class="mb-2">2. Install just the package from Cloudflare's apt repo.</li>
+  <li class="mb-2">3. Token into a root-only file, typed in an editor so it never hits shell history.</li>
+  <li class="mb-2">4. The unit (from the box repo) hands the file to the service with <span class="bg-gray-200 px-1 rounded font-mono text-sm">LoadCredential=</span> and runs <span class="bg-gray-200 px-1 rounded font-mono text-sm">cloudflared tunnel run --token-file</span> as a sandboxed <span class="bg-gray-200 px-1 rounded font-mono text-sm">DynamicUser</span>.</li>
+</ul>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# file on the laptop: ~/dev/box/root/etc/systemd/system/cloudflared.service
+# used on the box: boxsync installs it as /etc/systemd/system/cloudflared.service
+#
+
+# /etc/systemd/system/cloudflared.service
+[Unit]
+Description=Cloudflare Tunnel "box" (hostnames -> 127.0.0.1:PORT)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Token lives in a root-only file (/etc/cloudflared/token, 0600). systemd hands
+# it to the service privately (%d = this service's credentials dir), so it is
+# never in a command line, an environment variable, or this world-readable unit.
+LoadCredential=token:/etc/cloudflared/token
+ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token-file %d/token
+Type=notify
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=5
+
+# sandbox: throwaway unprivileged user, read-only OS, network only
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the box, as admin: ssh box
+#
+
+# curl -f: fail on HTTP errors instead of saving the error page
+# curl -s: silent, no progress bar
+# curl -S: still show errors when silent
+# curl -L: follow redirects
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+# apt -y: answer yes to every prompt
+sudo apt update && sudo apt -y install cloudflared
+
+# install -d: create directories instead of copying a file
+# install -m: set the permission mode
+# SUDO_EDITOR: the editor sudoedit opens for this one command (the default is nano)
+sudo install -d -m 700 /etc/cloudflared && sudo install -m 600 /dev/null /etc/cloudflared/token && SUDO_EDITOR=/usr/bin/vim sudoedit /etc/cloudflared/token
+sudo systemctl enable --now cloudflared
+# journalctl -u: only this systemd unit's logs
+sudo journalctl -u cloudflared     # "Registered tunnel connection"
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">This way the token never shows up in a command line, an env var or a readable unit file.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 13: Domains and subdomains
+</div>
+
+<p class="my-4">
+  Each domain is one Cloudflare zone, which we set up once. Each hostname,
+  apex or subdomain, is one tunnel route to one app's port:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> Namecheap ──nameservers──> Cloudflare zone example.com
+                                  │
+                   tunnel "box", one route per hostname
+                                  │
+   example.com         ──> 127.0.0.1:4001   main_site
+   app.example.com     ──> 127.0.0.1:4002   tracker
+   admin.example.com   ──> 127.0.0.1:4003   back_office  (+ Cloudflare Access)
+   www.example.com     ──> 301 to the apex  (a Cloudflare rule, not an app)
+</code></pre>
+
+<p class="my-4">
+  Once per domain:
+</p>
+
+<ul>
+  <li class="mb-2">1. Buy it.</li>
+  <li class="mb-2">2. Cloudflare -> Add a site -> Free. A new domain has no records, so there's nothing to import. If the domain already had DNS somewhere, <span class="text-red-600">especially email</span> (MX, SPF/DKIM), check that Cloudflare imported those records: after step 3, Cloudflare is the only one answering for the domain.</li>
+  <li class="mb-2">3. Namecheap -> Nameservers -> Custom DNS -> Cloudflare's two. Cloudflare assigns them per site, so copy them from the new site's page.</li>
+  <li class="mb-2">4. SSL/TLS: pick Full (strict) explicitly, turn on Always Use HTTPS, and set the minimum TLS to 1.2.</li>
+  <li class="mb-2">5. www -> apex: a proxied <span class="bg-gray-200 px-1 rounded font-mono text-sm">AAAA www 100::</span> placeholder, plus the "Redirect from WWW to root" rule. Ignore the warning that www isn't proxied.</li>
+</ul>
+
+<p class="my-4">
+  Once per hostname: <span class="bg-gray-200 px-1 rounded font-mono text-sm">new-app</span> on the box (Step 9),
+  then in Cloudflare Tunnels -> box -> add a route to
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">http://127.0.0.1:PORT</span>,
+  then deploy from the laptop (Step 10).
+</p>
+
+<ul>
+  <li class="mb-2">- <span class="text-red-600">Keep subdomains one level deep.</span> The free certificate covers <span class="bg-gray-200 px-1 rounded font-mono text-sm">*.example.com</span> but not <span class="bg-gray-200 px-1 rounded font-mono text-sm">a.b.example.com</span>.</li>
+  <li class="mb-2">- Use <span class="bg-gray-200 px-1 rounded font-mono text-sm">127.0.0.1</span> in routes. <span class="bg-gray-200 px-1 rounded font-mono text-sm">localhost</span> can resolve to ::1, and the apps only listen on IPv4.</li>
+  <li class="mb-2">- Private apps get Cloudflare Access. From inside the box, any other app can <span class="bg-gray-200 px-1 rounded font-mono text-sm">curl 127.0.0.1:PORT</span> and skip it, so the app checks the Access JWT too.</li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 14: What each Phoenix repo needs
+</div>
+
+<p class="my-4">
+  Each Phoenix repo needs a few things before its first deploy:
+</p>
+
+<ul>
+  <li class="mb-2">- <span class="bg-gray-200 px-1 rounded font-mono text-sm">mix phx.gen.release</span> committed. The scripts call <span class="bg-gray-200 px-1 rounded font-mono text-sm">bin/server</span> and <span class="bg-gray-200 px-1 rounded font-mono text-sm">bin/migrate</span>.</li>
+  <li class="mb-2">- <span class="bg-gray-200 px-1 rounded font-mono text-sm">mise.toml</span> pins Erlang and Elixir (Node only if npm deps exist), <span class="text-red-600">nothing else</span>, because the build runs <span class="bg-gray-200 px-1 rounded font-mono text-sm">mise install</span> on the box, hooks included.</li>
+  <li class="mb-2">- Bind to loopback, allow the real origin (below).</li>
+  <li class="mb-2">- Set <span class="bg-gray-200 px-1 rounded font-mono text-sm">force_ssl</span> (below). The tunnel reaches the app over plain HTTP, so without it Plug never sees https: the session cookie goes out without <span class="bg-gray-200 px-1 rounded font-mono text-sm">Secure</span> and there is no HSTS header.</li>
+  <li class="mb-2">- Anything that writes to disk writes under <span class="bg-gray-200 px-1 rounded font-mono text-sm">/var/lib/my_app</span>, the only writable dir. tzdata's auto-update is the common case.</li>
+  <li class="mb-2">- <span class="bg-gray-200 px-1 rounded font-mono text-sm">GET /</span> is cheap, since the health check calls it.</li>
+  <li class="mb-2">- <span class="text-red-600">Nothing trusts localhost or remote_ip</span>, because through the tunnel every request comes from 127.0.0.1. <span class="bg-gray-200 px-1 rounded font-mono text-sm">CF-Connecting-IP</span> is OK for rate limits and logs, but not for auth, since other apps on the box can send it too.</li>
+  <li class="mb-2">- No <span class="bg-gray-200 px-1 rounded font-mono text-sm">System.get_env("MIX_ENV")</span> at runtime, because nothing sets it in a release. Use <span class="bg-gray-200 px-1 rounded font-mono text-sm">config_env()</span> instead.</li>
+  <li class="mb-2">- If the app runs jobs or timers on its own (Oban, Quantum, a GenServer on a timer), turn them off when <span class="bg-gray-200 px-1 rounded font-mono text-sm">BOX_CONSOLE</span> is set (below). A console is a second copy of the app, and it shouldn't run the jobs too.</li>
+</ul>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# file in the app's repo: config/runtime.exs
+# runs on the box: read when the release starts, with /etc/apps/my_app.env loaded
+#
+
+config :my_app, MyAppWeb.Endpoint,
+  url: [host: host, port: 443, scheme: "https"],
+  http: [ip: {127, 0, 0, 1}, port: port],   # generated default is {0,0,0,0,0,0,0,0}
+  check_origin: ["https://#{host}"],
+  secret_key_base: secret_key_base
+
+# config/prod.exs (force_ssl is read at compile time)
+config :my_app, MyAppWeb.Endpoint,
+  force_ssl: [
+    rewrite_on: [:x_forwarded_proto],                # trust Cloudflare's header, or every request redirects forever
+    exclude: [hosts: ["localhost", "127.0.0.1"]]     # the deploy health check stays on http
+  ]
+
+# config/runtime.exs, only for apps with jobs or timers. This one is for Oban:
+if System.get_env("BOX_CONSOLE") do
+  config :my_app, Oban, queues: false, plugins: false
+end
+</code></pre>
+
+<p class="my-4">
+  Coming from Fly: delete <span class="bg-gray-200 px-1 rounded font-mono text-sm">fly.toml</span>,
+  the Dockerfile, <span class="bg-gray-200 px-1 rounded font-mono text-sm">rel/env.sh.eex</span>
+  (it overrides the box's settings)
+  and DNSCluster. <span class="bg-gray-200 px-1 rounded font-mono text-sm">fly secrets set</span>
+  becomes <span class="bg-gray-200 px-1 rounded font-mono text-sm">SUDO_EDITOR=/usr/bin/vim sudoedit /etc/apps/my_app.env</span>.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Step 15: Laptops
+</div>
+
+<p class="my-4">
+  Two different keys get called "deploy key" here:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code> laptop key        ~/.ssh/id_ed25519_box, one per laptop, made by you
+   laptop ──ssh──> box
+
+ GitHub deploy key /srv/build/APP/.ssh/deploy_key, one per repo, made by new-app
+   box ──git fetch──> GitHub     (read-only)
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the new laptop
+#
+
+# curl -f: fail on HTTP errors instead of saving the error page
+# curl -s: silent, no progress bar
+# curl -S: still show errors when silent
+# curl -L: follow redirects
+# ping -c: send one ping and stop
+curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up && ping -c 1 box
+# ssh-keygen -t: the key type
+# ssh-keygen -f: the key file
+# ssh-keygen -C: a comment naming the laptop
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_box -C "me-thinkpad-2026"     # passphrase
+printf 'Host box\n  HostName box\n  User admin\n  IdentityFile ~/.ssh/id_ed25519_box\n  IdentitiesOnly yes\n  AddKeysToAgent yes\n' >> ~/.ssh/config
+cat ~/.ssh/id_ed25519_box.pub     # send to a laptop that already has admin
+</code></pre>
+
+<p class="my-4">
+  The first laptop already did all of this in Steps 2 and 4. It only needs
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">add-deploy-key --admin</span>, run from itself.
+</p>
+
+<p class="my-4">
+  From an admin laptop, install the <span class="bg-gray-200 px-1 rounded font-mono text-sm">.pub</span> with
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">add-deploy-key</span>. <span class="bg-gray-200 px-1 rounded font-mono text-sm">--admin</span>
+  is for your own laptops: deploys, database dumps and a shell as admin.
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">--apps</span> is for anyone else: deploys of main for those apps
+  only, no other branches, no database dumps, no shell. One of the two is required.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in a laptop that already has admin
+#
+
+# ssh -t: give the session a terminal (sudo needs one to ask for the password)
+ssh -t box sudo add-deploy-key --admin "PUBLIC_KEY_LINE"                        # your own laptop
+ssh -t box "sudo add-deploy-key --apps 'my_app,other_app' 'PUBLIC_KEY_LINE'"    # someone else's: deploy only, those apps
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/add-deploy-key
+# runs on the box: boxsync installs it as /usr/local/bin/add-deploy-key
+#
+
+# add-deploy-key --admin | --apps app1,app2  PUBLIC_KEY_LINE
+#   ssh -t admin@box sudo add-deploy-key --admin "$(cat ~/.ssh/id_ed25519_box.pub)"
+#   ssh -t admin@box "sudo add-deploy-key --apps '*' 'ssh-ed25519 AAAA... kid-laptop-2026'"
+# Appends the key to deploy's authorized_keys behind the forced command.
+# --admin also appends it, unrestricted, to the calling admin's own authorized_keys.
+# --apps limits the key to those apps (names, prefixes ending in *, or '*' for all), and to no dumps (see deploy-gate).
+# One of the two is required: a bare key used to get every app plus dumps.
+set -euo pipefail
+admin=no apps=""
+case ${1:-} in
+  --admin) admin=yes; shift ;;
+  --apps)  apps=${2:-}; shift 2
+           [[ $apps =~ ^(\*|[a-z][a-z0-9_]{0,30}\*?(,[a-z][a-z0-9_]{0,30}\*?)*)$ ]] || { echo "--apps '*' (all) or 'app_one,prefix_*'" >&2; exit 2; } ;;
+  *)       echo "usage: add-deploy-key --admin KEY | --apps 'a,b_*' KEY" >&2; exit 2 ;;
+esac
+key="$*"
+# One line, ed25519 only, and a comment naming the laptop. The strict match also
+# stops a crafted "key" from smuggling in a second, unrestricted line.
+[[ $key =~ ^(ssh-ed25519|sk-ssh-ed25519@openssh\.com)\ [A-Za-z0-9+/=]+\ [A-Za-z0-9._@-]+$ ]] \
+  || { echo "expected: ssh-ed25519 AAAA... laptop-name   (one line, comment without spaces)" >&2; exit 2; }
+ssh-keygen -lf - <<< "$key" >/dev/null || { echo "not a valid public key" >&2; exit 2; }
+blob=$(cut -d' ' -f2 <<< "$key")
+
+f=/home/deploy/.ssh/authorized_keys
+gate=/usr/local/bin/deploy-gate${apps:+ \'$apps\'}
+if grep -qF "$blob" "$f"; then echo "already in deploy (edit the line to change its apps)"; else
+  printf 'restrict,command="%s" %s\n' "$gate" "$key" >> "$f"
+  echo "added to deploy (${apps:-all apps}): $(ssh-keygen -lf - <<< "$key")"
+fi
+if [[ $admin == yes ]]; then
+  a=/home/${SUDO_USER:?run with sudo}/.ssh/authorized_keys
+  if grep -qF "$blob" "$a"; then echo "already in $SUDO_USER"; else
+    printf '%s\n' "$key" >> "$a"
+    echo "added to $SUDO_USER (admin)"
+  fi
+fi
+logger -t add-deploy-key "admin=$admin apps=${apps:-all} by ${SUDO_USER:-root}: $(ssh-keygen -lf - <<< "$key")"
+</code></pre>
+
+<p class="my-4">
+  Then check:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the new laptop
+#
+
+ssh deploy@box status    # lists the apps
+ssh deploy@box bash      # refused: usage message, no shell
+</code></pre>
+
+<p class="my-4">
+  Revoke a laptop: Tailscale -> Machines -> Remove first, which also cuts
+  any session it has open. Then delete its keys. A deploy-only key has one line,
+  in deploy's <span class="bg-gray-200 px-1 rounded font-mono text-sm">authorized_keys</span>. An admin key has
+  two: that one, and one in the admin's own file.
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">grep</span> for its name finds them, but the name is
+  only a comment, so I read both files whole afterwards: every line left has to
+  be a laptop I can name.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in a laptop that has admin
+#
+
+# ssh -t: give the session a terminal (sudo needs one to ask for the password)
+# grep -n: print the line number of each match
+ssh -t box "sudo grep -n 'LAPTOP_NAME' /home/deploy/.ssh/authorized_keys /home/admin/.ssh/authorized_keys"
+ssh -t box SUDO_EDITOR=/usr/bin/vim sudoedit /home/deploy/.ssh/authorized_keys   # delete its line
+ssh -t box vim .ssh/authorized_keys                                              # admin keys: your own file, no sudo
+# the name at the end of every line that's left, in both files
+ssh -t box "sudo awk '{print FILENAME, \$NF}' /home/deploy/.ssh/authorized_keys /home/admin/.ssh/authorized_keys"
+ssh box who                                                                      # nobody you don't expect
+</code></pre>
+
+<p class="my-4">
+  Nothing needs a restart. Be careful not to delete the key of the laptop
+  you're typing on.
+</p>
+
+<p class="my-4">
+  If the laptop was lost or retired, that's all. If an admin laptop may have
+  had malware, it may have had root too (see Risks I accept), and removing its
+  key doesn't undo that: change the admin's password, then rebuild the box from
+  Step 1 with every secret rotated.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Daily use
+</div>
+
+<p class="my-4">
+  Day to day, this is all we need from a laptop:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+ssh deploy@box deploy my_app              # origin/main
+ssh deploy@box deploy my_app my-branch    # admin keys only: any branch/tag/sha pushed to GitHub (never local code)
+ssh deploy@box rollback my_app
+ssh deploy@box logs my_app 500
+ssh deploy@box status
+ssh deploy@box dump my_app > my_app_$(date +%Y%m%d).dump
+</code></pre>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in a laptop that has admin
+#
+
+# admin only, not through deploy-gate
+# ssh -t: give the session a terminal (sudo needs one to ask for the password)
+ssh -t box sudo app-console my_app                                  # IEx in a second copy of the app
+ssh -t box "sudo app-console my_app eval 'IO.puts(:ok)'"            # fresh VM, app sandbox
+ssh -t box SUDO_EDITOR=/usr/bin/vim sudoedit /etc/apps/my_app.env   # secrets, then redeploy or restart:
+ssh -t box sudo systemctl restart app@my_app
+# journalctl -u: only this systemd unit's logs
+# journalctl -f: keep printing new lines as they come
+ssh -t box sudo journalctl -u app@my_app -f                         # live logs (or ssh deploy@box logs)
+ssh -t box sudo systemctl edit app@my_app                           # e.g. more memory: [Service] MemoryMax=1G
+# sudo -u: run the command as this user
+ssh -t box 'cd /tmp && sudo -u my_app psql'                         # as the app, its DB only
+ssh -t box 'cd /tmp && sudo -u postgres psql my_app'                # superuser: be deliberate
+# ssh -N: don't run a remote command, just hold the tunnel open
+# ssh -L: forward local port 5433 to 127.0.0.1:5432 on the box
+ssh -N -L 5433:127.0.0.1:5432 admin@box                             # GUI on localhost:5433
+</code></pre>
+<p class="my-4">
+  The console is <span class="bg-gray-200 px-1 rounded font-mono text-sm">bin/my_app start_iex</span>
+  in the app's sandbox: a second copy of the app with the same code, env file and database, and no web server
+  (only <span class="bg-gray-200 px-1 rounded font-mono text-sm">bin/server</span> sets
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">PHX_SERVER</span>).
+  Queries, context functions and one-off fixes work as usual. What it can't see is the live app's memory:
+  the state of a GenServer, ETS tables, connected LiveViews. Leaving it with Ctrl-C twice doesn't touch the live app.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#!/usr/bin/env bash
+#
+# file on the laptop: ~/dev/box/root/usr/local/bin/app-console
+# runs on the box: boxsync installs it as /usr/local/bin/app-console
+#
+
+# app-console APP                IEx in a second copy of the app (bin/APP start_iex): same code, env and database, no web server
+# app-console APP eval 'CODE'      one-off code in a fresh VM, app not started
+set -euo pipefail
+source /usr/local/lib/box/sandbox.sh
+app=${1:-}
+[[ $app =~ ^[a-z][a-z0-9_]{1,30}$ && -f /etc/apps/$app.env ]] || { echo "unknown app: $app" >&2; exit 2; }
+# The console copy never starts the web server and never joins Erlang
+# distribution, whatever the env file says. BOX_CONSOLE=1 tells the app it is
+# a console, so it can skip work only the live copy should do (job queues, cron).
+pre=()
+case ${2:-} in
+  "")     cmd=(start_iex); pre=(/usr/bin/env -u PHX_SERVER RELEASE_DISTRIBUTION=none BOX_CONSOLE=1) ;;
+  eval)   cmd=(eval "${3:?usage: app-console APP eval 'CODE'}") ;;
+  *)      echo "usage: app-console APP [eval 'CODE']" >&2; exit 2 ;;
+esac
+logger -t app-console "${cmd[0]} on $app by ${SUDO_USER:-root}"
+app_sandbox "$app"
+exec systemd-run --quiet --pty --collect "${SANDBOX[@]}" "${pre[@]}" "/srv/apps/$app/current/bin/$app" "${cmd[@]}"
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Not reachable through deploy-gate, so a laptop's deploy key can't open a console.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Backups and monitoring
+</div>
+
+<p class="my-4">
+  There's no automated backup. I run <span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box dump</span>
+  before risky migrations and resizes, and DO's weekly whole-disk backup covers
+  the times I forget. A dump file on a laptop is plaintext, so delete it when
+  done. Dump and restore one database once, so you know it works.
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop
+#
+
+# the dump streams back over SSH into a local file
+ssh deploy@box dump my_app > my_app_20261111.dump
+
+# restore it into a local Postgres to check it works
+# pg_restore -d: the database to restore into
+createdb my_app_restore && pg_restore --no-owner --no-acl -d my_app_restore my_app_20261111.dump
+</code></pre>
+
+<p class="my-4">
+  DO alerts on CPU > 80% for 10 min, memory > 90% and disk > 80%, and
+  each hostname gets an external uptime check. Once a week I look at
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box status</span> from the laptop, and, on the box
+  (<span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh box</span>), at
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">apt list --upgradable</span> and
+  <span class="bg-gray-200 px-1 rounded font-mono text-sm">sudo journalctl -t deploy --since -7d | grep FAILED</span>.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Break glass aka "Oh Crap" moments
+</div>
+
+<ul>
+  <li class="mb-2">- <span class="text-red-600">Tailscale or SSH broken:</span> DO -> droplet -> Access -> Recovery Console, and log in as the admin with the password from the password manager.</li>
+  <li class="mb-2">- <span class="text-red-600">A bad sshd config:</span> <span class="bg-gray-200 px-1 rounded font-mono text-sm">install.sh</span> puts the old one back if <span class="bg-gray-200 px-1 rounded font-mono text-sm">sshd -t</span> fails. I keep a second session open whenever I change ssh anyway.</li>
+  <li class="mb-2">- <span class="text-red-600">A bad deploy:</span> <span class="bg-gray-200 px-1 rounded font-mono text-sm">ssh deploy@box rollback my_app</span>. A bad migration needs a database dump to go back to.</li>
+  <li class="mb-2">- <span class="text-red-600">A build ran bad code:</span> <span class="bg-gray-200 px-1 rounded font-mono text-sm">reset-build</span> (Step 10), then rotate the app's secrets if that release was deployed.</li>
+  <li class="mb-2">- <span class="text-red-600">Box lost:</span> restore a DO weekly backup. Or follow this post again from Step 1, run <span class="bg-gray-200 px-1 rounded font-mono text-sm">new-app</span> with the same name, port and host for each app, and restore its database before the first deploy:</li>
+</ul>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in a laptop that has admin
+#
+
+# ssh -t: give the session a terminal (sudo needs one to ask for the password)
+# sudo -u: run the command as this user
+# pg_restore -d: the database to restore into
+scp my_app.dump box:/tmp/ && ssh -t box 'cd /tmp && sudo -u my_app pg_restore --no-owner --no-acl -d my_app /tmp/my_app.dump; rm -f /tmp/my_app.dump'
+</code></pre>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Verify
+</div>
+
+<p class="my-4">
+  Let's verify the whole setup. Each line has the result we expect next to it:
+</p>
+
+<pre class="text-xs overflow-x-auto"><code>#
+# we are in the laptop, with Tailscale off
+#
+
+# nc -v: verbose, print whether the connection worked
+# nc -z: only check if the port is open, send no data
+# nc -w: give up after 5 seconds
+nc -vz -w 5 PUBLIC_IP 22                    # timeout
+# nmap -Pn: skip the ping check and scan anyway
+# nmap -p-: scan all 65535 ports
+nmap -Pn -p- PUBLIC_IP                      # everything filtered
+# curl -s: silent, no progress bar
+# curl -I: fetch the headers only
+curl -sI https://myapp.example.com          # 200, via Cloudflare
+
+#
+# we are in the box, as admin: ssh box
+#
+
+# ss -t: TCP sockets
+# ss -l: listening sockets only
+# ss -n: numeric addresses and ports, no name lookups
+# ss -p: show the process that owns each socket
+sudo ss -tlnp                               # apps and postgres: 127.0.0.1 only. sshd on :22 is behind both firewalls
+# sudo -l: list the commands a user may run with sudo
+# sudo -U: the user to list them for (with -l)
+sudo -l -U deploy                           # only deploy-app and pgdump-app
+# stat -c: print only the owner, group and mode
+stat -c '%U:%G %a' /home/deploy             # root:deploy 750
+# findmnt -n: no header line
+# findmnt -o: print only the OPTIONS column
+findmnt -no OPTIONS /proc                   # ...,hidepid=invisible
+sudo ufw status verbose                     # deny incoming; 22 only on tailscale0
+# sshd -T: print the config sshd actually uses, then exit
+# grep -E: extended regex, so | means "or"
+sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|authenticationmethods)'
+# sudo -u: run the command as this user
+sudo -u my_app cat /etc/apps/other_app.env  # Permission denied
+sudo -u b_my_app ls /srv/build/other_app    # Permission denied
+sudo -u b_my_app cat /etc/apps/my_app.env   # Permission denied: builds never see secrets
+systemd-analyze security app@my_app         # exposure around 3, OK
+systemctl --failed                          # nothing listed
+
+#
+# we are in the laptop
+#
+
+# with a deploy key
+ssh deploy@box bash                         # usage message, no shell
+# ssh -L: forward local port 5433 to 127.0.0.1:5432 on the box
+ssh -L 5433:127.0.0.1:5432 deploy@box       # forwarding refused
+ssh deploy@box console my_app               # usage message: no console as deploy
+
+#
+# we are in a laptop that has admin
+#
+
+# ssh -t: give the session a terminal (sudo needs one to ask for the password)
+ssh -t box sudo app-console my_app          # iex(1)>
+</code></pre>
+<p class="text-center text-sm text-gray-500 my-2">Run it after setup and after any infra change.</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  AI usage
+</div>
+
+<p class="my-4">
+  AI has been fantastic to learn/experiment with concepts and ideas that before
+  would take me a long time to even get situated. It helped me combine a
+  bunch of disparate notes I had into the flow and shape seen in this post. The
+  value you get out of tinkering, thinking and choosing between different
+  options that you get is unreal.
+</p>
+
+<p class="my-4">
+  It has caught security issues I had and also helped me fix them. I'm enjoying
+  AI as much as possible and hope we can run it locally soon (we are a while
+  away from it).
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Security review
+</div>
+
+<p class="my-4">
+  I had AI review the setup. This is what it found, and the steps above
+  already have the fixes:
+</p>
+
+<ul>
+  <li class="mb-2">- <span class="text-red-600">deploy-app trusted rel/LATEST.</span> Build code writes that file, and root used it in <span class="bg-gray-200 px-1 rounded font-mono text-sm">rm -rf</span>/<span class="bg-gray-200 px-1 rounded font-mono text-sm">cp -a</span>/<span class="bg-gray-200 px-1 rounded font-mono text-sm">chown -R</span>, so any dependency of any app could get root. Now deploy-app stops unless LATEST is 12 hex characters naming a real directory with no symlinks, and each app builds as its own user.</li>
+  <li class="mb-2">- <span class="text-red-600">cloudflared and Tailscale never got security updates.</span> unattended-upgrades skips third-party apt repos unless you list them, and cloudflared is the one process that handles internet traffic. Now <span class="bg-gray-200 px-1 rounded font-mono text-sm">52box</span> lists both, and cloudflared restarts when its binary gets replaced.</li>
+  <li class="mb-2">- <span class="text-red-600">The deploy user owned its own home.</span> <span class="bg-gray-200 px-1 rounded font-mono text-sm">authorized_keys</span> belonged to root, but the directories above it didn't, so a shell as deploy could swap <span class="bg-gray-200 px-1 rounded font-mono text-sm">.ssh</span> for its own and get rid of the forced command. Now root owns everything in <span class="bg-gray-200 px-1 rounded font-mono text-sm">/home/deploy</span>.</li>
+  <li class="mb-2">- <span class="text-red-600">Root services nobody uses were running.</span> snapd, udisks2, ModemManager, PackageKit, fwupd and bolt answer to any local user, so a compromised app could talk to all of them, and a bug in any one of them is a way to root that skips the sandbox. Step 3 removes them.</li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Risks I accept
+</div>
+
+<ul>
+  <li class="mb-2">- Cloudflare terminates TLS and sees all traffic. Whoever holds the Cloudflare account can also point a hostname at any port on the box's loopback, Postgres and sshd included.</li>
+  <li class="mb-2">- Malware on an admin laptop gets root. The admin key is a passphrase-protected file, and the admin's home on the box is writable by the admin, so the malware only has to wait for the next sudo.</li>
+  <li class="mb-2">- A bad dependency in app X can take over app X, but not the other apps.</li>
+  <li class="mb-2">- Anyone who can push to main of X's repo can run code as X's build user, and what that code leaves in the build home lasts until <span class="bg-gray-200 px-1 rounded font-mono text-sm">reset-build</span>.</li>
+  <li class="mb-2">- Anyone who can push to the box repo is root on the box the next time I run <span class="bg-gray-200 px-1 rounded font-mono text-sm">boxsync</span>, since it installs whatever is on origin/main as root. So push access to that repo is root access, keep that list short.</li>
+  <li class="mb-2">- A compromised app can listen on another app's port while that app restarts. Each unit could be pinned to its own port with <span class="bg-gray-200 px-1 rounded font-mono text-sm">SocketBindAllow</span>, and I chose not to.</li>
+  <li class="mb-2">- Apps on the box can send each other requests with a forged <span class="bg-gray-200 px-1 rounded font-mono text-sm">CF-Connecting-IP</span>, so a per-IP rate limit only holds against the outside.</li>
+  <li class="mb-2">- Nothing filters outbound traffic, so a compromised app can connect anywhere.</li>
+  <li class="mb-2">- One app can fill the disk or use all the CPU and take the others down with it.</li>
+  <li class="mb-2">- A deploy key for every app can read every app's logs.</li>
+  <li class="mb-2">- If you log into DO with your GitHub account, that one account holds the code, DO and root on the box.</li>
+  <li class="mb-2">- <span class="text-red-600">The biggest real risk is the accounts</span>: DO, GitHub, Cloudflare, whatever logs into Tailscale.</li>
+</ul>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  Conclusion
+</div>
+
+<p class="my-4">
+  After all of this, your applications should be up on one box, each one
+  isolated from the others, in a fairly safe environment: no ports open to the
+  internet, and one command to deploy from any laptop.
+</p>
+
+<div class="text-2xl font-bold mt-6 mb-6">
+  General Drawbacks
+</div>
+
+<ul>
+  <li class="mb-2">
+    - <span class="text-red-600">Local Postgres -></span> The database runs on
+    the same box as every app, so they all share the same 2 vCPUs, 4 GB of
+    memory and disk. Even though we use Elixir, if we are dealing with a lot of
+    requests we would likely struggle, or maybe not. I haven't put real load on
+    it yet. So, do this for low traffic apps. If you need anything more than
+    this, move the app to Fly. They have a decent intro plan now for
+    databases that is sufficient for a legit deploy.
+  </li>
+</ul>
+
+</div>
+
+</div>
+  </div>
+</main>
+      </div>
+    </main>
+  </body>
+</html>
