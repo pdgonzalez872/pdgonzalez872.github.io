@@ -8,7 +8,7 @@ tmp_file=$(mktemp)
 
 echo "<div hidden id="id">add-name-like-this</div>" > "$tmp_file"
 echo "<div hidden id="title">Some Title</div>" >> "$tmp_file"
-echo "<div hidden id="author">Paulo Gonzalez</div>" >> "$tmp_file"
+echo "<div hidden id="author">Paulo Daniel Gonzalez</div>" >> "$tmp_file"
 echo "<div hidden id="tags">some, tags, like, this</div>" >> "$tmp_file"
 
 cat "$file" >> "$tmp_file"
